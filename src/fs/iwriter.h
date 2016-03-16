@@ -1,5 +1,5 @@
-#ifndef SRC_FS_IWRITER_H_
-#define SRC_FS_IWRITER_H_
+#ifndef ECLIPSEMR_FS_IWRITER_H_
+#define ECLIPSEMR_FS_IWRITER_H_
 #include <memory>
 #include <thread>
 #include <string>
@@ -76,4 +76,4 @@ class IWriter {
 };
 
 }  // namespace eclipse
-#endif  // SRC_FS_IWRITER_H_
+#endif  // ECLIPSEMR_FS_IWRITER_H_
