@@ -17,3 +17,8 @@ BOOST_CLASS_EXPORT(eclipse::messages::CacheInfo);
 BOOST_CLASS_EXPORT(eclipse::messages::FileRequest);
 BOOST_CLASS_EXPORT(eclipse::messages::BlockRequest);
 BOOST_CLASS_EXPORT(eclipse::messages::FileDescription);
+BOOST_CLASS_EXPORT(eclipse::messages::FileDel);
+BOOST_CLASS_EXPORT(eclipse::messages::BlockDel);
+BOOST_CLASS_EXPORT(eclipse::messages::IDataInfo);
+BOOST_CLASS_EXPORT(eclipse::messages::IGroupInfo);
+BOOST_CLASS_EXPORT(eclipse::messages::IBlockInfo);

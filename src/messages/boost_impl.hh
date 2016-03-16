@@ -20,6 +20,11 @@
 #include "filerequest.hh"
 #include "blockrequest.hh"
 #include "filedescription.hh"
+#include "blockdel.hh"
+#include "filedel.hh"
+#include "idatainfo.hh"
+#include "igroupinfo.hh"
+#include "iblockinfo.hh"
 
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/access.hpp>
@@ -143,6 +148,47 @@ template <typename Archive>
     ar & BOOST_SERIALIZATION_NVP(c.file_name);
     ar & BOOST_SERIALIZATION_NVP(c.nodes);
   }
+
+template <typename Archive>
+  void serialize (Archive& ar, eclipse::messages::FileDel& c, unsigned int) {
+    ar & BASE_OBJECT(Message, c);
+    ar & BOOST_SERIALIZATION_NVP(c.file_name);
+  }
+
+template <typename Archive>
+  void serialize (Archive& ar, eclipse::messages::BlockDel& c, unsigned int) {
+    ar & BASE_OBJECT(Message, c);
+    ar & BOOST_SERIALIZATION_NVP(c.file_name);
+    ar & BOOST_SERIALIZATION_NVP(c.block_seq);
+    ar & BOOST_SERIALIZATION_NVP(c.block_name);
+  }
+
+template <typename Archive>
+  void serialize(Archive& ar, eclipse::messages::IDataInfo& c, unsigned int) {
+    ar & BASE_OBJECT(Message, c);
+    ar & BOOST_SERIALIZATION_NVP(c.job_id);
+    ar & BOOST_SERIALIZATION_NVP(c.map_id);
+    ar & BOOST_SERIALIZATION_NVP(c.num_reducer);
+  }
+
+template <typename Archive>
+  void serialize(Archive& ar, eclipse::messages::IGroupInfo& c, unsigned int) {
+    ar & BASE_OBJECT(Message, c);
+    ar & BOOST_SERIALIZATION_NVP(c.job_id);
+    ar & BOOST_SERIALIZATION_NVP(c.map_id);
+    ar & BOOST_SERIALIZATION_NVP(c.reducer_id);
+    ar & BOOST_SERIALIZATION_NVP(c.num_block);
+  }
+
+template <typename Archive>
+  void serialize(Archive& ar, eclipse::messages::IBlockInfo& c, unsigned int) {
+    ar & BASE_OBJECT(Message, c);
+    ar & BOOST_SERIALIZATION_NVP(c.job_id);
+    ar & BOOST_SERIALIZATION_NVP(c.map_id);
+    ar & BOOST_SERIALIZATION_NVP(c.reducer_id);
+    ar & BOOST_SERIALIZATION_NVP(c.block_seq);
+  }
+
 }
 }
 
@@ -163,3 +209,11 @@ BOOST_CLASS_TRACKING(eclipse::messages::CacheInfo, boost::serialization::track_n
 BOOST_CLASS_TRACKING(eclipse::messages::FileRequest, boost::serialization::track_never);
 BOOST_CLASS_TRACKING(eclipse::messages::BlockRequest, boost::serialization::track_never);
 BOOST_CLASS_TRACKING(eclipse::messages::FileDescription, boost::serialization::track_never);
+BOOST_CLASS_TRACKING(eclipse::messages::FileDel, boost::serialization::track_never);
+BOOST_CLASS_TRACKING(eclipse::messages::BlockDel, boost::serialization::track_never);
+BOOST_CLASS_TRACKING(eclipse::messages::IDataInfo,
+    boost::serialization::track_never);
+BOOST_CLASS_TRACKING(eclipse::messages::IGroupInfo,
+    boost::serialization::track_never);
+BOOST_CLASS_TRACKING(eclipse::messages::IBlockInfo,
+    boost::serialization::track_never);

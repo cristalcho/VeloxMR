@@ -13,6 +13,15 @@ RemoteDFS::RemoteDFS (Context& c) : Router(c), peer(c) {
   routing_table.insert({"FileRequest", bind(&RemoteDFS::request_file, this, ph::_1)});
   routing_table.insert({"BlockRequest", bind(&RemoteDFS::request_block, this, ph::_1)});
   routing_table.insert({"FileList", bind(&RemoteDFS::request_ls, this, ph::_1)});
+  routing_table.insert({"BlockDel", bind(&RemoteDFS::delete_block, this, ph::_1)});
+  routing_table.insert({"FileDel", bind(&RemoteDFS::delete_file, this, ph::_1)});
+
+  routing_table.insert({"IBlockInfo", bind(&RemoteDFS::insert_idata, this,
+      ph::_1)});
+  routing_table.insert({"IGroupInfo", bind(&RemoteDFS::insert_igroup, this,
+      ph::_1)});
+  routing_table.insert({"IBlockInfo", bind(&RemoteDFS::insert_iblock, this,
+      ph::_1)});
 }
 // }}}
 // establish {{{
@@ -40,6 +49,23 @@ void RemoteDFS::insert_block (messages::Message* m_) {
 
   network->send(0, &reply);
 }
+void RemoteDFS::delete_block (messages::Message* m_) {
+  auto m = dynamic_cast<messages::BlockDel*> (m_);
+  logger->info ("BlockDel received");
+
+  bool ret = peer.delete_block(m);
+  Reply reply;
+
+  if (ret) {
+    reply.message = "OK";
+  } else {
+    reply.message = "FAIL";
+    reply.details = "Block doesn't exist";
+  }
+
+  network->send(0, &reply);
+}
+
 // }}}
 // FileInfo* {{{
 void RemoteDFS::insert_file (messages::Message* m_) {
@@ -55,6 +81,22 @@ void RemoteDFS::insert_file (messages::Message* m_) {
   } else {
     reply.message = "FAIL";
     reply.details = "File already exists";
+  }
+
+  network->send(0, &reply);
+}
+void RemoteDFS::delete_file (messages::Message* m_) {
+  auto m = dynamic_cast<messages::FileDel*> (m_);
+  logger->info ("FileDel received");
+
+  bool ret = peer.delete_file (m);
+  Reply reply;
+
+  if (ret) {
+    reply.message = "OK";
+  } else {
+    reply.message = "FAIL";
+    reply.details = "File doesn't exist";
   }
 
   network->send(0, &reply);
@@ -94,3 +136,21 @@ void RemoteDFS::send_block (std::string k, std::string v) {
   network->send(0, &bi);
 }
 // }}}
+
+
+
+void RemoteDFS::insert_idata(messages::Message* msg) {
+  auto idata_info = dynamic_cast<messages::IDataInfo*>(msg);
+  logger->info("IDataInfo received.");
+  peer.insert_idata(idata_info);
+}
+void RemoteDFS::insert_igroup(messages::Message* msg) {
+  auto igroup_info = dynamic_cast<messages::IGroupInfo*>(msg);
+  logger->info("IGroupInfo received.");
+  peer.insert_igroup(igroup_info);
+}
+void RemoteDFS::insert_iblock(messages::Message* msg) {
+  auto iblock_info = dynamic_cast<messages::IBlockInfo*>(msg);
+  logger->info("IBlockInfo received.");
+  peer.insert_iblock(iblock_info);
+}
