@@ -15,13 +15,6 @@ RemoteDFS::RemoteDFS (Context& c) : Router(c), peer(c) {
   routing_table.insert({"FileList", bind(&RemoteDFS::request_ls, this, ph::_1)});
   routing_table.insert({"BlockDel", bind(&RemoteDFS::delete_block, this, ph::_1)});
   routing_table.insert({"FileDel", bind(&RemoteDFS::delete_file, this, ph::_1)});
-
-  routing_table.insert({"IBlockInfo", bind(&RemoteDFS::insert_idata, this,
-      ph::_1)});
-  routing_table.insert({"IGroupInfo", bind(&RemoteDFS::insert_igroup, this,
-      ph::_1)});
-  routing_table.insert({"IBlockInfo", bind(&RemoteDFS::insert_iblock, this,
-      ph::_1)});
 }
 // }}}
 // establish {{{
