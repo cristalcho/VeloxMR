@@ -210,6 +210,70 @@ namespace eclipse{
     {
       con.logger->info("block_table created successfully\n");
     }
+
+    // Create SQL statement
+    sprintf(sql, "CREATE TABLE idata_table( \
+        job_id         INT       NOT NULL, \
+        map_id         INT       NOT NULL, \
+        num_reducer    INT       NOT NULL, \
+        node           TEXT      NOT NULL, \
+        PRIMARY KEY (job_id, map_id));"); 
+
+    // Execute SQL statement
+    rc = sqlite3_exec(db, sql, NULL, 0, &zErrMsg);
+    if(rc != SQLITE_OK)
+    {
+      con.logger->error("SQL error: %s\n", zErrMsg);
+      sqlite3_free(zErrMsg);
+    }
+    else
+    {
+      con.logger->info("idata_table created successfully\n");
+    }
+
+    // Create SQL statement
+    sprintf(sql, "CREATE TABLE reducer_table( \
+        job_id         INT       NOT NULL, \
+        map_id         INT       NOT NULL, \
+        reducer_id     INT       NOT NULL, \
+        num_block      INT       NOT NULL, \
+        node           TEXT      NOT NULL, \
+        PRIMARY KEY (job_id, map_id, reducer_id));"); 
+
+    // Execute SQL statement
+    rc = sqlite3_exec(db, sql, NULL, 0, &zErrMsg);
+    if(rc != SQLITE_OK)
+    {
+      con.logger->error("SQL error: %s\n", zErrMsg);
+      sqlite3_free(zErrMsg);
+    }
+    else
+    {
+      con.logger->info("reducer_table created successfully\n");
+    }
+
+    // Create SQL statement
+    sprintf(sql, "CREATE TABLE iblock_table( \
+        job_id         INT       NOT NULL, \
+        map_id         INT       NOT NULL, \
+        reducer_id     INT       NOT NULL, \
+        block_seq      INT       NOT NULL, \
+        block_size     INT       NOT NULL, \
+        node           TEXT      NOT NULL, \
+        PRIMARY KEY (job_id, map_id, reducer_id, block_seq));"); 
+
+    // Execute SQL statement
+    rc = sqlite3_exec(db, sql, NULL, 0, &zErrMsg);
+    if(rc != SQLITE_OK)
+    {
+      con.logger->error("SQL error: %s\n", zErrMsg);
+      sqlite3_free(zErrMsg);
+    }
+    else
+    {
+      con.logger->info("iblock_table created successfully\n");
+    }
+
     // Close Database
     sqlite3_close(db);
   }

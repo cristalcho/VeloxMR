@@ -15,9 +15,13 @@ using std::vector;
 using std::multimap;
 using std::string;
 
+// ###########################
 // Rule for kmv_blocks_
 // front     : Stacking block.
 // front + n : Ready to write.
+// ###########################
+// Rule for naming iblocks
+// .job_[job_id]_[map_id]_[reducer_id]_[block_seq]
 
 namespace eclipse {
 
