@@ -35,7 +35,7 @@ IWriter::IWriter() {
   write_pos_ = write_buf_;
   kmv_blocks_.resize(reduce_slot_);
   is_write_ready_.resize(reduce_slot_);
-  for (int i = 0; i < reduce_slot_; ++i) {
+  for (uint32_t i = 0; i < reduce_slot_; ++i) {
     // kmv_blocks_[i].push_front(std::make_shared<multimap<string, string>>());
     block_size_.emplace_back(0);
     write_count_.emplace_back(0);
@@ -60,7 +60,7 @@ IWriter::~IWriter() {
 }
 void IWriter::finalize() {
   // It should be garuanteed no more key values added
-  for (int i = 0; i < reduce_slot_; ++i) {
+  for (uint32_t i = 0; i < reduce_slot_; ++i) {
     if (kmv_blocks_[i].size() > 0) {
       is_write_ready_[i].front() = true;
     }
@@ -77,7 +77,7 @@ void IWriter::seek_writable_block() {
   while(!is_write_finish_) {
     // Check if there is any block that should be written to disk.
     // And if it's true, write it onto disk.
-    for (int i = 0; i < reduce_slot_; ++i) {
+    for (uint32_t i = 0; i < reduce_slot_; ++i) {
       if (kmv_blocks_[i].size() > 0 && is_write_ready_[i].back()) {
         auto writing_block = kmv_blocks_[i].back();
         kmv_blocks_[i].pop_back();
@@ -88,8 +88,8 @@ void IWriter::seek_writable_block() {
 
     // Check if there are no more incoming key value pairs.
     if(is_write_start_) {
-      int finish_counter = 0;
-      for (int i = 0; i < reduce_slot_; ++i) {
+      uint32_t finish_counter = 0;
+      for (uint32_t i = 0; i < reduce_slot_; ++i) {
         if(kmv_blocks_[i].size() == 0) {
           ++finish_counter;
         }
@@ -108,7 +108,7 @@ void IWriter::add_key_value(const string &key, const string &value) {
   }
   auto block = kmv_blocks_[index].front();
 
-  int new_size;
+  uint32_t new_size;
   if (block->find(key) == block->end()) {
     new_size = get_block_size(index) + key.length() + value.length() + 4;
   } else {
