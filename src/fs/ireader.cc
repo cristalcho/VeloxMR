@@ -102,6 +102,7 @@ bool IReader::LoadKey(const int &index) {
 bool IReader::LoadValue(const int &index) {
   getline(*blocks_[index], next_value_);
   --num_remain_[curr_block_index_];
+  return true;
 }
 std::multimap<string, int>::iterator IReader::get_min_iterator() {
   return key_order_.begin();
