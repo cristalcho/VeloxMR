@@ -3,8 +3,7 @@ include tests/Makefile.am
 AM_CPPFLAGS         = -I@srcdir@/src/common -I@srcdir@/src -include ./config.h
 AM_CXXFLAGS         = -Wall -std=c++14 -ggdb3 
 
-bin_PROGRAMS        = eclipse_node dfsput dfsget dfsls dfsinit dfsrm
-
+bin_PROGRAMS        = eclipse_node dfsput dfsget dfsls dfsinit cacheinfo dfsrm
 
 messages_files   = src/messages/boundaries.cc      \
                    src/messages/message.cc         \
@@ -50,6 +49,8 @@ eclipse_node_SOURCES = src/targets/node_main.cc \
 											 src/nodes/remotedfs.cc \
 											 src/nodes/router.cc \
 											 src/fs/directory.cc \
+											 src/fs/iwriter.cc \
+											 src/fs/ireader.cc \
 											 src/nodes/node.cc \
 											 $(messages_files)
 
