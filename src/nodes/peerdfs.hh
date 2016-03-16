@@ -11,9 +11,6 @@
 #include "../messages/filedel.hh"
 #include "../messages/blockdel.hh"
 #include "../fs/directory.hh"
-#include "../messages/idatainfo.hh"
-#include "../messages/igroupinfo.hh"
-#include "../messages/iblockinfo.hh"
 
 #include <string>
 #include <boost/asio.hpp>
@@ -43,10 +40,6 @@ class PeerDFS: public Node, public AsyncNode {
     bool delete_file (messages::FileDel*);
     bool list (messages::FileList*);
     FileDescription request_file (messages::FileRequest*);
-
-    void insert_idata(messages::IDataInfo* idata_info);
-    void insert_igroup(messages::IGroupInfo* igroup_info);
-    void insert_iblock(messages::IBlockInfo* iblock_info);
 
   protected:
     Directory directory;
