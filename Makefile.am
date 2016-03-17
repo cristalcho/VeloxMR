@@ -3,7 +3,7 @@ include tests/Makefile.am
 AM_CPPFLAGS         = -I@srcdir@/src/common -I@srcdir@/src -include ./config.h
 AM_CXXFLAGS         = -Wall -std=c++14 -ggdb3 
 
-bin_PROGRAMS        = eclipse_node dfsput dfsget dfsls dfsinit cacheinfo dfsrm dfsformat
+bin_PROGRAMS        = eclipse_node dfsput dfsget dfsls cacheinfo dfsrm dfsformat
 
 messages_files   = src/messages/boundaries.cc      \
                    src/messages/message.cc         \
