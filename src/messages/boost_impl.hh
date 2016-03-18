@@ -23,15 +23,6 @@
 #include "blockdel.hh"
 #include "filedel.hh"
 #include "formatrequest.hh"
-#include "../messages/idatainfo.hh"
-#include "../messages/igroupinfo.hh"
-#include "../messages/iblockinfo.hh"
-#include "../messages/idatainforequest.hh"
-#include "../messages/igroupinforequest.hh"
-#include "../messages/iblockinforequest.hh"
-#include "../messages/idatainsert.hh"
-#include "../messages/igroupinsert.hh"
-#include "../messages/iblockinsert.hh"
 
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/access.hpp>

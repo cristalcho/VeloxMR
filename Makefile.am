@@ -34,6 +34,7 @@ messages_files   = src/messages/boundaries.cc        \
                    src/messages/idatainfo.cc         \
                    src/messages/igroupinfo.cc        \
                    src/messages/iblockinfo.cc        
+
 # libs -----
 lib_LTLIBRARIES     = libecfs.la
 libecfs_la_SOURCES  = src/common/hash.cc src/common/settings.cc \
