@@ -3,7 +3,7 @@ include tests/Makefile.am
 AM_CPPFLAGS         = -I@srcdir@/src/common -I@srcdir@/src -include ./config.h
 AM_CXXFLAGS         = -Wall -std=c++14 -ggdb3 
 
-bin_PROGRAMS        = eclipse_node dfsput dfsget dfsls dfsinit cacheinfo dfsrm
+bin_PROGRAMS        = eclipse_node dfsput dfsget dfsls cacheinfo dfsrm dfsformat
 
 messages_files   = src/messages/boundaries.cc      \
                    src/messages/message.cc         \
@@ -23,9 +23,11 @@ messages_files   = src/messages/boundaries.cc      \
                    src/messages/cacheinfo.cc       \
                    src/messages/blockdel.cc        \
                    src/messages/filedel.cc         \
+									 src/messages/formatrequest.cc   \
                    src/messages/idatainfo.cc       \
                    src/messages/igroupinfo.cc      \
                    src/messages/iblockinfo.cc        
+
 # libs -----
 lib_LTLIBRARIES     = libecfs.la
 libecfs_la_SOURCES  = src/common/hash.cc src/common/settings.cc \
@@ -74,10 +76,10 @@ dfsls_SOURCES        = src/fs/dfsls.cc src/fs/directory.cc \
 
 dfsls_LDADD          = $(LDADD) -lsqlite3
 
-dfsinit_SOURCES      = src/fs/dfsinit.cc src/fs/directory.cc \
+dfsformat_SOURCES      = src/fs/dfsformat.cc src/fs/directory.cc \
 											$(messages_files)
 
-dfsinit_LDADD        = $(LDADD) -lsqlite3
+dfsformat_LDADD        = $(LDADD) -lsqlite3
 
 dfsrm_SOURCES      = src/fs/dfsrm.cc src/fs/directory.cc \
 											$(messages_files)
