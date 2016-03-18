@@ -5,9 +5,9 @@
 namespace eclipse {
 namespace messages {
 
-struct IBlockInfo: public Message {
-  IBlockInfo() = default;
-  ~IBlockInfo() = default;
+struct IBlockInfoRequest: public Message {
+  IBlockInfoRequest() = default;
+  ~IBlockInfoRequest() = default;
 
   std::string get_type() const override;
 
