@@ -3,28 +3,36 @@ include tests/Makefile.am
 AM_CPPFLAGS         = -I@srcdir@/src/common -I@srcdir@/src -include ./config.h
 AM_CXXFLAGS         = -Wall -std=c++14 -ggdb3 
 
-bin_PROGRAMS        = eclipse_node dfsput dfsget dfsls dfsinit cacheinfo dfsrm
+bin_PROGRAMS        = eclipse_node dfsput dfsget dfsls dfsformat dfsrm cacheinfo 
 
-messages_files   = src/messages/boundaries.cc      \
-                   src/messages/message.cc         \
-                   src/messages/keyvalue.cc        \
-                   src/messages/keyrequest.cc      \
-                   src/messages/control.cc         \
-                   src/messages/boost_impl.cc      \
-                   src/messages/factory.cc         \
-                   src/messages/fileinfo.cc        \
-                   src/messages/blockinfo.cc       \
-                   src/messages/task.cc            \
-                   src/messages/reply.cc           \
-                   src/messages/filerequest.cc     \
-                   src/messages/blockrequest.cc    \
-                   src/messages/filelist.cc        \
-                   src/messages/filedescription.cc \
-                   src/messages/cacheinfo.cc       \
-                   src/messages/blockdel.cc        \
-                   src/messages/filedel.cc         \
-                   src/messages/idatainfo.cc       \
-                   src/messages/igroupinfo.cc      \
+messages_files   = src/messages/boundaries.cc        \
+                   src/messages/message.cc           \
+                   src/messages/keyvalue.cc          \
+                   src/messages/keyrequest.cc        \
+                   src/messages/control.cc           \
+                   src/messages/boost_impl.cc        \
+                   src/messages/boost_impl_mr.cc        \
+                   src/messages/factory.cc           \
+                   src/messages/fileinfo.cc          \
+                   src/messages/blockinfo.cc         \
+                   src/messages/task.cc              \
+                   src/messages/reply.cc             \
+                   src/messages/filerequest.cc       \
+                   src/messages/blockrequest.cc      \
+                   src/messages/filelist.cc          \
+                   src/messages/filedescription.cc   \
+                   src/messages/cacheinfo.cc         \
+                   src/messages/blockdel.cc          \
+                   src/messages/filedel.cc           \
+									 src/messages/formatrequest.cc     \
+                   src/messages/idatainsert.cc       \
+                   src/messages/igroupinsert.cc       \
+                   src/messages/iblockinsert.cc      \
+                   src/messages/idatainforequest.cc \
+                   src/messages/igroupinforequest.cc \
+                   src/messages/iblockinforequest.cc \
+                   src/messages/idatainfo.cc         \
+                   src/messages/igroupinfo.cc        \
                    src/messages/iblockinfo.cc        
 # libs -----
 lib_LTLIBRARIES     = libecfs.la
@@ -47,8 +55,11 @@ eclipse_node_SOURCES = src/targets/node_main.cc \
 											 src/nodes/machine.cc \
 											 src/nodes/peerdfs.cc \
 											 src/nodes/remotedfs.cc \
+                       src/nodes/peermr.cc \
+                       src/nodes/remotemr.cc \
 											 src/nodes/router.cc \
 											 src/fs/directory.cc \
+                       src/fs/directorymr.cc \
 											 src/fs/iwriter.cc \
 											 src/fs/ireader.cc \
 											 src/nodes/node.cc \
@@ -74,10 +85,10 @@ dfsls_SOURCES        = src/fs/dfsls.cc src/fs/directory.cc \
 
 dfsls_LDADD          = $(LDADD) -lsqlite3
 
-dfsinit_SOURCES      = src/fs/dfsinit.cc src/fs/directory.cc \
+dfsformat_SOURCES      = src/fs/dfsformat.cc src/fs/directory.cc \
 											$(messages_files)
 
-dfsinit_LDADD        = $(LDADD) -lsqlite3
+dfsformat_LDADD        = $(LDADD) -lsqlite3
 
 dfsrm_SOURCES      = src/fs/dfsrm.cc src/fs/directory.cc \
 											$(messages_files)
