@@ -3,9 +3,6 @@
 #include "remotedfs.hh"
 #include "peermr.h"
 #include "../messages/message.hh"
-#include "../messages/idatainfo.hh"
-#include "../messages/igroupinfo.hh"
-#include "../messages/iblockinfo.hh"
 #include "../messages/boost_impl_mr.hh"
 
 namespace eclipse {

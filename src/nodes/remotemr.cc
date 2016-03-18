@@ -5,9 +5,9 @@
 #include <functional>
 #include "../common/context.hh"
 #include "../messages/message.hh"
-#include "../messages/idatainfo.hh"
-#include "../messages/igroupinfo.hh"
-#include "../messages/iblockinfo.hh"
+#include "../messages/idatainsert.hh"
+#include "../messages/igroupinsert.hh"
+#include "../messages/iblockinsert.hh"
 #include "../messages/idatainforequest.hh"
 #include "../messages/igroupinforequest.hh"
 #include "../messages/iblockinforequest.hh"
@@ -15,11 +15,11 @@
 namespace eclipse {
 
 RemoteMR::RemoteMR(Context &c): RemoteDFS(c), peer(c) {
-  routing_table.insert({"IBlockInfo", std::bind(&RemoteMR::insert_idata,
+  routing_table.insert({"IBlockInsert", std::bind(&RemoteMR::insert_idata,
       this, std::placeholders::_1)});
-  routing_table.insert({"IGroupInfo", std::bind(&RemoteMR::insert_igroup,
+  routing_table.insert({"IGroupInsert", std::bind(&RemoteMR::insert_igroup,
       this, std::placeholders::_1)});
-  routing_table.insert({"IBlockInfo", std::bind(&RemoteMR::insert_iblock,
+  routing_table.insert({"IBlockInsert", std::bind(&RemoteMR::insert_iblock,
       this, std::placeholders::_1)});
   routing_table.insert({"IBlockInfoRequest", std::bind(&RemoteMR::request_idata,
       this, std::placeholders::_1)});
@@ -34,19 +34,19 @@ bool RemoteMR::establish() {
   return true;
 }
 void RemoteMR::insert_idata(messages::Message *msg) {
-  auto idata_info = dynamic_cast<messages::IDataInsert*>(msg);
-  logger->info("IDataInfo received.");
-  peer.insert_idata(idata_info);
+  auto idata_insert = dynamic_cast<messages::IDataInsert*>(msg);
+  logger->info("IDataInsert received.");
+  peer.insert_idata(idata_insert);
 }
 void RemoteMR::insert_igroup(messages::Message *msg) {
-  auto igroup_info = dynamic_cast<messages::IGroupInsert*>(msg);
-  logger->info("IGroupInfo received.");
-  peer.insert_igroup(igroup_info);
+  auto igroup_insert = dynamic_cast<messages::IGroupInsert*>(msg);
+  logger->info("IGroupInsert received.");
+  peer.insert_igroup(igroup_insert);
 }
 void RemoteMR::insert_iblock(messages::Message *msg) {
-  auto iblock_info = dynamic_cast<messages::IBlockInsert*>(msg);
-  logger->info("IBlockInfo received.");
-  peer.insert_iblock(iblock_info);
+  auto iblock_insert = dynamic_cast<messages::IBlockInsert*>(msg);
+  logger->info("IBlockInsert received.");
+  peer.insert_iblock(iblock_insert);
 }
 void RemoteMR::request_idata(messages::Message *msg) {
   auto idata_info_request = dynamic_cast<messages::IDataInfoRequest*>(msg);
