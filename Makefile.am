@@ -3,7 +3,7 @@ include tests/Makefile.am
 AM_CPPFLAGS         = -I@srcdir@/src/common -I@srcdir@/src -include ./config.h
 AM_CXXFLAGS         = -Wall -std=c++14 -ggdb3 
 
-bin_PROGRAMS        = eclipse_node dfsput dfsget dfsls dfsformat dfsrm cacheinfo 
+bin_PROGRAMS        = eclipse_node dfsput dfsget dfsls dfsformat dfsrm cacheinfo
 
 messages_files   = src/messages/boundaries.cc        \
                    src/messages/message.cc           \
@@ -11,7 +11,6 @@ messages_files   = src/messages/boundaries.cc        \
                    src/messages/keyrequest.cc        \
                    src/messages/control.cc           \
                    src/messages/boost_impl.cc        \
-                   src/messages/boost_impl_mr.cc        \
                    src/messages/factory.cc           \
                    src/messages/fileinfo.cc          \
                    src/messages/blockinfo.cc         \
@@ -48,7 +47,7 @@ AM_LDFLAGS          = -static
 LDADD               = libecfs.la -lboost_system -lboost_thread -lboost_serialization -lboost_system -lboost_coroutine -lboost_context
 
 
-eclipse_node_SOURCES = src/targets/node_main.cc \
+eclipse_node_SOURCES = src/targets/node_main_mr.cc \
 											 src/network/channel.cc \
 											 src/network/asyncchannel.cc \
 											 src/network/p2p.cc \

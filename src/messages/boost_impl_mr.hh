@@ -1,8 +1,8 @@
 #pragma once
 #include "boost_impl.hh"
-#include "idatainfo.hh"
-#include "igroupinfo.hh"
-#include "iblockinfo.hh"
+#include "idatainsert.hh"
+#include "igroupinsert.hh"
+#include "iblockinsert.hh"
 #include "idatainforequest.hh"
 #include "igroupinforequest.hh"
 #include "iblockinforequest.hh"
@@ -11,7 +11,7 @@ namespace eclipse {
 namespace messages {
 
 template <typename Archive>
-  void serialize(Archive& ar, eclipse::messages::IDataInfo& c, unsigned int) {
+  void serialize(Archive& ar, eclipse::messages::IDataInsert& c, unsigned int) {
     ar & BASE_OBJECT(Message, c);
     ar & BOOST_SERIALIZATION_NVP(c.job_id);
     ar & BOOST_SERIALIZATION_NVP(c.map_id);
@@ -19,7 +19,7 @@ template <typename Archive>
   }
 
 template <typename Archive>
-  void serialize(Archive& ar, eclipse::messages::IGroupInfo& c, unsigned int) {
+  void serialize(Archive& ar, eclipse::messages::IGroupInsert& c, unsigned int) {
     ar & BASE_OBJECT(Message, c);
     ar & BOOST_SERIALIZATION_NVP(c.job_id);
     ar & BOOST_SERIALIZATION_NVP(c.map_id);
@@ -28,7 +28,7 @@ template <typename Archive>
   }
 
 template <typename Archive>
-  void serialize(Archive& ar, eclipse::messages::IBlockInfo& c, unsigned int) {
+  void serialize(Archive& ar, eclipse::messages::IBlockInsert& c, unsigned int) {
     ar & BASE_OBJECT(Message, c);
     ar & BOOST_SERIALIZATION_NVP(c.job_id);
     ar & BOOST_SERIALIZATION_NVP(c.map_id);

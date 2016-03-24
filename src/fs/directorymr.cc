@@ -50,7 +50,6 @@ void DirectoryMR::init_db() {
       map_id         INT       NOT NULL, \
       reducer_id     INT       NOT NULL, \
       block_seq      INT       NOT NULL, \
-      block_name     TEXT      NOT NULL, \
       PRIMARY KEY (job_id, map_id, reducer_id, block_seq));"); 
   // Execute SQL statement
   rc = sqlite3_exec(db, sql, NULL, 0, &zErrMsg);

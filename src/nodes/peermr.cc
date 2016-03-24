@@ -1,6 +1,6 @@
 #include "peermr.h"
 #include "../messages/message.hh"
-#include "../messages/boost_impl_mr.hh"
+#include "../messages/boost_impl.hh"
 #include "../messages/idatainsert.hh"
 #include "../messages/igroupinsert.hh"
 #include "../messages/iblockinsert.hh"
@@ -18,17 +18,20 @@ PeerMR::PeerMR(Context &context): PeerDFS(context) {
 }
 PeerMR::~PeerMR() {
 }
-void PeerMR::insert_idata(messages::IDataInsert *msg) {
+bool PeerMR::insert_idata(messages::IDataInsert *msg) {
   directory.insert_idata_metadata(*msg);
   logger->info("Saving to SQLite db");
+  return true;
 }
-void PeerMR::insert_igroup(messages::IGroupInsert *msg) {
+bool PeerMR::insert_igroup(messages::IGroupInsert *msg) {
   directory.insert_igroup_metadata(*msg);
   logger->info("Saving to SQLite db");
+  return true;
 }
-void PeerMR::insert_iblock(messages::IBlockInsert *msg) {
+bool PeerMR::insert_iblock(messages::IBlockInsert *msg) {
   directory.insert_iblock_metadata(*msg);
   logger->info("Saving to SQLite db");
+  return true;
 }
 IDataInfo PeerMR::request_idata(messages::IDataInfoRequest
     *idata_info_request) {

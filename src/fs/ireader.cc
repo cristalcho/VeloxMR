@@ -28,8 +28,10 @@ IReader::IReader() {
   is_next_value_ = true;
   is_clear_ = true;
 }
-IReader::IReader(uint32_t job_id, uint32_t map_id, uint32_t reducer_id):
+IReader::IReader(uint32_t net_id, uint32_t job_id, uint32_t map_id,
+    uint32_t reducer_id):
     IReader() {
+  net_id_ = net_id;
   job_id_ = job_id;
   map_id_ = map_id;
   reducer_id_ = reducer_id;
@@ -39,8 +41,8 @@ IReader::~IReader() {
 }
 void IReader::init() {
   num_block_ = get_num_block();
-  num_remain_.reserve(num_block_);
-  loaded_keys_.reserve(num_block_);
+  num_remain_.resize(num_block_);
+  loaded_keys_.resize(num_block_);
   string block_path_prefix = scratch_path_ + "/.job_" + std::to_string(job_id_)
       + "_" + std::to_string(map_id_) + "_" + std::to_string(reducer_id_) + "_";
   for (uint32_t i = 0; i < num_block_; ++i) {
@@ -49,6 +51,9 @@ void IReader::init() {
     LoadKey(i);
   }
   SetNext();
+}
+void IReader::set_net_id(uint32_t net_id) {
+  net_id_ = net_id;
 }
 void IReader::set_job_id(uint32_t job_id) {
   job_id_ = job_id;
@@ -65,23 +70,23 @@ bool IReader::is_next_key() {
 bool IReader::is_next_value() {
   return is_next_value_;
 }
-bool IReader::get_next_key(string *key) {
+bool IReader::get_next_key(string &key) {
   if (!is_next_key_) return false;
   if (!is_clear_) {
     if (!ShiftToNextKey()) return false;
     is_clear_ = false;
   }
   SetNextAsCurrent();
-  *key = curr_key_;
+  key = curr_key_;
   LoadValue(curr_block_index_);
   is_next_value_ = true;
   return true;
 }
-bool IReader::get_next_value(string *value) {
-  *value = next_value_;
+bool IReader::get_next_value(string &value) {
+  value = next_value_;
   if (num_remain_[curr_block_index_] > 0) {
     LoadValue(curr_block_index_);
-  } else {  // All the values of current key from current file has been read.
+  } else {  // All the values of current key from current file have been read.
     if (!LoadKey(curr_block_index_)) {  // File ends.
       if (!FinishBlock(curr_block_index_)) return false;
     }
@@ -89,7 +94,7 @@ bool IReader::get_next_value(string *value) {
     if (next_key_ == curr_key_) {  // Same key exist on another file.
       SetNextAsCurrent();
       LoadValue(curr_block_index_);
-    } else {  // All the values of current key from whole files has been read.
+    } else {  // All the values of current key from whole files have been read.
       is_next_value_ = false;
       is_clear_ = true;
     }
@@ -99,7 +104,6 @@ bool IReader::get_next_value(string *value) {
 tcp::socket* IReader::connect(uint32_t net_id) {
   tcp::socket *socket = new tcp::socket(io_service_);
   Settings setted = Settings().load();
-  //uint32_t port = setted.get<uint32_t>("network.port_mapreduce");
   int port = setted.get<int>("network.port_mapreduce");
   vector<string> nodes = setted.get<vector<string>>("network.nodes");
   string host = nodes[net_id];
@@ -142,14 +146,18 @@ messages::IBlockInfo* IReader::read_iblock_info(tcp::socket *socket) {
   return dynamic_cast<messages::IBlockInfo*>(msg);
 }
 uint32_t IReader::get_num_block() {
-  tcp::socket *socket = connect(net_id_);
+  // tcp::socket *socket = connect(net_id_);
   messages::IGroupInfoRequest ig_request;
   ig_request.job_id = job_id_;
   ig_request.map_id = map_id_;
   ig_request.reducer_id = reducer_id_;
-  send_message(socket, &ig_request);
-  auto igroup_info = read_igroup_info(socket);
-  return igroup_info->num_block;
+  messages::IGroupInfo igroup_info;
+  directory_.select_igroup_metadata(ig_request.job_id, ig_request.map_id,
+      ig_request.reducer_id, &igroup_info);
+  // send_message(socket, &ig_request);
+  // auto igroup_info = read_igroup_info(socket);
+  // socket->close();
+  return igroup_info.num_block;
 }
 void IReader::SetNext() {
   next_it_ = get_min_iterator();
@@ -170,7 +178,7 @@ bool IReader::ShiftToNextKey() {
       int num_remain = num_remain_[i];
       block->seekg(pos + num_remain);
       if (!LoadKey(i)) {  // File ends.
-        if (!FinishBlock(i)) return false;
+        if (!FinishBlock(i)) return false; // All the files end.
       }
     }
   }
@@ -178,10 +186,14 @@ bool IReader::ShiftToNextKey() {
 }
 bool IReader::LoadKey(const int &index) {
   // Make sure you are not in the middle of the values.
-  if (blocks_[index]->eof()) return false;
+  if (blocks_[index]->eof()) {
+std::cout << "!!!! eof() works well!" << std::endl;
+    return false;
+  }
   getline(*blocks_[index], loaded_keys_[index]);
   string num_value;
   getline(*blocks_[index], num_value);
+if (num_value == "") return false;
   num_remain_[index] = stoi(num_value);
   key_order_.emplace(loaded_keys_[index], index);
   return true;
@@ -200,6 +212,7 @@ bool IReader::FinishBlock(const int &index) {
   loaded_keys_[index] = "";
   ++num_finished_;
   if (num_finished_ == num_block_) {
+    is_next_value_ = false;
     is_next_key_ = false;
     return false;
   }

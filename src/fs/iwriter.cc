@@ -6,14 +6,26 @@
 #include <iterator>
 #include <fstream>
 #include <utility>
-#include <boost/asio.hpp>
 #include <thread>
-#include "../fs/directory.hh"
+#include <sstream>
+#include <iomanip>
+#include <boost/asio.hpp>
+#include "../common/context.hh"
+#include "../messages/message.hh"
+#include "../messages/factory.hh"
+#include "../messages/idatainsert.hh"
+#include "../messages/igroupinsert.hh"
+#include "../messages/iblockinsert.hh"
+#include "../messages/reply.hh"
 
 using std::list;
 using std::vector;
 using std::multimap;
 using std::string;
+using boost::asio::ip::tcp;
+using std::stringstream;
+using std::setw;
+using std::setfill;
 
 // ###########################
 // Rule for kmv_blocks_
@@ -26,6 +38,7 @@ using std::string;
 namespace eclipse {
 
 IWriter::IWriter() {
+  Context con;
   reduce_slot_ = con.settings.get<int>("mapreduce.reduce_slot");
   iblock_size_ = con.settings.get<int>("mapreduce.iblock_size");
   scratch_path_ = con.settings.get<string>("path.scratch");
@@ -44,17 +57,19 @@ IWriter::IWriter() {
     block_size_.emplace_back(0);
     write_count_.emplace_back(0);
   }
-  writer_thread = std::make_unique<std::thread>(run, this);
+  writer_thread_ = std::make_unique<std::thread>(run, this);
 }
-IWriter::IWriter(const uint32_t job_id, const uint32_t net_id) : IWriter() {
-  job_id_ = job_id;
+IWriter::IWriter(const uint32_t net_id, const uint32_t job_id,
+    const uint32_t map_id) : IWriter() {
   net_id_ = net_id;
+  job_id_ = job_id;
+  map_id_ = map_id;
 }
 void IWriter::set_job_id(const uint32_t job_id) {
   job_id_ = job_id;
 }
-void IWriter::set_net_id(const uint32_t net_id) {
-  net_id_ = net_id;
+void IWriter::set_map_id(const uint32_t map_id) {
+  map_id_ = map_id;
 }
 bool IWriter::is_write_finish() {
   return is_write_finish_;
@@ -70,7 +85,67 @@ void IWriter::finalize() {
     }
   }
   is_write_start_ = true;
-  writer_thread->join();
+  writer_thread_->join();
+  // tcp::socket *socket = connect(0);  // temporally 0.
+  for (uint32_t i = 0; i < reduce_slot_; ++i) {
+    messages::IGroupInsert igroup_insert;
+    igroup_insert.job_id = job_id_;
+    igroup_insert.map_id = map_id_;
+    igroup_insert.reducer_id = i;
+    igroup_insert.num_block = write_count_[i];
+    directory_.insert_igroup_metadata(igroup_insert);
+    // send_message(socket, &igroup_insert);
+    // auto reply = read_reply(socket);
+    // if (reply->message != "OK") {
+    //   std::cerr << "Failed to write iblock metadata." << std::endl;
+    // }
+    // delete reply;
+  }
+  messages::IDataInsert idata_insert;
+  idata_insert.job_id = job_id_;
+  idata_insert.map_id = map_id_;
+  idata_insert.num_reducer = reduce_slot_;
+  directory_.insert_idata_metadata(idata_insert);
+  // send_message(socket, &idata_insert);
+  // auto reply = read_reply(socket);
+  // if (reply->message != "OK") {
+  //   std::cerr << "Failed to write iblock metadata." << std::endl;
+  // }
+  // delete reply;
+  // socket->close();
+}
+tcp::socket* IWriter::connect(uint32_t net_id) {
+  tcp::socket *socket = new tcp::socket(io_service_);
+  Settings setted = Settings().load();
+  int port = setted.get<int>("network.port_mapreduce");
+  vector<string> nodes = setted.get<vector<string>>("network.nodes");
+  string host = nodes[net_id];
+// std::cout << "DEBUG] host = " << host << std::endl;
+  tcp::resolver resolver(io_service_);
+  tcp::resolver::query query(host, std::to_string(port));
+  tcp::resolver::iterator it(resolver.resolve(query));
+  auto ep = new tcp::endpoint(*it);
+  socket->connect(*ep);
+  delete ep;
+  return socket;
+}
+void IWriter::send_message(tcp::socket *socket, messages::Message *msg) {
+  string out = save_message(msg);
+  stringstream ss;
+  ss << setfill('0') << setw(16) << out.length() << out;
+  socket->send(boost::asio::buffer(ss.str()));
+}
+messages::Reply* IWriter::read_reply(tcp::socket* socket) {
+  char header[17] = {0};
+  header[16] = '\0';
+  socket->receive(boost::asio::buffer(header, 16));
+  size_t size_of_msg = atoi(header);
+  char* body = new char[size_of_msg];
+  socket->receive(boost::asio::buffer(body, size_of_msg));
+  string recv_msg(body, size_of_msg);
+  messages::Message* m = messages::load_message(recv_msg);
+  delete[] body;
+  return dynamic_cast<eclipse::messages::Reply*>(m);
 }
 void IWriter::run(IWriter *obj) {
   obj->seek_writable_block();
@@ -192,11 +267,25 @@ void IWriter::write_block(std::shared_ptr<std::multimap<string, string>> block,
   } 
   flush_buffer();
   file_.close();
+  messages::IBlockInsert iblock_insert;
+  iblock_insert.job_id = job_id_;
+  iblock_insert.map_id = map_id_;
+  iblock_insert.reducer_id = index;
+  iblock_insert.block_seq = write_count_[index] - 1;
+  directory_.insert_iblock_metadata(iblock_insert);
+  // tcp::socket *socket = connect(0);  // temporally 0.
+  // send_message(socket, &iblock_insert);
+  // auto reply = read_reply(socket);
+  // if (reply->message != "OK") {
+  //   std::cerr << "Failed to write iblock metadata." << std::endl;
+  // }
+  // delete reply;
+  // socket->close();
   block_size_[index] = 0;
 }
 void IWriter::get_new_path(string &path) {
   path = scratch_path_ + "/.job_" + std::to_string(job_id_) + "_" +
-      std::to_string(net_id_) + "_" + std::to_string(writing_index_) + "_" +
+      std::to_string(map_id_) + "_" + std::to_string(writing_index_) + "_" +
       std::to_string(write_count_[writing_index_]);
   ++write_count_[writing_index_];
 }
