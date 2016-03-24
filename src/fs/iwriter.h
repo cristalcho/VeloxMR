@@ -10,28 +10,35 @@
 #include <fstream>
 #include <boost/asio.hpp>
 #include "../common/context.hh"
+#include "../messages/message.hh"
+#include "../messages/reply.hh"
+#include "../fs/directorymr.hh"
 
 using std::list;
 using std::vector;
 using std::multimap;
 using std::unordered_map;
 using std::string;
+using boost::asio::ip::tcp;
 
 namespace eclipse {
 
 class IWriter {
  public:
   IWriter();
-  IWriter(const uint32_t job_id, const uint32_t net_id);
+  IWriter(const uint32_t net_id, const uint32_t job_id, const uint32_t map_id);
   ~IWriter();
 
   void add_key_value(const string &key, const string &value);
   void set_job_id(const uint32_t job_id);
-  void set_net_id(const uint32_t net_id);
+  void set_map_id(const uint32_t map_id);
   bool is_write_finish();
   void finalize();
 
  private:
+  tcp::socket* connect(uint32_t net_id);
+  void send_message(tcp::socket *socket, messages::Message *msg);
+  messages::Reply* read_reply(tcp::socket *socket);
   static void run(IWriter *obj);
   void seek_writable_block();
   void async_flush(const uint32_t index);
@@ -51,10 +58,12 @@ class IWriter {
   // void write_handler(const boost::system::error_code &ec,
   //     std::size_t bytes_transferred);
 
-  std::unique_ptr<std::thread> writer_thread;
-  Context con;
-  uint32_t job_id_;
+  DirectoryMR directory_;
+  boost::asio::io_service io_service_;
+  std::unique_ptr<std::thread> writer_thread_;
   uint32_t net_id_;
+  uint32_t job_id_;
+  uint32_t map_id_;
   uint32_t reduce_slot_;
   uint32_t iblock_size_;
   string scratch_path_;

@@ -11,6 +11,7 @@
 #include "../messages/idatainforequest.hh"
 #include "../messages/igroupinforequest.hh"
 #include "../messages/iblockinforequest.hh"
+#include "../messages/reply.hh"
 
 namespace eclipse {
 
@@ -36,17 +37,38 @@ bool RemoteMR::establish() {
 void RemoteMR::insert_idata(messages::Message *msg) {
   auto idata_insert = dynamic_cast<messages::IDataInsert*>(msg);
   logger->info("IDataInsert received.");
-  peer.insert_idata(idata_insert);
+  bool ret = peer.insert_idata(idata_insert);
+  Reply reply;
+  if (ret) {
+    reply.message = "OK";
+  } else {
+    reply.message = "FAIL";
+  }
+  network->send(0, &reply);
 }
 void RemoteMR::insert_igroup(messages::Message *msg) {
   auto igroup_insert = dynamic_cast<messages::IGroupInsert*>(msg);
   logger->info("IGroupInsert received.");
-  peer.insert_igroup(igroup_insert);
+  bool ret = peer.insert_igroup(igroup_insert);
+  Reply reply;
+  if (ret) {
+    reply.message = "OK";
+  } else {
+    reply.message = "FAIL";
+  }
+  network->send(0, &reply);
 }
 void RemoteMR::insert_iblock(messages::Message *msg) {
   auto iblock_insert = dynamic_cast<messages::IBlockInsert*>(msg);
   logger->info("IBlockInsert received.");
-  peer.insert_iblock(iblock_insert);
+  bool ret = peer.insert_iblock(iblock_insert);
+  Reply reply;
+  if (ret) {
+    reply.message = "OK";
+  } else {
+    reply.message = "FAIL";
+  }
+  network->send(0, &reply);
 }
 void RemoteMR::request_idata(messages::Message *msg) {
   auto idata_info_request = dynamic_cast<messages::IDataInfoRequest*>(msg);

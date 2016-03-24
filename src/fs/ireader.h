@@ -8,6 +8,7 @@
 #include "../messages/igroupinfo.hh"
 #include "../messages/iblockinfo.hh"
 #include "../common/context.hh"
+#include "../fs/directorymr.hh"
 
 using std::vector;
 using std::ifstream;
@@ -20,15 +21,17 @@ namespace eclipse {
 class IReader {
  public:
   IReader();
-  IReader(uint32_t job_id, uint32_t map_id, uint32_t reducer_id);
+  IReader(uint32_t net_id, uint32_t job_id, uint32_t map_id,
+      uint32_t reducer_id);
   ~IReader();
 
   void init();
+  void set_net_id(uint32_t net_id);
   void set_job_id(uint32_t job_id);
   void set_map_id(uint32_t map_id);
   void set_reducer_id(uint32_t recducer_id);
-  bool get_next_key(string *key);
-  bool get_next_value(string *value);
+  bool get_next_key(string &key);
+  bool get_next_value(string &value);
   bool is_next_key();
   bool is_next_value();
 
@@ -45,6 +48,7 @@ class IReader {
   bool LoadValue(const int &index);
   bool FinishBlock(const int &index);
 
+  DirectoryMR directory_;
   boost::asio::io_service io_service_;
   string scratch_path_;
   uint32_t net_id_;

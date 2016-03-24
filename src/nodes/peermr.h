@@ -20,9 +20,9 @@ class PeerMR: public PeerDFS {
   PeerMR(Context &context);
   ~PeerMR();
 
-  void insert_idata(messages::IDataInsert *msg);
-  void insert_igroup(messages::IGroupInsert *msg);
-  void insert_iblock(messages::IBlockInsert *msg);
+  bool insert_idata(messages::IDataInsert *msg);
+  bool insert_igroup(messages::IGroupInsert *msg);
+  bool insert_iblock(messages::IBlockInsert *msg);
   IDataInfo request_idata(messages::IDataInfoRequest *idata_info_request);
   IGroupInfo request_igroup(messages::IGroupInfoRequest *igroup_info_request);
   IBlockInfo request_iblock(messages::IBlockInfoRequest *iblock_info_request);
