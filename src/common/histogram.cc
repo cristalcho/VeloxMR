@@ -244,3 +244,21 @@ int Histogram::get_index (unsigned query)     // return the server index range o
     cout << "[Histogram]Debugging: Cannot find index of requested query." << endl;
     return -1;
 }
+
+// random_within_boundaries {{{
+uint32_t Histogram::random_within_boundaries (unsigned int index) {
+  unsigned int which_server = index;
+  int lower_boundary ;
+
+  if (which_server != 0)
+    lower_boundary = boundaries[which_server-1];
+  else 
+    lower_boundary = boundaries[numserver-1];
+
+  int upper_boundary = boundaries[which_server];
+  int range = upper_boundary - lower_boundary;
+  uint32_t result = rand() % range + lower_boundary;
+
+  return result;
+}
+// }}}
