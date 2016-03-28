@@ -16,6 +16,7 @@ RemoteDFS::RemoteDFS (Context& c) : Router(c), peer(c) {
   routing_table.insert({"BlockDel", bind(&RemoteDFS::delete_block, this, ph::_1)});
   routing_table.insert({"FileDel", bind(&RemoteDFS::delete_file, this, ph::_1)});
   routing_table.insert({"FormatRequest", bind(&RemoteDFS::request_format, this, ph::_1)});
+  routing_table.insert({"FileExist", bind(&RemoteDFS::file_exist, this, ph::_1)});
 }
 // }}}
 // establish {{{
@@ -108,15 +109,15 @@ void RemoteDFS::request_file (messages::Message* m_) {
 // request_block {{{
 void RemoteDFS::request_block (messages::Message* m_) {
   auto m = dynamic_cast<messages::BlockRequest*> (m_);
-  string key = m->block_name;
-  peer.request(key, std::bind(&RemoteDFS::send_block, this, ph::_1, ph::_2));
+  auto key = m->hash_key;
+  auto name= m->block_name;
+  peer.request(key, name, std::bind(&RemoteDFS::send_block, this, ph::_1, ph::_2));
 }
 // }}}
 // request_ls {{{
 void RemoteDFS::request_ls (messages::Message* m_) {
   auto m = dynamic_cast<messages::FileList*> (m_);
   peer.list(m);
-  
   network->send(0, m);
 }
 // }}}
@@ -130,7 +131,7 @@ void RemoteDFS::send_block (std::string k, std::string v) {
   network->send(0, &bi);
 }
 // }}}
-// send_block {{{
+// request_format {{{
 void RemoteDFS::request_format (messages::Message* m_) {
   bool ret = peer.format();
   Reply reply;
@@ -143,6 +144,21 @@ void RemoteDFS::request_format (messages::Message* m_) {
     reply.details = "File already exists";
   }
 
+  network->send(0, &reply);
+}
+// }}}
+// file_exist {{{
+void RemoteDFS::file_exist (messages::Message* m_) {
+  auto m = dynamic_cast<messages::FileExist*> (m_);
+  bool ret = peer.file_exist(m->file_name);
+  Reply reply;
+
+  if (ret) {
+    reply.message = "TRUE";
+
+  } else {
+    reply.message = "FALSE";
+  }
   network->send(0, &reply);
 }
 // }}}

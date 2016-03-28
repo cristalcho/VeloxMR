@@ -3,7 +3,7 @@ include tests/Makefile.am
 AM_CPPFLAGS         = -I@srcdir@/src/common -I@srcdir@/src -include ./config.h
 AM_CXXFLAGS         = -Wall -std=c++14 -ggdb3 
 
-bin_PROGRAMS        = eclipse_node dfsput dfsget dfsls dfsformat dfsrm cacheinfo
+bin_PROGRAMS        = eclipse_node dfsput dfsget dfsls dfsformat dfsrm cacheinfo dfsshow
 
 messages_files   = src/messages/boundaries.cc        \
                    src/messages/message.cc           \
@@ -25,14 +25,15 @@ messages_files   = src/messages/boundaries.cc        \
                    src/messages/filedel.cc           \
 									 src/messages/formatrequest.cc     \
                    src/messages/idatainsert.cc       \
-                   src/messages/igroupinsert.cc       \
+                   src/messages/igroupinsert.cc      \
                    src/messages/iblockinsert.cc      \
-                   src/messages/idatainforequest.cc \
+                   src/messages/idatainforequest.cc  \
                    src/messages/igroupinforequest.cc \
                    src/messages/iblockinforequest.cc \
                    src/messages/idatainfo.cc         \
                    src/messages/igroupinfo.cc        \
-                   src/messages/iblockinfo.cc        
+                   src/messages/iblockinfo.cc        \
+									 src/messages/fileexist.cc
 
 # libs -----
 lib_LTLIBRARIES     = libecfs.la
@@ -67,9 +68,6 @@ eclipse_node_SOURCES = src/targets/node_main_mr.cc \
 
 eclipse_node_LDADD   = $(LDADD) -lsqlite3
 
-cacheinfo_SOURCES    = src/fs/cacheinfo.cc \
-											 $(messages_files)
-
 dfsput_SOURCES       = src/fs/dfsput.cc src/fs/directory.cc \
 											 $(messages_files)
 
@@ -94,6 +92,16 @@ dfsrm_SOURCES      = src/fs/dfsrm.cc src/fs/directory.cc \
 											$(messages_files)
 
 dfsrm_LDADD        = $(LDADD) -lsqlite3
+
+dfsshow_SOURCES      = src/fs/dfsshow.cc src/fs/directory.cc \
+											$(messages_files)
+
+dfsshow_LDADD        = $(LDADD) -lsqlite3
+
+cacheinfo_SOURCES        = src/fs/cacheinfo.cc src/fs/directory.cc \
+          								$(messages_files)
+         
+cacheinfo_LDADD          = $(LDADD) -lsqlite3
 
 pkginclude_HEADERS  = src/common/ecfs.hh src/common/settings.hh
 
