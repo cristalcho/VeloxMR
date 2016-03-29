@@ -28,7 +28,7 @@ class PeerDFS: public Node, public AsyncNode {
     ~PeerDFS ();
 
     bool establish () override;
-    void on_read (messages::Message*) override;
+    virtual void on_read (messages::Message*) override;
     void on_connect () override;
     void on_disconnect() override;
 

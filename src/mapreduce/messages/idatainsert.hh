@@ -1,6 +1,6 @@
 #ifndef ECLIPSEMR_MESSAGES_IDATAINSERT_HH_
 #define ECLIPSEMR_MESSAGES_IDATAINSERT_HH_
-#include "message.hh"
+#include "../../messages/message.hh"
 
 namespace eclipse {
 namespace messages {

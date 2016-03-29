@@ -1,13 +1,13 @@
 #pragma once
 #include <string>
-#include "message.hh"
+#include "../../messages/message.hh"
 
 namespace eclipse {
 namespace messages {
 
-struct IBlockInfo: public Message {
-  IBlockInfo() = default;
-  ~IBlockInfo() = default;
+struct IBlockInsert: public Message {
+  IBlockInsert() = default;
+  ~IBlockInsert() = default;
 
   std::string get_type() const override;
 

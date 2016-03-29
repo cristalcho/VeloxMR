@@ -10,13 +10,13 @@
 #include <sstream>
 #include <iomanip>
 #include <boost/asio.hpp>
-#include "../common/context.hh"
-#include "../messages/message.hh"
-#include "../messages/factory.hh"
+#include "../../common/context.hh"
+#include "../../messages/message.hh"
+#include "../../messages/factory.hh"
+#include "../../messages/reply.hh"
 #include "../messages/idatainsert.hh"
 #include "../messages/igroupinsert.hh"
 #include "../messages/iblockinsert.hh"
-#include "../messages/reply.hh"
 
 using std::list;
 using std::vector;
@@ -59,9 +59,13 @@ IWriter::IWriter() {
   }
   writer_thread_ = std::make_unique<std::thread>(run, this);
 }
-IWriter::IWriter(const uint32_t net_id, const uint32_t job_id,
-    const uint32_t map_id) : IWriter() {
-  net_id_ = net_id;
+// IWriter::IWriter(const uint32_t net_id, const uint32_t job_id,
+//     const uint32_t map_id) : IWriter() {
+//   net_id_ = net_id;
+//   job_id_ = job_id;
+//   map_id_ = map_id;
+// }
+IWriter::IWriter(const uint32_t job_id, const uint32_t map_id) : IWriter() {
   job_id_ = job_id;
   map_id_ = map_id;
 }
@@ -114,21 +118,21 @@ void IWriter::finalize() {
   // delete reply;
   // socket->close();
 }
-tcp::socket* IWriter::connect(uint32_t net_id) {
-  tcp::socket *socket = new tcp::socket(io_service_);
-  Settings setted = Settings().load();
-  int port = setted.get<int>("network.port_mapreduce");
-  vector<string> nodes = setted.get<vector<string>>("network.nodes");
-  string host = nodes[net_id];
-// std::cout << "DEBUG] host = " << host << std::endl;
-  tcp::resolver resolver(io_service_);
-  tcp::resolver::query query(host, std::to_string(port));
-  tcp::resolver::iterator it(resolver.resolve(query));
-  auto ep = new tcp::endpoint(*it);
-  socket->connect(*ep);
-  delete ep;
-  return socket;
-}
+// tcp::socket* IWriter::connect(uint32_t net_id) {
+//   tcp::socket *socket = new tcp::socket(io_service_);
+//   Settings setted = Settings().load();
+//   int port = setted.get<int>("network.port_mapreduce");
+//   vector<string> nodes = setted.get<vector<string>>("network.nodes");
+//   string host = nodes[net_id];
+// // std::cout << "DEBUG] host = " << host << std::endl;
+//   tcp::resolver resolver(io_service_);
+//   tcp::resolver::query query(host, std::to_string(port));
+//   tcp::resolver::iterator it(resolver.resolve(query));
+//   auto ep = new tcp::endpoint(*it);
+//   socket->connect(*ep);
+//   delete ep;
+//   return socket;
+// }
 void IWriter::send_message(tcp::socket *socket, messages::Message *msg) {
   string out = save_message(msg);
   stringstream ss;

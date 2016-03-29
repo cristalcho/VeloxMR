@@ -1,17 +1,18 @@
 #include "remotemr.h"
-#include "remotedfs.hh"
-#include "peermr.h"
-#include "router.hh"
 #include <functional>
-#include "../common/context.hh"
-#include "../messages/message.hh"
+#include "peermr.h"
+#include "../../nodes/router.hh"
+#include "../../nodes/remotedfs.hh"
+#include "../../common/context.hh"
+#include "../../messages/message.hh"
+#include "../../messages/reply.hh"
 #include "../messages/idatainsert.hh"
 #include "../messages/igroupinsert.hh"
 #include "../messages/iblockinsert.hh"
 #include "../messages/idatainforequest.hh"
 #include "../messages/igroupinforequest.hh"
 #include "../messages/iblockinforequest.hh"
-#include "../messages/reply.hh"
+#include "../messages/key_value_shuffle.h"
 
 namespace eclipse {
 
@@ -28,6 +29,8 @@ RemoteMR::RemoteMR(Context &c): RemoteDFS(c), peer(c) {
       this, std::placeholders::_1)});
   routing_table.insert({"IBlockInfoRequest", std::bind(&RemoteMR::request_iblock,
       this, std::placeholders::_1)});
+  routing_table.insert({"KeyValueShuffle", std::bind(&RemoteMR::shuffle, this,
+      std::placeholders::_1)});
 }
 bool RemoteMR::establish() {
   peer.establish();
@@ -84,6 +87,10 @@ void RemoteMR::request_iblock(messages::Message *msg) {
   auto iblock_info_request = dynamic_cast<messages::IBlockInfoRequest*>(msg);
   auto iblock_info = peer.request_iblock(iblock_info_request);
   network->send(0, &iblock_info);
+}
+void RemoteMR::shuffle(messages::Message *msg) {
+  auto kv_msg = dynamic_cast<messages::KeyValueShuffle*>(msg);
+  peer.receive_kv(kv_msg);
 }
 
 }  // namespace eclipse

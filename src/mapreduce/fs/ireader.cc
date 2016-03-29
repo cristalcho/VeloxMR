@@ -8,10 +8,9 @@
 #include <sstream>
 #include <iomanip>
 #include <boost/asio.hpp>
-#include "../common/settings.hh"
-#include "../common/context.hh"
-#include "../messages/message.hh"
-#include "../messages/factory.hh"
+#include "../../common/context.hh"
+#include "../../messages/factory.hh"
+#include "../../messages/message.hh"
 #include "../messages/igroupinforequest.hh"
 
 using std::vector;
@@ -103,9 +102,8 @@ bool IReader::get_next_value(string &value) {
 }
 tcp::socket* IReader::connect(uint32_t net_id) {
   tcp::socket *socket = new tcp::socket(io_service_);
-  Settings setted = Settings().load();
-  int port = setted.get<int>("network.port_mapreduce");
-  vector<string> nodes = setted.get<vector<string>>("network.nodes");
+  int port = con.settings.get<int>("network.port_mapreduce");
+  vector<string> nodes = con.settings.get<vector<string>>("network.nodes");
   string host = nodes[net_id];
   tcp::resolver resolver(io_service_);
   tcp::resolver::query query(host, std::to_string(port));

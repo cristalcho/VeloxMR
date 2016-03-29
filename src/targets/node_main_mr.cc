@@ -1,4 +1,4 @@
-#include <nodes/remotemr.h>
+#include <mapreduce/nodes/remotemr.h>
 #include <common/context.hh>
 #include <string>
 

@@ -4,10 +4,10 @@
 #include <fstream>
 #include <string>
 #include <map>
-#include "../messages/message.hh"
+#include "../../messages/message.hh"
 #include "../messages/igroupinfo.hh"
 #include "../messages/iblockinfo.hh"
-#include "../common/context.hh"
+#include "../../common/context.hh"
 #include "../fs/directorymr.hh"
 
 using std::vector;

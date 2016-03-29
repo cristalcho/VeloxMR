@@ -23,12 +23,14 @@
 #include "blockdel.hh"
 #include "filedel.hh"
 #include "formatrequest.hh"
-#include "idatainsert.hh"
-#include "igroupinsert.hh"
-#include "iblockinsert.hh"
-#include "idatainforequest.hh"
-#include "igroupinforequest.hh"
-#include "iblockinforequest.hh"
+#include "../mapreduce/messages/idatainsert.hh"
+#include "../mapreduce/messages/igroupinsert.hh"
+#include "../mapreduce/messages/iblockinsert.hh"
+#include "../mapreduce/messages/idatainforequest.hh"
+#include "../mapreduce/messages/igroupinforequest.hh"
+#include "../mapreduce/messages/iblockinforequest.hh"
+#include "../mapreduce/messages/key_value_shuffle.h"
+#include "../mapreduce/messages/finish_shuffle.h"
 #include "fileexist.hh"
 
 #include <boost/serialization/export.hpp>
@@ -232,8 +234,27 @@ template <typename Archive>
     ar & BASE_OBJECT(Message, c);
     ar & BOOST_SERIALIZATION_NVP(c.file_name);
   }
-}
-}
+
+template <typename Archive>
+  void serialize(Archive& ar, eclipse::messages::KeyValueShuffle& c,
+      unsigned int) {
+    ar & BASE_OBJECT(Message, c);
+    ar & BOOST_SERIALIZATION_NVP(c.job_id_);
+    ar & BOOST_SERIALIZATION_NVP(c.map_id_);
+    ar & BOOST_SERIALIZATION_NVP(c.key_);
+    ar & BOOST_SERIALIZATION_NVP(c.value_);
+  }
+
+template <typename Archive>
+  void serialize(Archive& ar, eclipse::messages::FinishShuffle& c,
+      unsigned int) {
+    ar & BASE_OBJECT(Message, c);
+    ar & BOOST_SERIALIZATION_NVP(c.job_id_);
+    ar & BOOST_SERIALIZATION_NVP(c.map_id_);
+  }
+
+}  // namespace messages
+}  // namespace eclipse
 
 BOOST_SERIALIZATION_ASSUME_ABSTRACT(eclipse::messages::Message);
 
@@ -262,3 +283,7 @@ BOOST_CLASS_TRACKING(eclipse::messages::IDataInfoRequest, boost::serialization::
 BOOST_CLASS_TRACKING(eclipse::messages::IGroupInfoRequest, boost::serialization::track_never);
 BOOST_CLASS_TRACKING(eclipse::messages::IBlockInfoRequest, boost::serialization::track_never);
 BOOST_CLASS_TRACKING(eclipse::messages::FileExist, boost::serialization::track_never);
+BOOST_CLASS_TRACKING(eclipse::messages::KeyValueShuffle,
+    boost::serialization::track_never);
+BOOST_CLASS_TRACKING(eclipse::messages::FinishShuffle,
+    boost::serialization::track_never);

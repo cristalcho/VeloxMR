@@ -8,7 +8,7 @@
 #include "../messages/idatainsert.hh"
 #include "../messages/igroupinsert.hh"
 #include "../messages/iblockinsert.hh"
-#include "../common/context.hh"
+#include "../../common/context.hh"
 
 namespace eclipse {
 
