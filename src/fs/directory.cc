@@ -45,7 +45,7 @@ namespace eclipse{
     int i = 0;
     auto block = reinterpret_cast<BlockInfo*>(block_info);
     block->block_name     = argv[i++];
-    block->file_name      = atoi(argv[i++]);
+    block->file_name      = argv[i++];
     block->block_seq      = atoi(argv[i++]);
     block->block_hash_key = atoi(argv[i++]);
     block->block_size     = atoi(argv[i++]);
@@ -55,7 +55,7 @@ namespace eclipse{
     i++;
     block->r_node = argv[i] ? argv[i] : "NULL";
     i++;
-    block->is_commit = argv[i] ? atoi(argv[i]) : 0;
+    block->is_committed = argv[i] ? atoi(argv[i]) : 0;
     return 0;
   } 
 
@@ -101,7 +101,7 @@ namespace eclipse{
       i++;
       tmp_block.r_node = argv[i] ? argv[i] : "NULL";
       i++;
-      tmp_block.is_commit = argv[i] ? atoi(argv[i]) : 0;
+      tmp_block.is_committed = argv[i] ? atoi(argv[i]) : 0;
       block_list->push_back(tmp_block);
     }
     return 0;
@@ -151,7 +151,7 @@ namespace eclipse{
         node           TEXT      NOT NULL, \
         l_node         TEXT              , \
         r_node         TEXT              , \
-        is_commit      INT               , \
+        is_committed      INT               , \
         PRIMARY KEY (block_name));"); 
 
     // Execute SQL statement
@@ -211,7 +211,7 @@ namespace eclipse{
     // Create sql statement
     sprintf(sql, "INSERT INTO block_table (\
       block_name, file_name, block_seq, block_hash_key, \
-        block_size, is_inter, node, l_node, r_node, is_commit) \
+        block_size, is_inter, node, l_node, r_node, is_committed) \
       VALUES ('%s', '%s', %u, %" PRIu32 ", %" PRIu32 ",\
       %u, '%s', '%s', '%s', %u);",
         block_info.block_name.c_str(),
@@ -223,7 +223,7 @@ namespace eclipse{
         block_info.node.c_str(),
         block_info.l_node.c_str(),
         block_info.r_node.c_str(),
-        block_info.is_commit);
+        block_info.is_committed);
 
     // Execute SQL statement
     rc = sqlite3_exec(db, sql, NULL, 0, &zErrMsg);
@@ -386,7 +386,7 @@ namespace eclipse{
     sprintf(sql, "UPDATE block_table set \
         block_name='%s', file_name='%s', block_seq=%u, block_hash_key=%" PRIu32 ", \
         block_size=%" PRIu32 ", is_inter=%u, node='%s', l_node='%s', r_node='%s' \
-        , is_commit=%u where (file_name='%s') and (block_seq=%u);",
+        , is_committed=%u where (file_name='%s') and (block_seq=%u);",
         block_info.block_name.c_str(),
         block_info.file_name.c_str(),
         block_info.block_seq,
@@ -396,7 +396,7 @@ namespace eclipse{
         block_info.node.c_str(),
         block_info.l_node.c_str(),
         block_info.r_node.c_str(),
-        block_info.is_commit,
+        block_info.is_committed,
         file_name.c_str(),
         block_seq);
 
@@ -516,57 +516,7 @@ namespace eclipse{
     sqlite3_close(db);
   }
 
-/*
-  void Directory::list_file_metadata(string &list) // Only for dfsls!! 
-  {
-    // Open database
-    open_db();
-
-    // Create sql statement
-    sprintf(sql, "SELECT file_name from file_table");
-
-    // Execute SQL statement
-    rc = sqlite3_exec(db, sql, list_callback, &list, &zErrMsg);
-    if(rc != SQLITE_OK)
-    {
-      cerr << "SQL error: " << zErrMsg << endl;
-      sqlite3_free(zErrMsg);
-    }
-    else
-    {
-      //cout  << "file_metadata ls done successfully" << endl;
-    }
-
-    // Close Database
-    sqlite3_close(db);
-  }
-
-  void Directory::list_block_metadata(string &list) // Only for dfsls!! 
-  {
-    // Open database
-    open_db();
-
-    // Create sql statement
-    sprintf(sql, "SELECT file_name AND block_seq from block_table");
-
-    // Execute SQL statement
-    rc = sqlite3_exec(db, sql, list_callback, &list, &zErrMsg);
-    if(rc != SQLITE_OK)
-    {
-      cerr << "SQL error: " << zErrMsg << endl;
-      sqlite3_free(zErrMsg);
-    }
-    else
-    {
-      //cout << "block_metadata ls done successfully" << endl;
-    }
-
-    // Close Database
-    sqlite3_close(db);
-  }
-*/
-
-  bool Directory::is_exist(string file_name)
+  bool Directory::file_exist(string file_name)
   {
     Context con;
     bool result = false;
@@ -575,7 +525,7 @@ namespace eclipse{
     open_db();
 
     // Create SQL statement
-    sprintf(sql, "SELECT * from file_table where file_name='%s';", file_name.c_str());
+    sprintf(sql, "SELECT file_name from file_table where file_name='%s';", file_name.c_str());
 
     // Execute SQL statement
     rc = sqlite3_exec(db, sql, exist_callback, &result, &zErrMsg);
@@ -586,7 +536,7 @@ namespace eclipse{
     }
     else
     {
-      con.logger->info("is_exist executed successfully\n");
+      con.logger->info("file_exist executed successfully\n");
     }
 
     // Close Database

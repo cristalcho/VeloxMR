@@ -10,7 +10,9 @@
 #include "../messages/filelist.hh"
 #include "../messages/filedel.hh"
 #include "../messages/blockdel.hh"
+#include "../messages/fileexist.hh"
 #include "../fs/directory.hh"
+#include "../common/histogram.hh"
 
 #include <string>
 #include <boost/asio.hpp>
@@ -30,8 +32,9 @@ class PeerDFS: public Node, public AsyncNode {
     void on_connect () override;
     void on_disconnect() override;
 
-    void insert (std::string, std::string);
-    void request (std::string, req_func);
+    virtual void insert (uint32_t, std::string, std::string);
+    virtual void request (uint32_t, std::string, req_func);
+
     void Delete (std::string);
     void close ();
     bool insert_block (messages::BlockInfo*);
@@ -41,9 +44,11 @@ class PeerDFS: public Node, public AsyncNode {
     bool list (messages::FileList*);
     bool format ();
     FileDescription request_file (messages::FileRequest*);
+    bool file_exist (std::string);
 
   protected:
     Directory directory;
+    std::unique_ptr<Histogram> boundaries;
     std::map<std::string, req_func> requested_blocks;
     bool connected = false;
     uint32_t size;
