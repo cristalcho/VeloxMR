@@ -17,7 +17,7 @@ class RemoteMR: public RemoteDFS {
   void request_idata(messages::Message *msg);
   void request_igroup(messages::Message *msg);
   void request_iblock(messages::Message *msg);
-  void shuffle_key_value(messages::Message *Msg);
+  void shuffle(messages::Message *msg);
 
  protected:
   PeerMR peer;

@@ -1,5 +1,8 @@
 #include "peermr.h"
+#include <iostream>
+#include <sstream>
 #include <string>
+#include <vector>
 #include <memory>
 #include "../messages/message.hh"
 #include "../messages/boost_impl.hh"
@@ -12,20 +15,64 @@
 #include "../messages/idatainfo.hh"
 #include "../messages/igroupinfo.hh"
 #include "../messages/iblockinfo.hh"
+#include "../messages/key_value_shuffle.h"
+#include "../messages/finish_shuffle.h"
+#include "../../common/hash.hh"
 
 namespace eclipse {
 
 PeerMR::PeerMR(Context &context): PeerDFS(context) {
   directory.init_db();
+  auto ip_list = con_.settings.get<std::vector<std::string>>("network.nodes");
+  for (uint32_t i = 0; i < ip_list.size(); ++i) {
+    if (ip_of_this == ip_list[i]) {
+      net_id_ = i;
+      break;
+    }
+  }
+  net_size_ = ip_list.size();
 }
 PeerMR::~PeerMR() {
 }
-// void PeerMR::shuffle(std::string key, std::string value) {
-//   int net_id = h(key) % size;
-//   if (net_id == id) {
-//     iwriter_.add_key_value(key, value);
-//   }
-// }
+template<> void PeerMR::process(KeyValueShuffle *kv_shuffle) {
+  auto key = kv_shuffle->key_;
+  int hash_value = h(key) % net_size_;
+std::stringstream ss;
+ss << "hash_value: " << hash_value << std::endl;
+logger->info(ss.str().c_str());
+  // int dst_net_id = boundaries->get_index(hash_value);
+  uint32_t dst_net_id = hash_value;
+std::stringstream ss1;
+ss1 << "key: " << key << " net_id: " << net_id_ << " net_size: " <<
+    net_size_ << " dst: " << dst_net_id << std::endl;
+logger->info(ss1.str().c_str());
+  if (dst_net_id == net_id_) {
+    write_key_value(kv_shuffle);
+  } else {
+std::cout << "!!! Another node" << std::endl;
+    network->send(dst_net_id, kv_shuffle);
+  }
+}
+template<> void PeerMR::process(FinishShuffle *msg) {
+  const uint32_t job_id = msg->job_id_;
+  auto it = iwriters_.find(job_id);
+  if (it != iwriters_.end()) {
+    it->second->finalize();
+    iwriters_.erase(it);
+  }
+}
+void PeerMR::on_read(messages::Message *msg) {
+  std::string type = msg->get_type();
+  if (type == "KeyValueShuffle") {
+    auto kv_shuffle = dynamic_cast<KeyValueShuffle*>(msg);
+    process(kv_shuffle);
+  } else if (type == "FinishShuffle") {
+    auto finish_shuffle = dynamic_cast<FinishShuffle*>(msg);
+    process(finish_shuffle);
+  } else {
+    PeerDFS::on_read(msg);
+  }
+}
 bool PeerMR::insert_idata(messages::IDataInsert *msg) {
   directory.insert_idata_metadata(*msg);
   logger->info("Saving to SQLite db");
@@ -64,29 +111,24 @@ IBlockInfo PeerMR::request_iblock(messages::IBlockInfoRequest
       iblock_info_request->block_seq, &iblock_info);
   return iblock_info;
 }
-void PeerMR::receive_key_value(messages::KeyValueShuffle *key_value) {
-  const uint32_t job_id = key_value->job_id_;
+void PeerMR::write_key_value(messages::KeyValueShuffle *kv_shuffle) {
+  const uint32_t job_id = kv_shuffle->job_id_;
   std::shared_ptr<IWriter> iwriter;
   auto it = iwriters_.find(job_id);
   if (it == iwriters_.end()) {
-    const uint32_t map_id = key_value->map_id_;
+    const uint32_t map_id = kv_shuffle->map_id_;
     iwriter = std::make_shared<IWriter>(job_id, map_id);
     iwriters_.emplace(job_id, iwriter);
   }
   else {
     iwriter = it->second;
   }
-  const std::string &key = key_value->key_;
-  const std::string &value = key_value->value_;
+  const std::string &key = kv_shuffle->key_;
+  const std::string &value = kv_shuffle->value_;
   iwriters_[job_id]->add_key_value(key, value);
 }
-void PeerMR::finalize_iwriter(messages::FinishShuffle *msg) {
-  const uint32_t job_id = msg->job_id_;
-  auto it = iwriters_find(job_id);
-  if (it != iwriters_.end()) {
-    it->second->finalize();
-    iwriters_.erase(it);
-  }
+void PeerMR::receive_kv(messages::KeyValueShuffle *kv_shuffle) {
+  process(kv_shuffle);
 }
 
 }  // namespace eclipse

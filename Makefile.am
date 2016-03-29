@@ -24,15 +24,17 @@ messages_files   = src/messages/boundaries.cc        \
                    src/messages/blockdel.cc          \
                    src/messages/filedel.cc           \
 									 src/messages/formatrequest.cc     \
-                   src/messages/idatainsert.cc       \
-                   src/messages/igroupinsert.cc      \
-                   src/messages/iblockinsert.cc      \
-                   src/messages/idatainforequest.cc  \
-                   src/messages/igroupinforequest.cc \
-                   src/messages/iblockinforequest.cc \
-                   src/messages/idatainfo.cc         \
-                   src/messages/igroupinfo.cc        \
-                   src/messages/iblockinfo.cc        \
+                   src/mapreduce/messages/idatainsert.cc       \
+                   src/mapreduce/messages/igroupinsert.cc      \
+                   src/mapreduce/messages/iblockinsert.cc      \
+                   src/mapreduce/messages/idatainforequest.cc  \
+                   src/mapreduce/messages/igroupinforequest.cc \
+                   src/mapreduce/messages/iblockinforequest.cc \
+                   src/mapreduce/messages/idatainfo.cc         \
+                   src/mapreduce/messages/igroupinfo.cc        \
+                   src/mapreduce/messages/iblockinfo.cc        \
+                   src/mapreduce/messages/key_value_shuffle.cc \
+                   src/mapreduce/messages/finish_shuffle.cc    \
 									 src/messages/fileexist.cc
 
 # libs -----
@@ -56,13 +58,13 @@ eclipse_node_SOURCES = src/targets/node_main_mr.cc \
 											 src/nodes/machine.cc \
 											 src/nodes/peerdfs.cc \
 											 src/nodes/remotedfs.cc \
-                       src/nodes/peermr.cc \
-                       src/nodes/remotemr.cc \
+                       src/mapreduce/nodes/peermr.cc \
+                       src/mapreduce/nodes/remotemr.cc \
 											 src/nodes/router.cc \
 											 src/fs/directory.cc \
-                       src/fs/directorymr.cc \
-											 src/mapreduce/iwriter.cc \
-											 src/mapreduce/ireader.cc \
+                       src/mapreduce/fs/directorymr.cc \
+											 src/mapreduce/fs/iwriter.cc \
+											 src/mapreduce/fs/ireader.cc \
 											 src/nodes/node.cc \
 											 $(messages_files)
 
