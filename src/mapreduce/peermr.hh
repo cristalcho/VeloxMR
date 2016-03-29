@@ -1,24 +1,35 @@
-#pragma once
-#include "../nodes/peer.hh"
-#include "../messages/boost_impl.hh"
-#include "../fs/directory.hh"
+#ifndef ECLIPSEMR_NODES_PEERMR_H_
+#define ECLIPSEMR_NODES_PEERMR_H_
+#include "../nodes/peerdfs.hh"
+#include "../fs/directorymr.hh"
+#include "../messages/message.hh"
+#include "../messages/idatainsert.hh"
+#include "../messages/igroupinsert.hh"
+#include "../messages/iblockinsert.hh"
+#include "../messages/idatainforequest.hh"
+#include "../messages/igroupinforequest.hh"
+#include "../messages/iblockinforequest.hh"
+#include "../messages/idatainfo.hh"
+#include "../messages/igroupinfo.hh"
+#include "../messages/iblockinfo.hh"
 
 namespace eclipse {
 
-class PeerMR: public Peer {
-  public:
-    PeerMR (Context&);
-    ~PeerMR ();
+class PeerMR: public PeerDFS {
+ public:
+  PeerMR(Context &context);
+  ~PeerMR();
 
-    bool insert (std::string, std::string);
-    void lookup (std::string, req_func);
-    bool store (messages::FileInfo*);
-    bool insert_block (messages::BlockInfo*);
+  bool insert_idata(messages::IDataInsert *msg);
+  bool insert_igroup(messages::IGroupInsert *msg);
+  bool insert_iblock(messages::IBlockInsert *msg);
+  IDataInfo request_idata(messages::IDataInfoRequest *idata_info_request);
+  IGroupInfo request_igroup(messages::IGroupInfoRequest *igroup_info_request);
+  IBlockInfo request_iblock(messages::IBlockInfoRequest *iblock_info_request);
 
-    using Peer::establish;
-    using Peer::close;
-  private:
-    Directory directory;
+ protected:
+  DirectoryMR directory;
 };
 
-} /* eclipse  */ 
+}  // namespace eclipse
+#endif  // ECLIPSEMR_NODES_PEERMR_H_

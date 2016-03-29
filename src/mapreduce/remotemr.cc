@@ -1,7 +1,7 @@
-#include "remotemr.h"
-#include "remotedfs.hh"
-#include "peermr.h"
-#include "router.hh"
+#include "remotemr.hh"
+#include "peermr.hh"
+#include "../nodes/remotedfs.hh"
+#include "../nodes/router.hh"
 #include <functional>
 #include "../common/context.hh"
 #include "../messages/message.hh"

@@ -1,7 +1,7 @@
 #ifndef ECLIPSEMR_NODES_REMOTEMR_H_
 #define ECLIPSEMR_NODES_REMOTEMR_H_
-#include "remotedfs.hh"
-#include "peermr.h"
+#include "../nodes/remotedfs.hh"
+#include "peermr.hh"
 #include "../messages/message.hh"
 #include "../messages/boost_impl.hh"
 
