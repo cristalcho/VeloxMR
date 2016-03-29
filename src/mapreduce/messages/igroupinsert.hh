@@ -1,21 +1,21 @@
 #pragma once
-#include <string>
-#include "message.hh"
+#include "../../messages/message.hh"
 
 namespace eclipse {
 namespace messages {
 
-struct IBlockInsert: public Message {
-  IBlockInsert() = default;
-  ~IBlockInsert() = default;
+struct IGroupInsert: public Message {
+  IGroupInsert() = default;
+  ~IGroupInsert() = default;
 
   std::string get_type() const override;
 
   uint32_t job_id;
   uint32_t map_id;
   uint32_t reducer_id;
-  uint32_t block_seq;
+  uint32_t num_block;
 };
 
 }
 }
+

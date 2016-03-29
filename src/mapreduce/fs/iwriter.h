@@ -9,9 +9,9 @@
 #include <list>
 #include <fstream>
 #include <boost/asio.hpp>
-#include "../common/context.hh"
-#include "../messages/message.hh"
-#include "../messages/reply.hh"
+#include "../../common/context.hh"
+#include "../../messages/message.hh"
+#include "../../messages/reply.hh"
 #include "../fs/directorymr.hh"
 
 using std::list;
@@ -26,7 +26,9 @@ namespace eclipse {
 class IWriter {
  public:
   IWriter();
-  IWriter(const uint32_t net_id, const uint32_t job_id, const uint32_t map_id);
+  // IWriter(const uint32_t net_id, const uint32_t job_id,
+  // const uint32_t map_id);
+  IWriter(const uint32_t job_id, const uint32_t map_id);
   ~IWriter();
 
   void add_key_value(const string &key, const string &value);
@@ -36,7 +38,7 @@ class IWriter {
   void finalize();
 
  private:
-  tcp::socket* connect(uint32_t net_id);
+  // tcp::socket* connect(uint32_t net_id);
   void send_message(tcp::socket *socket, messages::Message *msg);
   messages::Reply* read_reply(tcp::socket *socket);
   static void run(IWriter *obj);
@@ -61,7 +63,7 @@ class IWriter {
   DirectoryMR directory_;
   boost::asio::io_service io_service_;
   std::unique_ptr<std::thread> writer_thread_;
-  uint32_t net_id_;
+  // uint32_t net_id_;
   uint32_t job_id_;
   uint32_t map_id_;
   uint32_t reduce_slot_;

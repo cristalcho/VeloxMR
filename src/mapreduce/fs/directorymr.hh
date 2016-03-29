@@ -1,5 +1,5 @@
 #pragma once
-#include "directory.hh"
+#include "../../fs/directory.hh"
 #include "../messages/idatainfo.hh"
 #include "../messages/igroupinfo.hh"
 #include "../messages/iblockinfo.hh"

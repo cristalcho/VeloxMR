@@ -60,8 +60,8 @@ eclipse_node_SOURCES = src/targets/node_main_mr.cc \
 											 src/nodes/router.cc \
 											 src/fs/directory.cc \
                        src/fs/directorymr.cc \
-											 src/fs/iwriter.cc \
-											 src/fs/ireader.cc \
+											 src/mapreduce/iwriter.cc \
+											 src/mapreduce/ireader.cc \
 											 src/nodes/node.cc \
 											 $(messages_files)
 
