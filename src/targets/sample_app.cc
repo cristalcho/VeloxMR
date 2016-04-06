@@ -3,4 +3,5 @@
 using namespace eclipse;
 int main () {
   DataSet& A = DataSet::open("A");
+  A.map("Myfunc");
 }

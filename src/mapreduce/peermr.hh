@@ -12,6 +12,7 @@
 #include "../messages/idatainfo.hh"
 #include "../messages/igroupinfo.hh"
 #include "../messages/iblockinfo.hh"
+#include "../messages/task.hh"
 
 namespace eclipse {
 
@@ -26,6 +27,10 @@ class PeerMR: public PeerDFS {
   IDataInfo request_idata(messages::IDataInfoRequest *idata_info_request);
   IGroupInfo request_igroup(messages::IGroupInfoRequest *igroup_info_request);
   IBlockInfo request_iblock(messages::IBlockInfoRequest *iblock_info_request);
+
+  void process_map_block (std::string, std::string, messages::Task*);
+  bool process_map_file (messages::Task*);
+  //void process_map_dataset (messages::Task*);
 
  protected:
   DirectoryMR directory;

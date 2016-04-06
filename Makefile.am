@@ -45,7 +45,7 @@ libecfs_la_LDFLAGS  = -version-info 0:0:0
 
 # Binaries ----
 AM_LDFLAGS          = -static
-LDADD               = libecfs.la -lboost_system -lboost_thread -lboost_serialization -lboost_system -lboost_coroutine -lboost_context
+LDADD               = libecfs.la -lboost_system -lboost_thread -lboost_serialization -lboost_system -lboost_coroutine -lboost_context -ldl
 
 
 eclipse_node_SOURCES = src/targets/node_main_mr.cc \
@@ -64,6 +64,7 @@ eclipse_node_SOURCES = src/targets/node_main_mr.cc \
 											 src/fs/iwriter.cc \
 											 src/fs/ireader.cc \
 											 src/nodes/node.cc \
+											 src/mapreduce/executor.cc \
 											 $(messages_files)
 
 eclipse_node_LDADD   = $(LDADD) -lsqlite3

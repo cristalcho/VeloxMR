@@ -1,9 +1,7 @@
-#ifndef ECLIPSEMR_NODES_REMOTEMR_H_
-#define ECLIPSEMR_NODES_REMOTEMR_H_
-#include "../nodes/remotedfs.hh"
+#pragma once
 #include "peermr.hh"
+#include "../nodes/remotedfs.hh"
 #include "../messages/message.hh"
-#include "../messages/boost_impl.hh"
 
 namespace eclipse {
 
@@ -12,16 +10,16 @@ class RemoteMR: public RemoteDFS {
   RemoteMR(Context &c);
 
   bool establish();
-  void insert_idata(messages::Message *msg);
-  void insert_igroup(messages::Message *msg);
-  void insert_iblock(messages::Message *msg);
-  void request_idata(messages::Message *msg);
-  void request_igroup(messages::Message *msg);
-  void request_iblock(messages::Message *msg);
+  void map (messages::Message*);
+  void insert_idata(messages::Message*);
+  void insert_igroup(messages::Message*);
+  void insert_iblock(messages::Message*);
+  void request_idata(messages::Message*);
+  void request_igroup(messages::Message*);
+  void request_iblock(messages::Message*);
 
  protected:
-  PeerMR peer;
+  PeerMR* peer_mr;
 };
 
 }  // namespace eclipse
-#endif  // ECLIPSEMR_NODES_REMOTEMR_H_

@@ -1,43 +1,53 @@
 #include "remotemr.hh"
-#include "peermr.hh"
-#include "../nodes/remotedfs.hh"
-#include "../nodes/router.hh"
+#include "../messages/boost_impl.hh"
 #include <functional>
-#include "../common/context.hh"
-#include "../messages/message.hh"
-#include "../messages/idatainsert.hh"
-#include "../messages/igroupinsert.hh"
-#include "../messages/iblockinsert.hh"
-#include "../messages/idatainforequest.hh"
-#include "../messages/igroupinforequest.hh"
-#include "../messages/iblockinforequest.hh"
-#include "../messages/reply.hh"
 
 namespace eclipse {
+using namespace messages;
+namespace ph = std::placeholders;
+using std::bind;
 
-RemoteMR::RemoteMR(Context &c): RemoteDFS(c), peer(c) {
-  routing_table.insert({"IBlockInsert", std::bind(&RemoteMR::insert_idata,
-      this, std::placeholders::_1)});
-  routing_table.insert({"IGroupInsert", std::bind(&RemoteMR::insert_igroup,
-      this, std::placeholders::_1)});
-  routing_table.insert({"IBlockInsert", std::bind(&RemoteMR::insert_iblock,
-      this, std::placeholders::_1)});
-  routing_table.insert({"IBlockInfoRequest", std::bind(&RemoteMR::request_idata,
-      this, std::placeholders::_1)});
-  routing_table.insert({"IGroupInfoRequest", std::bind(&RemoteMR::request_igroup,
-      this, std::placeholders::_1)});
-  routing_table.insert({"IBlockInfoRequest", std::bind(&RemoteMR::request_iblock,
-      this, std::placeholders::_1)});
+// Constructor {{{
+RemoteMR::RemoteMR(Context &c): RemoteDFS(c) {
+  auto& rt = routing_table;
+  rt.insert({"IBlockInsert", bind(&RemoteMR::insert_idata, this, ph::_1)});
+  rt.insert({"IGroupInsert", bind(&RemoteMR::insert_igroup, this, ph::_1)});
+  rt.insert({"IBlockInsert", bind(&RemoteMR::insert_iblock, this, ph::_1)});
+  rt.insert({"IBlockInfoRequest", bind(&RemoteMR::request_idata, this, ph::_1)});
+  rt.insert({"IGroupInfoRequest", bind(&RemoteMR::request_igroup, this, ph::_1)});
+  rt.insert({"IBlockInfoRequest", bind(&RemoteMR::request_iblock, this, ph::_1)});
+  rt.insert({"Task", bind(&RemoteMR::map, this, ph::_1)});
 }
+// }}}
+// establish {{{
 bool RemoteMR::establish() {
-  peer.establish();
+  peer  = make_unique<PeerMR> (context);
+  peer_mr = dynamic_cast<PeerMR*> (peer.get());
+  peer_mr->establish();
   Router::establish();
   return true;
 }
-void RemoteMR::insert_idata(messages::Message *msg) {
-  auto idata_insert = dynamic_cast<messages::IDataInsert*>(msg);
+// }}}
+// map {{{
+void RemoteMR::map (messages::Message* _m) {
+  auto m = dynamic_cast<Task*>(_m);
+  logger->info("Task received.");
+  bool ret = peer_mr->process_map_file(m);
+
+  Reply reply;
+  if (ret) {
+    reply.message = "OK";
+  } else {
+    reply.message = "FAIL";
+  }
+  network->send(0, &reply);
+}
+// }}}
+// insert_idata {{{
+void RemoteMR::insert_idata(Message *msg) {
+  auto idata_insert = dynamic_cast<IDataInsert*>(msg);
   logger->info("IDataInsert received.");
-  bool ret = peer.insert_idata(idata_insert);
+  bool ret = peer_mr->insert_idata(idata_insert);
   Reply reply;
   if (ret) {
     reply.message = "OK";
@@ -46,10 +56,12 @@ void RemoteMR::insert_idata(messages::Message *msg) {
   }
   network->send(0, &reply);
 }
-void RemoteMR::insert_igroup(messages::Message *msg) {
-  auto igroup_insert = dynamic_cast<messages::IGroupInsert*>(msg);
+// }}}
+// insert_iblock {{{
+void RemoteMR::insert_igroup(Message *msg) {
+  auto igroup_insert = dynamic_cast<IGroupInsert*>(msg);
   logger->info("IGroupInsert received.");
-  bool ret = peer.insert_igroup(igroup_insert);
+  bool ret = peer_mr->insert_igroup(igroup_insert);
   Reply reply;
   if (ret) {
     reply.message = "OK";
@@ -58,10 +70,12 @@ void RemoteMR::insert_igroup(messages::Message *msg) {
   }
   network->send(0, &reply);
 }
-void RemoteMR::insert_iblock(messages::Message *msg) {
-  auto iblock_insert = dynamic_cast<messages::IBlockInsert*>(msg);
+// }}}
+// insert_iblock {{{
+void RemoteMR::insert_iblock(Message *msg) {
+  auto iblock_insert = dynamic_cast<IBlockInsert*>(msg);
   logger->info("IBlockInsert received.");
-  bool ret = peer.insert_iblock(iblock_insert);
+  bool ret = peer_mr->insert_iblock(iblock_insert);
   Reply reply;
   if (ret) {
     reply.message = "OK";
@@ -70,20 +84,27 @@ void RemoteMR::insert_iblock(messages::Message *msg) {
   }
   network->send(0, &reply);
 }
-void RemoteMR::request_idata(messages::Message *msg) {
-  auto idata_info_request = dynamic_cast<messages::IDataInfoRequest*>(msg);
-  auto idata_info = peer.request_idata(idata_info_request);
+// }}}
+// request_idata  {{{
+void RemoteMR::request_idata(Message *msg) {
+  auto idata_info_request = dynamic_cast<IDataInfoRequest*>(msg);
+  auto idata_info = peer_mr->request_idata(idata_info_request);
   network->send(0, &idata_info);
 }
-void RemoteMR::request_igroup(messages::Message *msg) {
-  auto igroup_info_request = dynamic_cast<messages::IGroupInfoRequest*>(msg);
-  auto igroup_info = peer.request_igroup(igroup_info_request);
+// }}}
+// request_igroup {{{
+void RemoteMR::request_igroup(Message *msg) {
+  auto igroup_info_request = dynamic_cast<IGroupInfoRequest*>(msg);
+  auto igroup_info = peer_mr->request_igroup(igroup_info_request);
   network->send(0, &igroup_info);
 }
-void RemoteMR::request_iblock(messages::Message *msg) {
-  auto iblock_info_request = dynamic_cast<messages::IBlockInfoRequest*>(msg);
-  auto iblock_info = peer.request_iblock(iblock_info_request);
+// }}}
+// request_iblock {{{
+void RemoteMR::request_iblock(Message *msg) {
+  auto iblock_info_request = dynamic_cast<IBlockInfoRequest*>(msg);
+  auto iblock_info = peer_mr->request_iblock(iblock_info_request);
   network->send(0, &iblock_info);
 }
+// }}}
 
 }  // namespace eclipse
