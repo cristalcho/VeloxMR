@@ -38,15 +38,14 @@ using std::setfill;
 namespace eclipse {
 
 IWriter::IWriter() {
-  Context con;
-  reduce_slot_ = con.settings.get<int>("mapreduce.reduce_slot");
-  iblock_size_ = con.settings.get<int>("mapreduce.iblock_size");
-  scratch_path_ = con.settings.get<string>("path.scratch");
+  reduce_slot_ = context.settings.get<int>("mapreduce.reduce_slot");
+  iblock_size_ = context.settings.get<int>("mapreduce.iblock_size");
+  scratch_path_ = context.settings.get<string>("path.scratch");
   is_write_start_ = false;
   is_write_finish_ = false;
   index_counter_ = 0;
   writing_index_ = -1;
-  write_buf_size_ = con.settings.get<int>("mapreduce.write_buf_size");
+  write_buf_size_ = context.settings.get<int>("mapreduce.write_buf_size");
   written_bytes_ = 0;
   write_buf_ = (char*)malloc(write_buf_size_ + 1);
   write_pos_ = write_buf_;

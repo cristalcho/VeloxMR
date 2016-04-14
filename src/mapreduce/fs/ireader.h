@@ -57,7 +57,6 @@ class IReader {
   uint32_t reducer_id_;
   uint32_t num_block_;
   multimap<string, int>::iterator get_min_iterator();
-  Context con;
   uint32_t num_finished_;
   bool is_next_key_;
   bool is_next_value_;

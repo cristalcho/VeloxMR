@@ -13,7 +13,7 @@ using namespace eclipse::network;
 
 class Router: public Node, public AsyncNode {
   public:
-    Router (Context&);
+    Router ();
     ~Router ();
 
     bool establish() override; 
@@ -23,6 +23,7 @@ class Router: public Node, public AsyncNode {
 
   protected:
     std::map<std::string, std::function<void(messages::Message*)>> routing_table;
+    std::unique_ptr<Node> peer;
     int port;
 };
 

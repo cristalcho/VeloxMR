@@ -16,7 +16,7 @@
 
 namespace eclipse {
 
-RemoteMR::RemoteMR(Context &c): RemoteDFS(c), peer(c) {
+RemoteMR::RemoteMR() {
   routing_table.insert({"IBlockInsert", std::bind(&RemoteMR::insert_idata,
       this, std::placeholders::_1)});
   routing_table.insert({"IGroupInsert", std::bind(&RemoteMR::insert_igroup,

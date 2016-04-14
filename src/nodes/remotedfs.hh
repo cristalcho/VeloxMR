@@ -10,7 +10,7 @@ using boost::asio::ip::tcp;
 
 class RemoteDFS: public Router {
   public:
-    RemoteDFS (Context&);
+    RemoteDFS ();
     ~RemoteDFS () = default;
 
     virtual bool establish ();
@@ -25,9 +25,8 @@ class RemoteDFS: public Router {
     void request_format (messages::Message*);
     void file_exist (messages::Message*);
 
-  protected:
-    std::unique_ptr<PeerDFS> peer;
-    Context& context;
+  private:
+    PeerDFS* peer_dfs = nullptr;
 };
 
 } /* eclipse  */ 

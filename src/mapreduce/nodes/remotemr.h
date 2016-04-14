@@ -8,7 +8,7 @@ namespace eclipse {
 
 class RemoteMR: public RemoteDFS {
  public: 
-  RemoteMR(Context &c);
+  RemoteMR();
 
   bool establish();
   void insert_idata(messages::Message *msg);
