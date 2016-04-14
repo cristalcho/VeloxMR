@@ -1,9 +1,9 @@
 include tests/Makefile.am
 
-AM_CPPFLAGS         = -I@srcdir@/src/common -I@srcdir@/src -include ./config.h
-AM_CXXFLAGS         = -Wall -std=c++14 -ggdb3 
+AM_CPPFLAGS      = -I@srcdir@/src/common -I@srcdir@/src -include ./config.h
+AM_CXXFLAGS      = -Wall -std=c++14 -ggdb3 
 
-bin_PROGRAMS        = eclipse_node dfsput dfsget dfsls dfsformat dfsrm cacheinfo dfsshow
+bin_PROGRAMS     = eclipse_node dfs
 
 messages_files   = src/messages/boundaries.cc        \
                    src/messages/message.cc           \
@@ -40,7 +40,7 @@ messages_files   = src/messages/boundaries.cc        \
 # libs -----
 lib_LTLIBRARIES     = libecfs.la
 libecfs_la_SOURCES  = src/common/hash.cc src/common/settings.cc \
-											src/common/util.cc src/common/logger.cc src/common/histogram.cc \
+											src/common/logger.cc src/common/histogram.cc \
 											src/common/context.cc src/common/dl_loader.cc
 
 libecfs_la_LDFLAGS  = -version-info 0:0:0 
@@ -49,12 +49,13 @@ libecfs_la_LDFLAGS  = -version-info 0:0:0
 AM_LDFLAGS          = -static
 LDADD               = libecfs.la -lboost_system -lboost_thread -lboost_serialization -lboost_system -lboost_coroutine -lboost_context
 
-
 eclipse_node_SOURCES = src/targets/node_main_mr.cc \
 											 src/network/channel.cc \
 											 src/network/asyncchannel.cc \
 											 src/network/p2p.cc \
 											 src/network/server.cc \
+											 src/network/acceptor.cc \
+											 src/network/connector.cc \
 											 src/nodes/machine.cc \
 											 src/nodes/peerdfs.cc \
 											 src/nodes/remotedfs.cc \
@@ -68,48 +69,17 @@ eclipse_node_SOURCES = src/targets/node_main_mr.cc \
 											 src/nodes/node.cc \
 											 $(messages_files)
 
-eclipse_node_LDADD   = $(LDADD) -lsqlite3
+eclipse_node_LDADD  = $(LDADD) -lsqlite3
 
-dfsput_SOURCES       = src/fs/dfsput.cc src/fs/directory.cc \
-											 $(messages_files)
-
-dfsput_LDADD         = $(LDADD) -lsqlite3
-
-dfsget_SOURCES       = src/fs/dfsget.cc src/fs/directory.cc \
-											 $(messages_files)
-
-dfsget_LDADD         = $(LDADD) -lsqlite3
-
-dfsls_SOURCES        = src/fs/dfsls.cc src/fs/directory.cc \
+dfs_SOURCES         = src/fs/dfs.cc \
+                      src/fs/directory.cc \
+                      src/fs/main.cc \
 											$(messages_files)
 
-dfsls_LDADD          = $(LDADD) -lsqlite3
-
-dfsformat_SOURCES      = src/fs/dfsformat.cc src/fs/directory.cc \
-											$(messages_files)
-
-dfsformat_LDADD        = $(LDADD) -lsqlite3
-
-dfsrm_SOURCES      = src/fs/dfsrm.cc src/fs/directory.cc \
-											$(messages_files)
-
-dfsrm_LDADD        = $(LDADD) -lsqlite3
-
-dfsshow_SOURCES      = src/fs/dfsshow.cc src/fs/directory.cc \
-											$(messages_files)
-
-dfsshow_LDADD        = $(LDADD) -lsqlite3
-
-cacheinfo_SOURCES        = src/fs/cacheinfo.cc src/fs/directory.cc \
-          								$(messages_files)
-         
-cacheinfo_LDADD          = $(LDADD) -lsqlite3
+dfs_LDADD           = $(LDADD) -lsqlite3
 
 pkginclude_HEADERS  = src/common/ecfs.hh src/common/settings.hh
 
-# Scripts -------
-#bin_SCRIPTS         = src/fs/eclipsed
-# ------
 if COPY_SAMPLES
 sysconf_DATA        = doc/eclipse.json
 endif

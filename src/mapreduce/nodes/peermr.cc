@@ -21,9 +21,8 @@
 
 namespace eclipse {
 
-PeerMR::PeerMR(Context &context): PeerDFS(context) {
-  directory.init_db();
-  auto ip_list = con_.settings.get<std::vector<std::string>>("network.nodes");
+PeerMR::PeerMR() {
+  auto ip_list = context.settings.get<std::vector<std::string>>("network.nodes");
   for (uint32_t i = 0; i < ip_list.size(); ++i) {
     if (ip_of_this == ip_list[i]) {
       net_id_ = i;
@@ -31,25 +30,26 @@ PeerMR::PeerMR(Context &context): PeerDFS(context) {
     }
   }
   net_size_ = ip_list.size();
+  directory.init_db();
 }
 PeerMR::~PeerMR() {
 }
 template<> void PeerMR::process(KeyValueShuffle *kv_shuffle) {
   auto key = kv_shuffle->key_;
   int hash_value = h(key) % net_size_;
-std::stringstream ss;
-ss << "hash_value: " << hash_value << std::endl;
-logger->info(ss.str().c_str());
+  std::stringstream ss;
+  ss << "hash_value: " << hash_value << std::endl;
+  logger->info(ss.str().c_str());
   // int dst_net_id = boundaries->get_index(hash_value);
   uint32_t dst_net_id = hash_value;
-std::stringstream ss1;
-ss1 << "key: " << key << " net_id: " << net_id_ << " net_size: " <<
+  std::stringstream ss1;
+  ss1 << "key: " << key << " net_id: " << net_id_ << " net_size: " <<
     net_size_ << " dst: " << dst_net_id << std::endl;
-logger->info(ss1.str().c_str());
+  logger->info(ss1.str().c_str());
   if (dst_net_id == net_id_) {
     write_key_value(kv_shuffle);
   } else {
-std::cout << "!!! Another node" << std::endl;
+    std::cout << "!!! Another node" << std::endl;
     network->send(dst_net_id, kv_shuffle);
   }
 }

@@ -22,7 +22,7 @@ namespace eclipse {
 
 class PeerMR: public PeerDFS {
  public:
-  PeerMR(Context &context);
+  PeerMR();
   ~PeerMR();
 
   void on_read(messages::Message *msg) override;
@@ -40,7 +40,6 @@ class PeerMR: public PeerDFS {
 
   uint32_t net_id_;
   uint32_t net_size_;
-  Context con_;
   DirectoryMR directory;
   std::unordered_map<uint32_t, std::shared_ptr<IWriter>> iwriters_;
 };

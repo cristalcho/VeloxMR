@@ -8,7 +8,7 @@ namespace eclipse {
 
 class RemoteMR: public RemoteDFS {
  public: 
-  RemoteMR(Context &c);
+  RemoteMR();
 
   bool establish();
   void insert_idata(messages::Message *msg);
@@ -20,7 +20,7 @@ class RemoteMR: public RemoteDFS {
   void shuffle(messages::Message *msg);
 
  protected:
-  PeerMR peer;
+  PeerMR* peer;
 };
 
 }  // namespace eclipse

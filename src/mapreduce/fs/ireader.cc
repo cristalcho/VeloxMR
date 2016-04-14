@@ -21,7 +21,7 @@ using boost::asio::ip::tcp;
 namespace eclipse {
 
 IReader::IReader() {
-  scratch_path_ = con.settings.get<string>("path.scratch");
+  scratch_path_ = context.settings.get<string>("path.scratch");
   num_finished_ = 0;
   is_next_key_ = true;
   is_next_value_ = true;
@@ -102,8 +102,8 @@ bool IReader::get_next_value(string &value) {
 }
 tcp::socket* IReader::connect(uint32_t net_id) {
   tcp::socket *socket = new tcp::socket(io_service_);
-  int port = con.settings.get<int>("network.port_mapreduce");
-  vector<string> nodes = con.settings.get<vector<string>>("network.nodes");
+  int port = context.settings.get<int>("network.port_mapreduce");
+  vector<string> nodes = context.settings.get<vector<string>>("network.nodes");
   string host = nodes[net_id];
   tcp::resolver resolver(io_service_);
   tcp::resolver::query query(host, std::to_string(port));
