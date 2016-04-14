@@ -30,6 +30,7 @@ PeerMR::PeerMR() {
     }
   }
   net_size_ = ip_list.size();
+  directory.init_db();
 }
 PeerMR::~PeerMR() {
 }

@@ -20,7 +20,7 @@ class RemoteMR: public RemoteDFS {
   void shuffle(messages::Message *msg);
 
  protected:
-  PeerMR peer;
+  PeerMR* peer;
 };
 
 }  // namespace eclipse
