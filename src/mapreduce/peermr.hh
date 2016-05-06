@@ -1,7 +1,7 @@
 #ifndef ECLIPSEMR_NODES_PEERMR_H_
 #define ECLIPSEMR_NODES_PEERMR_H_
 #include "../nodes/peerdfs.hh"
-#include "../fs/directorymr.hh"
+#include "fs/directorymr.hh"
 #include "../messages/message.hh"
 #include "../messages/idatainsert.hh"
 #include "../messages/igroupinsert.hh"

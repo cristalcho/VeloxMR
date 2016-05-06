@@ -15,9 +15,9 @@ using namespace std;
 
 namespace eclipse {
 // Constructor {{{
-Router::Router(Context& c) : Node (c), context(c) {
-  port = context.settings.get<int>("network.port_mapreduce");
-  network = new AsyncNetwork<Server> (this, context, 1, port);
+Router::Router() : Node () {
+  port = context.settings.get<int>("network.ports.client");
+  network = new AsyncNetwork<Server> (this, port);
 }
 
 Router::~Router() { }
@@ -29,14 +29,13 @@ bool Router::establish () {
 }
 // }}}
 // on_read {{{
-void Router::on_read (Message* m) {
+void Router::on_read (Message* m, int n_channel) {
   string type = m->get_type();
-  routing_table[type](m);
+  routing_table[type](m, n_channel);
 }
 // }}}
 // on_disconnect {{{
-void Router::on_disconnect () {
-  network->on_disconnect();
+void Router::on_disconnect (int id) {
 }
 // }}}
 // on_connect() {{{

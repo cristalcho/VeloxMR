@@ -24,13 +24,13 @@ typedef std::function<void(std::string, std::string)> req_func;
 
 class PeerDFS: public Node, public AsyncNode {
   public:
-    PeerDFS (Context&);
+    PeerDFS ();
     ~PeerDFS ();
 
     bool establish () override;
-    void on_read (messages::Message*) override;
+    void on_read (messages::Message*, int) override;
     void on_connect () override;
-    void on_disconnect() override;
+    void on_disconnect(int) override;
 
     virtual void insert (uint32_t, std::string, std::string);
     virtual void request (uint32_t, std::string, req_func);
@@ -51,7 +51,7 @@ class PeerDFS: public Node, public AsyncNode {
     std::unique_ptr<Histogram> boundaries;
     std::map<std::string, req_func> requested_blocks;
     bool connected = false;
-    uint32_t size;
+    int size;
     std::string disk_path;
 
     template <typename T> void process (T);

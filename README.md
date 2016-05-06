@@ -1,16 +1,26 @@
-[![Build Status](https://travis-ci.com/DICL/Eclipse2.svg?token=MaWCP2sHsbC2FaU6ztsx)](https://magnum.travis-ci.com/DICL/EclipseDFS)
+[![Build Status](https://travis-ci.com/DICL/EclipseDFS.svg?token=MaWCP2sHsbC2FaU6ztsx&branch=master)](https://magnum.travis-ci.com/DICL/EclipseDFS)
 [![Slack room](https://img.shields.io/badge/slack-join-pink.svg)](https://dicl.slack.com/messages/general/)
 BRIEFING
 ========
 
-Eclipse is a novel experimental MapReduce framework integrated with distributed
-semantic caches and Chord based Distributed Hash Table file system.
+EclipseDFS is a state-of-the-art distribute file system. It was designed to be an essential layer of EclipseMR middle-ware.
+Key feature of EclipseDFS are:
+ - Efficient block distribution over the nodes.
+ - Fast time response.
+ - High efficient balancing algorithm.
 
-Eclipse was created to satisfy the need for better performance in the Hadoop framework.
-Eclipse outperforms better by addressing some key facts such as:
- - Dealing with the HDFS storage bottleneck.
- - Providing a better concurrency scheduling.
- - Imposing austere memory management and implementing an efficient suffle phase. 
+USAGE
+=====
+EclipseDFS default launcher is not included in this repository, if you want to use it you can find it [here][eclipsed].
+
+The reason to not to include the launcher inside the package is to let the user to chose any launcher, options are:
+ - systemd/init.d
+ - puppet/chef/salt
+ 
+Once the system is running, you can interact with EclipseDFS with the following commands:
+```
+ $ dfs ls|put|get|rm|format|show
+```
 
 COMPILING & INSTALLING
 =====================
@@ -55,3 +65,4 @@ AUTHOR
 [mh]:       https://github.com/nammh 
 [wb]:       https://github.com/zwigul
 [kb]:       https://github.com/kbjin
+[eclipsed]: https://github.com/DICL/eclipsed

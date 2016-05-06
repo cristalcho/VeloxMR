@@ -26,14 +26,14 @@ using namespace std;
 
 namespace eclipse {
 // Constructor & destructor {{{
-PeerDFS::PeerDFS (Context& context) : Node (context) { 
+PeerDFS::PeerDFS () : Node () { 
   Settings& setted = context.settings;
 
-  int port       = setted.get<int>("network.port_cache");
+  int port       = setted.get<int>("network.ports.internal");
   size           = setted.get<vec_str>("network.nodes").size();
   disk_path      = setted.get<string>("path.scratch");
 
-  network   = new AsyncNetwork<P2P>(this, context, 10, port);
+  network   = new AsyncNetwork<P2P>(this, port);
   boundaries.reset( new Histogram {size, 0});
   boundaries->initialize();
 
@@ -56,6 +56,7 @@ void PeerDFS::insert (uint32_t hash_key, std::string name, std::string v) {
   int which_node = boundaries->get_index(hash_key);
 
   if (which_node == id) {
+    logger->info ("[DFS] Saving locally KEY: %s", name.c_str());
     string file_path = disk_path + string("/") + name;
     ofstream file (file_path);
     file << v;
@@ -137,7 +138,7 @@ template<> void PeerDFS::process (Control* m) {
 }
 // }}}
 // on_read (Message*) {{{
-void PeerDFS::on_read (Message* m) {
+void PeerDFS::on_read (Message* m, int) {
   string type = m->get_type();
 
   if (type == "KeyValue") {
@@ -161,8 +162,7 @@ void PeerDFS::on_connect () {
 }
 // }}}
 // on_disconnect {{{
-void PeerDFS::on_disconnect () {
-
+void PeerDFS::on_disconnect (int id) {
 }
 // }}}
 // insert_file {{{
@@ -237,7 +237,7 @@ FileDescription PeerDFS::request_file (messages::FileRequest* m) {
     directory.select_block_metadata (file_name, i, &bi);
     string block_name = bi.block_name;
     fd.blocks.push_back(block_name);
-    fd.hashes.push_back(bi.block_hash_key);
+    fd.hash_keys.push_back(bi.block_hash_key);
   }
 
   return fd;
@@ -253,8 +253,8 @@ bool PeerDFS::list (messages::FileList* m) {
 bool PeerDFS::format () {
   logger->info ("Formating DFS");
 
-  string fs_path = settings.get<string>("path.scratch");
-  string md_path = settings.get<string>("path.metadata");
+  string fs_path = context.settings.get<string>("path.scratch");
+  string md_path = context.settings.get<string>("path.metadata");
 
   DIR *theFolder = opendir(fs_path.c_str());
   struct dirent *next_file;

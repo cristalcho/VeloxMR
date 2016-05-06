@@ -51,7 +51,7 @@ DataSet::DataSet (uint32_t id_) :
 tcp::endpoint* DataSet::find_local_master() {
   Settings setted = Settings().load();
 
-  int port      = setted.get<int> ("network.port_mapreduce");
+  int port      = setted.get<int> ("network.ports.client");
   vec_str nodes = setted.get<vec_str> ("network.nodes");
 
   string host = nodes[ id % nodes.size() ];

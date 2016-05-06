@@ -1,14 +1,11 @@
-#include <mapreduce/remotemr.hh>
+#include <mapreduce/nodes/remotemr.h>
 #include <common/context.hh>
 #include <string>
 
 using namespace eclipse;
 
 int main (int argc, char ** argv) {
-  Context context;
-  context.run();
-
-  RemoteMR nl (context);
+  RemoteMR nl;
   nl.establish();
 
   return context.join();
