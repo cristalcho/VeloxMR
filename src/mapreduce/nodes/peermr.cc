@@ -61,7 +61,7 @@ template<> void PeerMR::process(FinishShuffle *msg) {
     iwriters_.erase(it);
   }
 }
-void PeerMR::on_read(messages::Message *msg) {
+void PeerMR::on_read(messages::Message *msg, int) {
   std::string type = msg->get_type();
   if (type == "KeyValueShuffle") {
     auto kv_shuffle = dynamic_cast<KeyValueShuffle*>(msg);
@@ -70,7 +70,7 @@ void PeerMR::on_read(messages::Message *msg) {
     auto finish_shuffle = dynamic_cast<FinishShuffle*>(msg);
     process(finish_shuffle);
   } else {
-    PeerDFS::on_read(msg);
+    PeerDFS::on_read(msg, 0);
   }
 }
 bool PeerMR::insert_idata(messages::IDataInsert *msg) {

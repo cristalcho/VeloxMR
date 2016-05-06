@@ -25,7 +25,7 @@ class PeerMR: public PeerDFS {
   PeerMR();
   ~PeerMR();
 
-  void on_read(messages::Message *msg) override;
+  void on_read(messages::Message *msg, int) override;
   bool insert_idata(messages::IDataInsert *msg);
   bool insert_igroup(messages::IGroupInsert *msg);
   bool insert_iblock(messages::IBlockInsert *msg);
