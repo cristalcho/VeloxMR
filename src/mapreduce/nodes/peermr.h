@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include "../../nodes/peerdfs.hh"
 #include "../fs/directorymr.hh"
-#include "../fs/iwriter.h"
+#include "../fs/iwriter_interface.hh"
 #include "../../messages/message.hh"
 #include "../messages/idatainsert.hh"
 #include "../messages/igroupinsert.hh"
@@ -24,7 +24,7 @@ namespace eclipse {
 class PeerMR: public PeerDFS {
  public:
   PeerMR();
-  ~PeerMR();
+  ~PeerMR() = default;
 
   void on_read(messages::Message *msg, int) override;
   bool insert_idata(messages::IDataInsert *msg);
@@ -37,14 +37,12 @@ class PeerMR: public PeerDFS {
   void receive_kv(messages::KeyValueShuffle *kv_shuffle);
   void process_map_block (std::string, std::string, messages::Task*);
   bool process_map_file (messages::Task*);
-
- protected:
   template<typename T> void process(T);
 
-  uint32_t net_id_;
+ protected:
   uint32_t net_size_;
   DirectoryMR directory;
-  std::unordered_map<uint32_t, std::shared_ptr<IWriter>> iwriters_;
+  std::unordered_map<uint32_t, std::shared_ptr<IWriter_interface>> iwriters_;
 };
 
 }  // namespace eclipse

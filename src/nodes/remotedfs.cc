@@ -25,11 +25,7 @@ RemoteDFS::RemoteDFS () : Router() {
 // }}}
 // establish {{{
 bool RemoteDFS::establish () {
-<<<<<<< HEAD
-  peer  = make_unique<PeerDFS> (context);
-=======
   peer  = make_unique<PeerDFS> ();
->>>>>>> mapreduce
   peer_dfs = dynamic_cast<PeerDFS*> (peer.get());
   peer_dfs->establish();
   Router::establish();
@@ -113,11 +109,7 @@ void RemoteDFS::request_file (messages::Message* m_, int n_channel) {
   logger->info ("File Info received %s", m->file_name.c_str());
 
   auto fd = peer_dfs->request_file (m);
-<<<<<<< HEAD
-  network->send(0, &fd);
-=======
   network->send(n_channel, &fd);
->>>>>>> mapreduce
 }
 // }}}
 // request_block {{{
@@ -125,23 +117,15 @@ void RemoteDFS::request_block (messages::Message* m_, int n_channel) {
   auto m = dynamic_cast<messages::BlockRequest*> (m_);
   auto key = m->hash_key;
   auto name= m->block_name;
-<<<<<<< HEAD
-  peer_dfs->request(key, name, std::bind(&RemoteDFS::send_block, this, ph::_1, ph::_2));
-=======
   peer_dfs->request(key, name, std::bind(&RemoteDFS::send_block, this, 
         ph::_1, ph::_2, n_channel));
->>>>>>> mapreduce
 }
 // }}}
 // request_ls {{{
 void RemoteDFS::request_ls (messages::Message* m_, int n_channel) {
   auto m = dynamic_cast<messages::FileList*> (m_);
   peer_dfs->list(m);
-<<<<<<< HEAD
-  network->send(0, m);
-=======
   network->send(n_channel, m);
->>>>>>> mapreduce
 }
 // }}}
 // send_block {{{
@@ -155,11 +139,7 @@ void RemoteDFS::send_block (std::string k, std::string v, int n_channel) {
 }
 // }}}
 // request_format {{{
-<<<<<<< HEAD
-void RemoteDFS::request_format (messages::Message* m_) {
-=======
 void RemoteDFS::request_format (messages::Message* m_, int n_channel) {
->>>>>>> mapreduce
   bool ret = peer_dfs->format();
   Reply reply;
 

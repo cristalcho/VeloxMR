@@ -1,9 +1,12 @@
 #include "executor.hh"
 #include "../common/dl_loader.hh"
 #include "../common/hash.hh"
+#include "../mapreduce/messages/key_value_shuffle.h"
 
 #include <string>
 #include <sstream>
+#include <utility>
+#include <functional>
 
 using namespace eclipse;
 using namespace std;
@@ -15,26 +18,35 @@ Executor::~Executor() { }
 // }}}
 // run_map {{{
 bool Executor::run_map (messages::Task* m, std::string input) {
-    DL_loader loader (m->library);
+    auto path_lib = context.settings.get<string>("path.applications");
+    path_lib += ("/" + m->library);
+    DL_loader loader (path_lib);
 
     try {
       loader.init_lib();
     } catch (std::exception& e) {
-      //logger->error ("Not found library path[%s]", m->library.c_str());
+      context.logger->error ("Not found library path[%s]", path_lib.c_str());
     }
 
-    auto _map_ = loader.load_function(m->func_name);
+    function<pair<string, string>(string)> _map_ = 
+        loader.load_function(m->func_name);
     stringstream ss (input);
 
-    while (ss.eof()) {
-      char next_line [256];
+    while (!ss.eof()) {
+      char next_line [256] = {0}; //! :TODO: change to DFS line limit
       ss.getline (next_line, 256);
-      auto key_value = _map_ (string(next_line));
+      pair<string, string> key_value = _map_ (string(next_line));
 
       auto key        = key_value.first;
       auto hash_key   = h(key.c_str());
       auto& value     = key_value.second;
-      peer->insert (hash_key, key, value);
+
+      KeyValueShuffle kv; 
+      kv.job_id_ = 0;
+      kv.key_ = key;
+      kv.value_ = value; 
+      peer->process(&kv);
+      //peer->insert (hash_key, key, value);
     }
 
     return true;

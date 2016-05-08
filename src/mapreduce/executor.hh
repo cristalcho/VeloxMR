@@ -1,10 +1,11 @@
 #pragma once
 #include "nodes/peermr.h"
 #include "../messages/task.hh"
+#include <utility>
 
 namespace eclipse {
 class Executor {
-  typedef void (*maptype)(std::string);
+  typedef std::pair<string, string> (*maptype)(std::string);
   public:
     Executor (PeerMR*);
     ~Executor ();

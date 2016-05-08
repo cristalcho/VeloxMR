@@ -12,11 +12,10 @@ DL_loader::~DL_loader() {
 // }}}
 // init_executor {{{
 bool DL_loader::init_lib () {
-  lib = dlopen(lib_name.c_str(), RTLD_NOW);
+  lib = dlopen(lib_name.c_str(), RTLD_LAZY);
 
-  if (!lib) throw std::runtime_error("Path not found");
+  if (!lib) throw std::runtime_error("Path not found" + string(dlerror()));
 
-  dlerror();
   return true;
 }
 // }}}

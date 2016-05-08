@@ -66,7 +66,7 @@ tcp::endpoint* DataSet::find_local_master() {
 
 DataSet& DataSet::map (std::string func) {
   Task map_task;
-  map_task.library = "Mylib";
+  map_task.library = "libfoo.so";
   map_task.func_name = func;
   map_task.input_path = file;
 

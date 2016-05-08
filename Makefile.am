@@ -41,9 +41,11 @@ messages_files   = src/messages/boundaries.cc        \
 lib_LTLIBRARIES     = libecfs.la
 libecfs_la_SOURCES  = src/common/hash.cc src/common/settings.cc \
 											src/common/logger.cc src/common/histogram.cc \
-											src/common/context.cc src/common/dl_loader.cc
+											src/common/context.cc src/common/dl_loader.cc \
+											src/mapreduce/dataset.cc
 
 libecfs_la_LDFLAGS  = -version-info 0:0:0 
+libecfs_la_LIBADD   =  -lboost_thread -lboost_system
 
 # Binaries ----
 AM_LDFLAGS          = -static
@@ -79,7 +81,7 @@ dfs_SOURCES         = src/fs/dfs.cc \
 
 dfs_LDADD           = $(LDADD) -lsqlite3
 
-eclipse_app_SOURCES     = src/targets/sample_app.cc src/mapreduce/dataset.cc \
+eclipse_app_SOURCES    = src/targets/sample_app.cc \
           						$(messages_files)
          
 eclipse_app_LDADD      = $(LDADD) -lsqlite3
