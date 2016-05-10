@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 #include <map>
+#include "ireader_interface.hh"
 #include "../../messages/message.hh"
 #include "../messages/igroupinfo.hh"
 #include "../messages/iblockinfo.hh"
@@ -18,22 +19,22 @@ using boost::asio::ip::tcp;
 
 namespace eclipse {
 
-class IReader {
+class IReader: public IReader_interface {
  public:
   IReader();
   IReader(uint32_t net_id, uint32_t job_id, uint32_t map_id,
       uint32_t reducer_id);
   ~IReader();
 
-  void init();
-  void set_net_id(uint32_t net_id);
-  void set_job_id(uint32_t job_id);
-  void set_map_id(uint32_t map_id);
-  void set_reducer_id(uint32_t recducer_id);
-  bool get_next_key(string &key);
-  bool get_next_value(string &value);
-  bool is_next_key();
-  bool is_next_value();
+  void init() override;
+  void set_net_id(uint32_t net_id) override;
+  void set_job_id(uint32_t job_id) override;
+  void set_map_id(uint32_t map_id) override;
+  void set_reducer_id(uint32_t recducer_id) override;
+  bool get_next_key(string &key) override;
+  bool get_next_value(string &value) override;
+  bool is_next_key() override;
+  bool is_next_value() override;
 
  private:
   tcp::socket* connect(uint32_t net_id);

@@ -3,7 +3,7 @@ include tests/Makefile.am
 AM_CPPFLAGS      = -I@srcdir@/src/common -I@srcdir@/src -include ./config.h
 AM_CXXFLAGS      = -Wall -std=c++14 -ggdb3 
 
-bin_PROGRAMS     = eclipse_node dfs
+bin_PROGRAMS     = eclipse_node dfs eclipse_app
 
 messages_files   = src/messages/boundaries.cc        \
                    src/messages/message.cc           \
@@ -41,13 +41,15 @@ messages_files   = src/messages/boundaries.cc        \
 lib_LTLIBRARIES     = libecfs.la
 libecfs_la_SOURCES  = src/common/hash.cc src/common/settings.cc \
 											src/common/logger.cc src/common/histogram.cc \
-											src/common/context.cc src/common/dl_loader.cc
+											src/common/context.cc src/common/dl_loader.cc \
+											src/mapreduce/dataset.cc
 
 libecfs_la_LDFLAGS  = -version-info 0:0:0 
+libecfs_la_LIBADD   =  -lboost_thread -lboost_system
 
 # Binaries ----
 AM_LDFLAGS          = -static
-LDADD               = libecfs.la -lboost_system -lboost_thread -lboost_serialization -lboost_system -lboost_coroutine -lboost_context
+LDADD               = libecfs.la -lboost_system -lboost_thread -lboost_serialization -lboost_system -lboost_coroutine -lboost_context -ldl
 
 eclipse_node_SOURCES = src/targets/node_main_mr.cc \
 											 src/network/channel.cc \
@@ -67,6 +69,7 @@ eclipse_node_SOURCES = src/targets/node_main_mr.cc \
 											 src/mapreduce/fs/iwriter.cc \
 											 src/mapreduce/fs/ireader.cc \
 											 src/nodes/node.cc \
+											 src/mapreduce/executor.cc \
 											 $(messages_files)
 
 eclipse_node_LDADD  = $(LDADD) -lsqlite3
@@ -77,6 +80,11 @@ dfs_SOURCES         = src/fs/dfs.cc \
 											$(messages_files)
 
 dfs_LDADD           = $(LDADD) -lsqlite3
+
+eclipse_app_SOURCES    = src/targets/sample_app.cc \
+          						$(messages_files)
+         
+eclipse_app_LDADD      = $(LDADD) -lsqlite3
 
 pkginclude_HEADERS  = src/common/ecfs.hh src/common/settings.hh
 

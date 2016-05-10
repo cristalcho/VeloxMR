@@ -9,6 +9,7 @@
 #include <list>
 #include <fstream>
 #include <boost/asio.hpp>
+#include "iwriter_interface.hh"
 #include "../../common/context.hh"
 #include "../../messages/message.hh"
 #include "../../messages/reply.hh"
@@ -23,19 +24,17 @@ using boost::asio::ip::tcp;
 
 namespace eclipse {
 
-class IWriter {
+class IWriter: public IWriter_interface {
  public:
   IWriter();
-  // IWriter(const uint32_t net_id, const uint32_t job_id,
-  // const uint32_t map_id);
   IWriter(const uint32_t job_id, const uint32_t map_id);
   ~IWriter();
 
-  void add_key_value(const string &key, const string &value);
-  void set_job_id(const uint32_t job_id);
-  void set_map_id(const uint32_t map_id);
-  bool is_write_finish();
-  void finalize();
+  void add_key_value(const string &key, const string &value) override;
+  void set_job_id(const uint32_t job_id) override;
+  void set_map_id(const uint32_t map_id) override;
+  bool is_write_finish() override;
+  void finalize() override;
 
  private:
   // tcp::socket* connect(uint32_t net_id);

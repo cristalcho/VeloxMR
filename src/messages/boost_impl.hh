@@ -45,6 +45,7 @@
   boost::serialization::make_nvp(#X,              \
       boost::serialization::base_object<X>(Y));
 #endif
+#define ECNS eclipse::messages
 
 //! 2) Also here
 namespace eclipse {
@@ -256,34 +257,37 @@ template <typename Archive>
 }  // namespace messages
 }  // namespace eclipse
 
-BOOST_SERIALIZATION_ASSUME_ABSTRACT(eclipse::messages::Message);
 
+BOOST_SERIALIZATION_ASSUME_ABSTRACT(ECNS::Message);
+
+#define TRACK_NEVER  boost::serialization::track_never
 //! 3) Also here
-BOOST_CLASS_TRACKING(eclipse::messages::Message, boost::serialization::track_never);
-BOOST_CLASS_TRACKING(eclipse::messages::Boundaries, boost::serialization::track_never);
-BOOST_CLASS_TRACKING(eclipse::messages::KeyValue, boost::serialization::track_never);
-BOOST_CLASS_TRACKING(eclipse::messages::Control, boost::serialization::track_never);
-BOOST_CLASS_TRACKING(eclipse::messages::KeyRequest, boost::serialization::track_never);
-BOOST_CLASS_TRACKING(eclipse::messages::FileInfo, boost::serialization::track_never);
-BOOST_CLASS_TRACKING(eclipse::messages::BlockInfo, boost::serialization::track_never);
-BOOST_CLASS_TRACKING(eclipse::messages::Task, boost::serialization::track_never);
-BOOST_CLASS_TRACKING(eclipse::messages::FileList, boost::serialization::track_never);
-BOOST_CLASS_TRACKING(eclipse::messages::Reply, boost::serialization::track_never);
-BOOST_CLASS_TRACKING(eclipse::messages::CacheInfo, boost::serialization::track_never);
-BOOST_CLASS_TRACKING(eclipse::messages::FileRequest, boost::serialization::track_never);
-BOOST_CLASS_TRACKING(eclipse::messages::BlockRequest, boost::serialization::track_never);
-BOOST_CLASS_TRACKING(eclipse::messages::FileDescription, boost::serialization::track_never);
-BOOST_CLASS_TRACKING(eclipse::messages::FileDel, boost::serialization::track_never);
-BOOST_CLASS_TRACKING(eclipse::messages::BlockDel, boost::serialization::track_never);
-BOOST_CLASS_TRACKING(eclipse::messages::FormatRequest, boost::serialization::track_never);
-BOOST_CLASS_TRACKING(eclipse::messages::IDataInsert, boost::serialization::track_never);
-BOOST_CLASS_TRACKING(eclipse::messages::IGroupInsert, boost::serialization::track_never);
-BOOST_CLASS_TRACKING(eclipse::messages::IBlockInsert, boost::serialization::track_never);
-BOOST_CLASS_TRACKING(eclipse::messages::IDataInfoRequest, boost::serialization::track_never);
-BOOST_CLASS_TRACKING(eclipse::messages::IGroupInfoRequest, boost::serialization::track_never);
-BOOST_CLASS_TRACKING(eclipse::messages::IBlockInfoRequest, boost::serialization::track_never);
-BOOST_CLASS_TRACKING(eclipse::messages::FileExist, boost::serialization::track_never);
-BOOST_CLASS_TRACKING(eclipse::messages::KeyValueShuffle,
-    boost::serialization::track_never);
-BOOST_CLASS_TRACKING(eclipse::messages::FinishShuffle,
-    boost::serialization::track_never);
+BOOST_CLASS_TRACKING(ECNS::Message, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::Boundaries, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::KeyValue, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::Control, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::KeyRequest, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::FileInfo, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::BlockInfo, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::Task, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::FileList, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::Reply, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::CacheInfo, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::FileRequest, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::BlockRequest, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::FileDescription, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::FileDel, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::BlockDel, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::FormatRequest, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::IDataInsert, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::IGroupInsert, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::IBlockInsert, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::IDataInfoRequest, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::IGroupInfoRequest, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::IBlockInfoRequest, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::FileExist, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::KeyValueShuffle, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::FinishShuffle, TRACK_NEVER);
+
+#undef ECNS
+#undef TRACK_NEVER 

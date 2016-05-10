@@ -15,22 +15,20 @@
 #include "../messages/key_value_shuffle.h"
 
 namespace eclipse {
+using namespace messages;
+namespace ph = std::placeholders;
+using std::bind;
 
 RemoteMR::RemoteMR() {
-  routing_table.insert({"IBlockInsert", std::bind(&RemoteMR::insert_idata,
-      this, std::placeholders::_1)});
-  routing_table.insert({"IGroupInsert", std::bind(&RemoteMR::insert_igroup,
-      this, std::placeholders::_1)});
-  routing_table.insert({"IBlockInsert", std::bind(&RemoteMR::insert_iblock,
-      this, std::placeholders::_1)});
-  routing_table.insert({"IBlockInfoRequest", std::bind(&RemoteMR::request_idata,
-      this, std::placeholders::_1)});
-  routing_table.insert({"IGroupInfoRequest", std::bind(&RemoteMR::request_igroup,
-      this, std::placeholders::_1)});
-  routing_table.insert({"IBlockInfoRequest", std::bind(&RemoteMR::request_iblock,
-      this, std::placeholders::_1)});
-  routing_table.insert({"KeyValueShuffle", std::bind(&RemoteMR::shuffle, this,
-      std::placeholders::_1)});
+  auto& rt = routing_table;
+  rt.insert({"IBlockInsert", bind(&RemoteMR::insert_idata, this, ph::_1)});
+  rt.insert({"IGroupInsert", bind(&RemoteMR::insert_igroup, this, ph::_1)});
+  rt.insert({"IBlockInsert", bind(&RemoteMR::insert_iblock, this, ph::_1)});
+  rt.insert({"IBlockInfoRequest", bind(&RemoteMR::request_idata, this, ph::_1)});
+  rt.insert({"IGroupInfoRequest", bind(&RemoteMR::request_igroup, this, ph::_1)});
+  rt.insert({"IBlockInfoRequest", bind(&RemoteMR::request_iblock, this, ph::_1)});
+  rt.insert({"KeyValueShuffle", bind(&RemoteMR::shuffle, this, ph::_1)});
+  rt.insert({"Task", bind(&RemoteMR::map, this, ph::_1)});
 }
 bool RemoteMR::establish() {
   peer_dfs = new PeerMR(); 
@@ -39,6 +37,21 @@ bool RemoteMR::establish() {
   Router::establish();
   return true;
 }
+// map {{{
+void RemoteMR::map (messages::Message* _m) {
+  auto m = dynamic_cast<Task*>(_m);
+  logger->info("Task received.");
+  bool ret = peer->process_map_file(m);
+
+  Reply reply;
+  if (ret) {
+    reply.message = "OK";
+  } else {
+    reply.message = "FAIL";
+  }
+  network->send(0, &reply);
+}
+// }}}
 void RemoteMR::insert_idata(messages::Message *msg) {
   auto idata_insert = dynamic_cast<messages::IDataInsert*>(msg);
   logger->info("IDataInsert received.");
