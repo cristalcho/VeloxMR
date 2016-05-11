@@ -48,6 +48,7 @@ bool Executor::run_map (messages::Task* m, std::string input) {
       peer->process(&kv);
       //peer->insert (hash_key, key, value);
     }
+    peer->finish_map(0);
 
     return true;
   }

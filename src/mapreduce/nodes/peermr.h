@@ -39,6 +39,8 @@ class PeerMR: public PeerDFS {
   bool process_map_file (messages::Task*);
   template<typename T> void process(T);
 
+  void finish_map (int);
+
  protected:
   uint32_t net_size_;
   DirectoryMR directory;

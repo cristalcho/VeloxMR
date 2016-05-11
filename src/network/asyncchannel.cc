@@ -48,12 +48,14 @@ void AsyncChannel::do_write_impl (string* to_write) {
 // on_write {{{
 void AsyncChannel::on_write (const boost::system::error_code& ec, 
     size_t s, string* str) {
-  delete str;
   if (ec) {
-    logger->info ("Message %s, size: %d, could not reach err=%s", 
-        str->c_str(), s, ec.message().c_str());
+    logger->info ("Message , size: %d, could not reach err=%s", 
+         s, ec.message().c_str());
 
     do_write_impl(str);
+
+  } else {
+    delete str;
   }
 }
 // }}}

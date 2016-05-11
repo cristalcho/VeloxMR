@@ -105,6 +105,7 @@ template<> void PeerMR::process(KeyValueShuffle *kv_shuffle) {
 // }}}
 // process FinishShuffle {{{
 template<> void PeerMR::process(FinishShuffle *msg) {
+  logger->info (" I got Finish shuffle");
   const uint32_t job_id = msg->job_id_;
   auto it = iwriters_.find(job_id);
   if (it != iwriters_.end()) {
@@ -197,4 +198,17 @@ void PeerMR::receive_kv(messages::KeyValueShuffle *kv_shuffle) {
   process(kv_shuffle);
 }
 // }}}
+// finish_map
+void PeerMR::finish_map (int job_id_) {
+  FinishShuffle fs;
+  fs.job_id_ = job_id_;
+  fs.map_id_ = 0;
+
+  for (uint8_t i = 0; i < net_size_; i++) {
+    if (i != id) {
+      network->send(i, &fs);
+    }
+  }
+}
+
 }  // namespace eclipse
