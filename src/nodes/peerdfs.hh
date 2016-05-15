@@ -45,6 +45,7 @@ class PeerDFS: public Node, public AsyncNode {
     bool format ();
     FileDescription request_file (messages::FileRequest*);
     bool file_exist (std::string);
+    template <typename T> void process (T);
 
   protected:
     Directory directory;
@@ -56,7 +57,6 @@ class PeerDFS: public Node, public AsyncNode {
     int replica;
     std::vector<std::string> nodes;
 
-    template <typename T> void process (T);
 };
 
 }

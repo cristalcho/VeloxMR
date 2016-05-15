@@ -29,6 +29,16 @@ maptype DL_loader::load_function (std::string fun) {
   return func_;
 }
 // }}}
+// load_function {{{
+reducetype DL_loader::load_function_reduce (std::string fun) {
+  reducetype func_ = 
+    reinterpret_cast<reducetype>(dlsym(lib, fun.c_str())); 
+  char* err = dlerror();
+
+  if (err) throw std::runtime_error("Symbol not found");
+  return func_;
+}
+// }}}
 void DL_loader::close() {
   dlclose(lib);
 }

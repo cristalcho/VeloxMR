@@ -69,8 +69,21 @@ DataSet& DataSet::map (std::string func) {
   map_task.library = "libfoo.so";
   map_task.func_name = func;
   map_task.input_path = file;
+  map_task.type = "MAP";
 
   send_message(&socket, &map_task);
+  auto reply = read_reply (&socket);
+  return *(new DataSet(2131231));
+}
+
+DataSet& DataSet::reduce (std::string func) {
+  Task task;
+  task.library = "libfoo.so";
+  task.func_name = func;
+  task.input_path = file;
+  task.type = "REDUCE";
+
+  send_message(&socket, &task);
   auto reply = read_reply (&socket);
   return *(new DataSet(2131231));
 }

@@ -117,6 +117,9 @@ template <typename Archive>
     ar & BOOST_SERIALIZATION_NVP(c.library);
     ar & BOOST_SERIALIZATION_NVP(c.input_path);
     ar & BOOST_SERIALIZATION_NVP(c.func_name);
+    ar & BOOST_SERIALIZATION_NVP(c.job_id);
+    ar & BOOST_SERIALIZATION_NVP(c.map_id);
+    ar & BOOST_SERIALIZATION_NVP(c.output);
   }
 template <typename Archive>
   void serialize (Archive& ar, eclipse::messages::FileList& c, unsigned int) {

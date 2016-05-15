@@ -21,7 +21,7 @@ using boost::asio::ip::tcp;
 namespace eclipse {
 
 IReader::IReader() {
-  scratch_path_ = context.settings.get<string>("path.scratch");
+  scratch_path_ = context.settings.get<string>("path.idata");
   num_finished_ = 0;
   is_next_key_ = true;
   is_next_value_ = true;

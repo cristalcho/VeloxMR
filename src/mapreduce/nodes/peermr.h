@@ -37,6 +37,7 @@ class PeerMR: public PeerDFS {
   void receive_kv(messages::KeyValueShuffle *kv_shuffle);
   void process_map_block (std::string, std::string, messages::Task*);
   bool process_map_file (messages::Task*);
+  bool process_reduce (messages::Task*);
   template<typename T> void process(T);
 
   void finish_map (int);

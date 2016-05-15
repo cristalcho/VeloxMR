@@ -40,7 +40,7 @@ namespace eclipse {
 IWriter::IWriter() {
   reduce_slot_ = context.settings.get<int>("mapreduce.reduce_slot");
   iblock_size_ = context.settings.get<int>("mapreduce.iblock_size");
-  scratch_path_ = context.settings.get<string>("path.scratch");
+  scratch_path_ = context.settings.get<string>("path.idata");
   is_write_start_ = false;
   is_write_finish_ = false;
   index_counter_ = 0;
