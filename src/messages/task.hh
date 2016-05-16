@@ -6,13 +6,6 @@
 namespace eclipse {
 namespace messages {
 
-enum TASKTYPE {
-  OPEN    = 0,
-  FLATMAP = 1,
-  MAP     = 2,
-  REDUCE  = 4
-};
-
 struct Task: public Message {
   std::string get_type() const override;
 
@@ -21,11 +14,13 @@ struct Task: public Message {
   Task& set_input_path(std::string);
 
   int get_id();
-  int get_type();
+  std::string get_type_task();
   std::string get_input_path();
 
-  int id, type;
+  int id, job_id, map_id;
+  std::string type;
   std::string library, func_name, input_path;
+  std::string output;
 };
 
 //eclipse::messages::Task* serialize (eclipse::Task*);

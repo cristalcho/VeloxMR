@@ -3,7 +3,7 @@ include tests/Makefile.am
 AM_CPPFLAGS      = -I@srcdir@/src/common -I@srcdir@/src -include ./config.h
 AM_CXXFLAGS      = -Wall -std=c++14 -ggdb3 
 
-bin_PROGRAMS     = eclipse_node dfs eclipse_app
+bin_PROGRAMS     = eclipse_node dfs eclipse_wc
 
 messages_files   = src/messages/boundaries.cc        \
                    src/messages/message.cc           \
@@ -81,10 +81,10 @@ dfs_SOURCES         = src/fs/dfs.cc \
 
 dfs_LDADD           = $(LDADD) -lsqlite3
 
-eclipse_app_SOURCES    = src/targets/sample_app.cc \
+eclipse_wc_SOURCES    = src/targets/wc.cc \
           						$(messages_files)
          
-eclipse_app_LDADD      = $(LDADD) -lsqlite3
+eclipse_wc_LDADD      = $(LDADD) -lsqlite3
 
 pkginclude_HEADERS  = src/common/ecfs.hh src/common/settings.hh
 

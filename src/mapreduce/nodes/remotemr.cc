@@ -41,7 +41,13 @@ bool RemoteMR::establish() {
 void RemoteMR::map (messages::Message* _m) {
   auto m = dynamic_cast<Task*>(_m);
   logger->info("Task received.");
-  bool ret = peer->process_map_file(m);
+  bool ret;
+
+  if (m->get_type_task() == "MAP") {
+    ret = peer->process_map_file(m);
+  } else {
+    ret = peer->process_reduce(m);
+  }
 
   Reply reply;
   if (ret) {

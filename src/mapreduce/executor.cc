@@ -2,6 +2,8 @@
 #include "../common/dl_loader.hh"
 #include "../common/hash.hh"
 #include "../mapreduce/messages/key_value_shuffle.h"
+#include "../mapreduce/fs/ireader.h"
+#include "../messages/keyvalue.hh"
 
 #include <string>
 #include <sstream>
@@ -35,6 +37,9 @@ bool Executor::run_map (messages::Task* m, std::string input) {
     while (!ss.eof()) {
       char next_line [256] = {0}; //! :TODO: change to DFS line limit
       ss.getline (next_line, 256);
+      if (strnlen(next_line, 256) == 0) 
+        continue;
+
       pair<string, string> key_value = _map_ (string(next_line));
 
       auto key        = key_value.first;
@@ -43,13 +48,81 @@ bool Executor::run_map (messages::Task* m, std::string input) {
 
       KeyValueShuffle kv; 
       kv.job_id_ = 0;
+      kv.map_id_ = 0;
       kv.key_ = key;
       kv.value_ = value; 
       peer->process(&kv);
-      //peer->insert (hash_key, key, value);
     }
+    peer->finish_map(0);
 
     return true;
   }
+// }}}
+// run_reduce {{{
+bool Executor::run_reduce (messages::Task* task) {
+    auto path_lib = context.settings.get<string>("path.applications");
+    path_lib += ("/" + task->library);
+    DL_loader loader (path_lib);
+
+    try {
+      loader.init_lib();
+    } catch (std::exception& e) {
+      context.logger->error ("Not found library path[%s]", path_lib.c_str());
+    }
+
+    function<string(string,string)> _reducer_ = 
+        loader.load_function_reduce(task->func_name);
+
+    IReader ireader;
+    ireader.set_net_id(0);
+    ireader.set_job_id(task->job_id);
+    ireader.set_map_id(task->map_id);
+    ireader.set_reducer_id(0);
+    ireader.init();
+
+    while (ireader.is_next_key()) {
+      string key;
+      ireader.get_next_key(key);
+
+      bool is_first_iteration = true;
+      string last_output;
+      while (ireader.is_next_value()) {
+        string value;
+        ireader.get_next_value(value);
+
+        if (is_first_iteration)
+          ireader.get_next_value(last_output);
+
+        else 
+          last_output = _reducer_ (value, last_output);
+
+        is_first_iteration = false;
+      }
+
+   FileInfo fi;
+   fi.file_name = key;
+   fi.num_block = 1;
+   fi.file_size = last_output.length();
+   fi.file_hash_key = h(key.c_str());
+
+   BlockInfo bi;
+   bi.file_name = key;
+   bi.block_name = key + "_0";
+   bi.block_seq = 0;
+   bi.block_hash_key = h(bi.block_name);
+   bi.block_size = last_output.length();
+   bi.content = last_output;
+   
+   dynamic_cast<PeerDFS*>(peer)->process(&fi);
+   dynamic_cast<PeerDFS*>(peer)->insert_block(&bi);
+
+
+//      KeyValue kv;
+ //     kv.key  = h("output");
+ //     kv.name = "output";
+ //     kv.value = last_output;
+      dynamic_cast<PeerDFS*>(peer)->insert(h("output"), "output", last_output);
+    }
+}
 // }}}
 } /* eclipse  */

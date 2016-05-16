@@ -9,6 +9,7 @@ using boost::asio::ip::tcp;
 class DataSet {
   public:
     DataSet& map(std::string);
+    DataSet& reduce(std::string);
     static DataSet& open (std::string);
 
   private:

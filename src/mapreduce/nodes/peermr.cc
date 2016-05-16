@@ -16,7 +16,7 @@ PeerMR::PeerMR() {
 // }}}
 // process_map_block {{{
 void PeerMR::process_map_block (string ignoreme, string block, Task* task) {
-  auto leader_node = h(task->input_path) % 3;
+  auto leader_node = h(task->input_path) % nodes.size();
   Reply reply;
 
   logger->info ("Executing map");
@@ -105,11 +105,35 @@ template<> void PeerMR::process(KeyValueShuffle *kv_shuffle) {
 // }}}
 // process FinishShuffle {{{
 template<> void PeerMR::process(FinishShuffle *msg) {
+  logger->info (" I got Finish shuffle");
   const uint32_t job_id = msg->job_id_;
   auto it = iwriters_.find(job_id);
   if (it != iwriters_.end()) {
     it->second->finalize();
     iwriters_.erase(it);
+  }
+}
+// }}}
+// process Task {{{
+template<> void PeerMR::process(Task* m) {
+  auto map_id = m->map_id;
+  auto job_id = m->job_id;
+
+  IDataInfo di;
+  di.map_id = map_id;
+  di.job_id = job_id;
+  di.num_reducer = 0;
+  directory.select_idata_metadata(job_id, map_id, &di);
+
+  if (di.num_reducer > 0) { //! Perform reduce operation
+    logger->info("Performing reduce operation");
+    Executor exec(this);
+    Reply reply;
+
+    if (exec.run_reduce(m))
+      reply.message = "MAPDONE";
+    else 
+      reply.message = "MAPFAILED";
   }
 }
 // }}}
@@ -122,6 +146,11 @@ void PeerMR::on_read(messages::Message *msg, int) {
   } else if (type == "FinishShuffle") {
     auto finish_shuffle = dynamic_cast<FinishShuffle*>(msg);
     process(finish_shuffle);
+
+  } else if (type == "Task") {
+    auto task_ = dynamic_cast<Task*>(msg);
+    process(task_);
+
   } else {
     PeerDFS::on_read(msg, 0);
   }
@@ -195,6 +224,32 @@ void PeerMR::write_key_value(messages::KeyValueShuffle *kv_shuffle) {
 // receive_kv {{{
 void PeerMR::receive_kv(messages::KeyValueShuffle *kv_shuffle) {
   process(kv_shuffle);
+}
+// }}}
+// finish_map {{{
+void PeerMR::finish_map (int job_id_) {
+  FinishShuffle fs;
+  fs.job_id_ = job_id_;
+  fs.map_id_ = 0;
+
+  for (uint8_t i = 0; i < net_size_; i++) {
+    if (i != id) {
+      network->send(i, &fs);
+    }
+  }
+  process(&fs);
+}
+// }}}
+// process_reduce {{{
+bool PeerMR::process_reduce (messages::Task* m) {
+  m->job_id = 0;
+  m->map_id = 0;
+  for (uint8_t i = 0; i < net_size_; i++) {
+    if (i != id) {
+      network->send(i, m);
+    }
+  }
+  process(m);
 }
 // }}}
 }  // namespace eclipse

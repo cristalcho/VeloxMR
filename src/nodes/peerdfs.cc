@@ -156,6 +156,18 @@ template<> void PeerDFS::process (BlockDel* m) {
   remove(block_path.c_str());
 }
 // }}}
+// process (FileInfo* m) {{{
+template<> void PeerDFS::process (FileInfo* m) {
+  int which_node = m->file_hash_key % nodes.size();
+
+  if (which_node != id){
+    network->send(which_node, m);
+  
+  } else {
+    insert_file(m);
+  }
+}
+// }}}
 // on_read (Message*) {{{
 void PeerDFS::on_read (Message* m, int) {
   string type = m->get_type();
@@ -177,6 +189,10 @@ void PeerDFS::on_read (Message* m, int) {
     process(m_);
   } else if (type == "BlockDel") {
     auto m_ = dynamic_cast<BlockDel*>(m);
+    process(m_);
+
+  } else if (type == "FileInfo") {
+    auto m_ = dynamic_cast<FileInfo*>(m);
     process(m_);
   }
 }
@@ -223,7 +239,6 @@ bool PeerDFS::insert_block (messages::BlockInfo* m) {
     }
     uint32_t tmp_hash_key = boundaries->random_within_boundaries(tmp_node);
     insert(tmp_hash_key, m->block_name, m->content);
-    sleep(1);
   }
   return true;
 }

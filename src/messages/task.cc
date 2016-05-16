@@ -13,7 +13,7 @@ Task& Task::set_input_path(std::string i) {
 }
 
 int Task::get_id()                 { return id; }
-int Task::get_type()               { return type;}
+std::string Task::get_type_task()  { return type;}
 std::string Task::get_input_path() { return input_path; }
 
 //// serialize {{{
