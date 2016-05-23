@@ -14,7 +14,8 @@ class DataSet {
 
   private:
     DataSet (uint32_t);
-    int id;
+    int id = 0;
+    uint32_t job_id = 0;
     std::string file;
     tcp::endpoint* find_local_master();
     boost::asio::io_service iosvc;

@@ -5,13 +5,16 @@
 #include "../common/hash.hh"
 #include <vector>
 #include <iomanip>
+#include <random>
 
 using namespace eclipse;
 using namespace std;
 using namespace eclipse::messages;
 using vec_str = std::vector<std::string>;
 
-eclipse::messages::Reply* read_reply(tcp::socket* socket) {
+
+template <typename T>
+T* read_reply(tcp::socket* socket) {
   char header[17] = {0};
   header[16] = '\0';
   socket->receive(boost::asio::buffer(header, 16));
@@ -21,7 +24,7 @@ eclipse::messages::Reply* read_reply(tcp::socket* socket) {
   string recv_msg(body, size_of_msg);
   eclipse::messages::Message* m = load_message(recv_msg);
   delete[] body;
-  return dynamic_cast<eclipse::messages::Reply*>(m);
+  return dynamic_cast<T*>(m);
 }
 
 void send_message (tcp::socket* socket, eclipse::messages::Message* msg) {
@@ -45,6 +48,11 @@ DataSet::DataSet (uint32_t id_) :
 {
   find_local_master();
   auto  ep = find_local_master();
+  std::random_device rd;
+  std::uniform_int_distribution<uint32_t> dist(std::numeric_limits<uint32_t>::max());
+  job_id = dist(rd);
+  cout << "[CLIENT] submitting Job id: " << job_id << endl;
+
   socket.connect(*ep);
 }
 
@@ -70,9 +78,11 @@ DataSet& DataSet::map (std::string func) {
   map_task.func_name = func;
   map_task.input_path = file;
   map_task.type = "MAP";
+  map_task.job_id = job_id;
+  map_task.map_id = 0;
 
   send_message(&socket, &map_task);
-  auto reply = read_reply (&socket);
+  auto reply = read_reply<Reply> (&socket);
   return *(new DataSet(2131231));
 }
 
@@ -82,8 +92,9 @@ DataSet& DataSet::reduce (std::string func) {
   task.func_name = func;
   task.input_path = file;
   task.type = "REDUCE";
+  task.job_id = job_id;
 
   send_message(&socket, &task);
-  auto reply = read_reply (&socket);
+  auto reply = read_reply<Reply> (&socket);
   return *(new DataSet(2131231));
 }

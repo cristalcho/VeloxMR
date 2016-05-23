@@ -45,8 +45,12 @@ void RemoteMR::map (messages::Message* _m) {
 
   if (m->get_type_task() == "MAP") {
     ret = peer->process_map_file(m);
-  } else {
+
+  } else if (m->get_type_task() == "REDUCE") {
     ret = peer->process_reduce(m);
+
+  } else if (m->get_type_task() == "COUNT") {
+    //ret = peer->process_count(m);
   }
 
   Reply reply;

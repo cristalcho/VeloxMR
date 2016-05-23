@@ -41,9 +41,12 @@ class PeerMR: public PeerDFS {
   template<typename T> void process(T);
 
   void finish_map (int);
+  bool format ();
 
  protected:
   uint32_t net_size_;
+  uint32_t job_ids = 0;
+  uint32_t current_maps = 0;
   DirectoryMR directory;
   std::unordered_map<uint32_t, std::shared_ptr<IWriter_interface>> iwriters_;
 };

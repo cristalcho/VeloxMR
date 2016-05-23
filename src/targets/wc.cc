@@ -40,6 +40,11 @@ string myreducer (string a, string b) {
 
 int main (int argc, char** argv) {
   DataSet& A = DataSet::open(argv[1]);
+//  DataSet& B = DataSet::open("FileB");
+
+//  cout << B.count() << endl;
+//  cout << B.filter("^Total\s").count() << endl;
+
   A.map("myfunc");
   A.reduce("myreducer");
 }

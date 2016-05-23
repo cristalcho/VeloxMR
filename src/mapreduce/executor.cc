@@ -13,6 +13,8 @@
 using namespace eclipse;
 using namespace std;
 
+uint32_t eclipse::Executor::map_ids(0);
+
 namespace eclipse {
 // Constructor {{{
 Executor::Executor(PeerMR* p) : peer(p) { }
@@ -47,13 +49,13 @@ bool Executor::run_map (messages::Task* m, std::string input) {
       auto& value     = key_value.second;
 
       KeyValueShuffle kv; 
-      kv.job_id_ = 0;
+      kv.job_id_ = m->job_id;
       kv.map_id_ = 0;
       kv.key_ = key;
       kv.value_ = value; 
       peer->process(&kv);
     }
-    peer->finish_map(0);
+    peer->finish_map(m->job_id);
 
     return true;
   }
@@ -73,8 +75,10 @@ bool Executor::run_reduce (messages::Task* task) {
     function<string(string,string)> _reducer_ = 
         loader.load_function_reduce(task->func_name);
 
+    try {
+
     IReader ireader;
-    ireader.set_net_id(0);
+    //ireader.set_net_id(0);
     ireader.set_job_id(task->job_id);
     ireader.set_map_id(task->map_id);
     ireader.set_reducer_id(0);
@@ -99,29 +103,26 @@ bool Executor::run_reduce (messages::Task* task) {
         is_first_iteration = false;
       }
 
-   FileInfo fi;
-   fi.file_name = key;
-   fi.num_block = 1;
-   fi.file_size = last_output.length();
-   fi.file_hash_key = h(key.c_str());
+      FileInfo fi;
+      fi.file_name = key;
+      fi.num_block = 1;
+      fi.file_size = last_output.length();
+      fi.file_hash_key = h(key.c_str());
 
-   BlockInfo bi;
-   bi.file_name = key;
-   bi.block_name = key + "_0";
-   bi.block_seq = 0;
-   bi.block_hash_key = h(bi.block_name);
-   bi.block_size = last_output.length();
-   bi.content = last_output;
-   
-   dynamic_cast<PeerDFS*>(peer)->process(&fi);
-   dynamic_cast<PeerDFS*>(peer)->insert_block(&bi);
+      BlockInfo bi;
+      bi.file_name = key;
+      bi.block_name = key + "_0";
+      bi.block_seq = 0;
+      bi.block_hash_key = h(bi.block_name);
+      bi.block_size = last_output.length();
+      bi.content = last_output;
 
-
-//      KeyValue kv;
- //     kv.key  = h("output");
- //     kv.name = "output";
- //     kv.value = last_output;
-      dynamic_cast<PeerDFS*>(peer)->insert(h("output"), "output", last_output);
+      dynamic_cast<PeerDFS*>(peer)->process(&fi);
+      dynamic_cast<PeerDFS*>(peer)->insert_block(&bi);
+    }
+    } catch (std::exception& e) {
+      context.logger->error ("Error in the executer: %s", e.what());
+      exit(1);
     }
 }
 // }}}
