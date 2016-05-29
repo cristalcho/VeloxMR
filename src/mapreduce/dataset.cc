@@ -48,9 +48,11 @@ DataSet::DataSet (uint32_t id_) :
 {
   find_local_master();
   auto  ep = find_local_master();
-  std::random_device rd;
-  std::uniform_int_distribution<uint32_t> dist(std::numeric_limits<uint32_t>::max());
-  job_id = dist(rd);
+  std::mt19937 rng;
+  rng.seed(std::random_device()());
+  std::uniform_int_distribution<std::mt19937::result_type> dist(1, 
+      std::numeric_limits<uint32_t>::max());
+  job_id = dist(rng);
   cout << "[CLIENT] submitting Job id: " << job_id << endl;
 
   socket.connect(*ep);

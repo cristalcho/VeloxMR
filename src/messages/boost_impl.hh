@@ -32,6 +32,7 @@
 #include "../mapreduce/messages/key_value_shuffle.h"
 #include "../mapreduce/messages/finish_shuffle.h"
 #include "fileexist.hh"
+#include "taskstatus.hh"
 
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/access.hpp>
@@ -39,6 +40,7 @@
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/vector.hpp>
+#include <boost/serialization/utility.hpp>
 
 #ifndef BASE_OBJECT
 #define BASE_OBJECT(X,Y)                          \
@@ -112,16 +114,13 @@ template <typename Archive>
 template <typename Archive>
   void serialize (Archive& ar, eclipse::messages::Task& c, unsigned int) {
     ar & BASE_OBJECT(Message, c);
-    ar & BOOST_SERIALIZATION_NVP(c.id);
     ar & BOOST_SERIALIZATION_NVP(c.type);
     ar & BOOST_SERIALIZATION_NVP(c.library);
     ar & BOOST_SERIALIZATION_NVP(c.input_path);
     ar & BOOST_SERIALIZATION_NVP(c.func_name);
     ar & BOOST_SERIALIZATION_NVP(c.job_id);
     ar & BOOST_SERIALIZATION_NVP(c.map_id);
-    ar & BOOST_SERIALIZATION_NVP(c.output);
-    ar & BOOST_SERIALIZATION_NVP(c.block_name);
-    ar & BOOST_SERIALIZATION_NVP(c.block_hash_key);
+    ar & BOOST_SERIALIZATION_NVP(c.blocks);
   }
 template <typename Archive>
   void serialize (Archive& ar, eclipse::messages::FileList& c, unsigned int) {
@@ -260,6 +259,14 @@ template <typename Archive>
     ar & BOOST_SERIALIZATION_NVP(c.map_id_);
   }
 
+template <typename Archive>
+  void serialize(Archive& ar, eclipse::messages::TaskStatus& c,
+      unsigned int) {
+    ar & BASE_OBJECT(Message, c);
+    ar & BOOST_SERIALIZATION_NVP(c.is_success);
+    ar & BOOST_SERIALIZATION_NVP(c.job_id);
+  }
+
 }  // namespace messages
 }  // namespace eclipse
 
@@ -294,6 +301,7 @@ BOOST_CLASS_TRACKING(ECNS::IBlockInfoRequest, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::FileExist, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::KeyValueShuffle, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::FinishShuffle, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::TaskStatus, TRACK_NEVER);
 
 #undef ECNS
 #undef TRACK_NEVER 

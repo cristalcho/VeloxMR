@@ -44,21 +44,23 @@ void RemoteMR::map (messages::Message* _m) {
   bool ret;
 
   if (m->get_type_task() == "MAP") {
-    ret = peer->process_map_file(m);
+    ret = peer->process_map_file(m, std::bind(&RemoteMR::reply_map, this, m));
 
   } else if (m->get_type_task() == "REDUCE") {
     ret = peer->process_reduce(m);
+    Reply reply;
+    reply.message = "OK";
+    network->send(0, &reply);
 
   } else if (m->get_type_task() == "COUNT") {
     //ret = peer->process_count(m);
   }
 
+}
+
+void RemoteMR::reply_map (messages::Message* _m) {
   Reply reply;
-  if (ret) {
-    reply.message = "OK";
-  } else {
-    reply.message = "FAIL";
-  }
+  reply.message = "OK";
   network->send(0, &reply);
 }
 // }}}

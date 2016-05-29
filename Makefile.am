@@ -35,6 +35,7 @@ messages_files   = src/messages/boundaries.cc        \
                    src/mapreduce/messages/iblockinfo.cc        \
                    src/mapreduce/messages/key_value_shuffle.cc \
                    src/mapreduce/messages/finish_shuffle.cc    \
+                   src/messages/taskstatus.cc        \
 									 src/messages/fileexist.cc
 
 # libs -----

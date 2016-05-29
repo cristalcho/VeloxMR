@@ -25,7 +25,7 @@ maptype DL_loader::load_function (std::string fun) {
     reinterpret_cast<maptype>(dlsym(lib, fun.c_str())); 
   char* err = dlerror();
 
-  if (err) throw std::runtime_error("Symbol not found");
+  if (err) throw std::runtime_error("DL_LOADER: Symbol not found");
   return func_;
 }
 // }}}
