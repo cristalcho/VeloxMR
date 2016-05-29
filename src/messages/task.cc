@@ -5,14 +5,12 @@ namespace messages {
 
 std::string Task::get_type() const { return "Task"; }
 
-Task& Task::set_id(int i)   { id = i; return *this; }
 Task& Task::set_type(int i) { type = i; return *this; }
 Task& Task::set_input_path(std::string i) { 
   input_path = i; 
   return *this;
 }
 
-int Task::get_id()                 { return id; }
 std::string Task::get_type_task()  { return type;}
 std::string Task::get_input_path() { return input_path; }
 

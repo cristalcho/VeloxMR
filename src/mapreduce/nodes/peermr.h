@@ -35,16 +35,27 @@ class PeerMR: public PeerDFS {
   IBlockInfo request_iblock(messages::IBlockInfoRequest *iblock_info_request);
   void write_key_value(messages::KeyValueShuffle *key_value);
   void receive_kv(messages::KeyValueShuffle *kv_shuffle);
-  void process_map_block (std::string, std::string, messages::Task*);
-  bool process_map_file (messages::Task*);
-  bool process_reduce (messages::Task*);
   template<typename T> void process(T);
+  bool format ();
+
+  void process_map_block (std::string, std::string, messages::Task*);
+  bool process_map_file (messages::Task*, std::function<void(void)>);
+  void map_leader (messages::Task*);
+  void map_follower (messages::Task*);
+  bool process_reduce (messages::Task*);
 
   void finish_map (int);
 
  protected:
+  bool is_leader(std::string);
+  void notify_map_leader (messages::Task*);
+
   uint32_t net_size_;
+  uint32_t job_ids = 0;
+  uint32_t remaining_follower_map_nodes = 0;
+  uint32_t remaining_maps = 0;
   DirectoryMR directory;
+  std::unordered_map<uint32_t, std::function<void(void)>> task_callbacks;
   std::unordered_map<uint32_t, std::shared_ptr<IWriter_interface>> iwriters_;
 };
 

@@ -27,59 +27,22 @@ void PeerMR::process_map_block (string ignoreme, string block, Task* task) {
   else 
     reply.message = "MAPFAILED";
 
-  if (leader_node == id) {
-
-  } else {
-    network->send (leader_node, &reply);
-  }
+  remaining_maps--;
+  if (remaining_maps == 0)
+    notify_map_leader(task);
 }
 // }}}
 // process_map_file {{{
-bool PeerMR::process_map_file (messages::Task* m) {
-  auto file = m->input_path;
-  FileInfo fi;
-  fi.num_block = 0;
+bool PeerMR::process_map_file (messages::Task* m, std::function<void(void)> f) {
+  task_callbacks[m->job_id] = f;
 
-  directory.select_file_metadata(file, &fi);
+  if (is_leader(m->input_path)) 
+    map_leader(m);
+  else
+    map_follower(m);
 
-  int num_blocks = fi.num_block;
-  if (num_blocks == 0) return false;
-
-  for (int i = 0; i< num_blocks; i++) {
-    BlockInfo bi;
-    directory.select_block_metadata (file, i, &bi);
-    auto block_name = bi.block_name;
-    auto hash_key = bi.block_hash_key;
-
-    auto block_node = boundaries->get_index(hash_key);
-
-    if (block_node == id) {
-      request(hash_key, block_name, std::bind(
-            &PeerMR::process_map_block, this, 
-            std::placeholders::_1,
-            std::placeholders::_2, m));
-
-    } else {
-      network->send (block_node, m);
-    }
-  }
   return true;
 }
-// }}}
-//// process_map_dataset {{{
-//void PeerMR::process_map_dataset (messages::Task* m) {
-//  vec_str dataset = task.dataset;
-//
-//  for (auto& file : dataset) {
-//    which_node = disk_boundaries->get_index(h(file));
-//    if (which_node == id) {
-//      process_map_file(m);
-//
-//    } else {
-//      network->send (which_node, m);
-//    }
-//  }
-//}
 // }}}
 // process KeyValueShuffle {{{
 template<> void PeerMR::process(KeyValueShuffle *kv_shuffle) {
@@ -106,34 +69,59 @@ template<> void PeerMR::process(KeyValueShuffle *kv_shuffle) {
 // process FinishShuffle {{{
 template<> void PeerMR::process(FinishShuffle *msg) {
   logger->info (" I got Finish shuffle");
-  const uint32_t job_id = msg->job_id_;
-  auto it = iwriters_.find(job_id);
-  if (it != iwriters_.end()) {
-    it->second->finalize();
-    iwriters_.erase(it);
-  }
+
+  //Make sure all the nodes have finished shuffling
+    try { 
+      const uint32_t job_id = msg->job_id_;
+      auto it = iwriters_.find(job_id);
+      if (it != iwriters_.end()) {
+        it->second->finalize();
+        iwriters_.erase(it);
+      }
+    } catch (std::exception& e) {
+      logger->error ("Iwriter exception");
+    }
+    if (task_callbacks.find(msg->job_id_) != task_callbacks.end())
+      task_callbacks[msg->job_id_]();
 }
 // }}}
 // process Task {{{
 template<> void PeerMR::process(Task* m) {
-  auto map_id = m->map_id;
-  auto job_id = m->job_id;
+  if (m->get_type_task() == "MAP") {
+    map_follower(m);
+  
+  } else {
+    auto map_id = m->map_id;
+    auto job_id = m->job_id;
 
-  IDataInfo di;
-  di.map_id = map_id;
-  di.job_id = job_id;
-  di.num_reducer = 0;
-  directory.select_idata_metadata(job_id, map_id, &di);
+    IDataInfo di;
+    di.map_id = map_id;
+    di.job_id = job_id;
+    di.num_reducer = 0;
+    directory.select_idata_metadata(job_id, map_id, &di);
 
-  if (di.num_reducer > 0) { //! Perform reduce operation
-    logger->info("Performing reduce operation");
-    Executor exec(this);
-    Reply reply;
+    if (di.num_reducer > 0) { //! Perform reduce operation
+      logger->info("Performing reduce operation");
+      Executor exec(this);
+      Reply reply;
 
-    if (exec.run_reduce(m))
-      reply.message = "MAPDONE";
-    else 
-      reply.message = "MAPFAILED";
+      if (exec.run_reduce(m))
+        reply.message = "MAPDONE";
+      else 
+        reply.message = "MAPFAILED";
+    }
+  }
+}
+// }}}
+// process TaskStatus {{{
+template<> void PeerMR::process(messages::TaskStatus* m) {
+  logger->info ("I got a Task status: %d  jobid: %u", m->is_success, m->job_id);
+  if (m->is_success) {
+    remaining_follower_map_nodes--;
+  }
+
+  if (remaining_follower_map_nodes == 0) {
+    finish_map(m->job_id);
   }
 }
 // }}}
@@ -149,6 +137,10 @@ void PeerMR::on_read(messages::Message *msg, int) {
 
   } else if (type == "Task") {
     auto task_ = dynamic_cast<Task*>(msg);
+    process(task_);
+
+  } else if (type == "TaskStatus") {
+    auto task_ = dynamic_cast<TaskStatus*>(msg);
     process(task_);
 
   } else {
@@ -228,28 +220,100 @@ void PeerMR::receive_kv(messages::KeyValueShuffle *kv_shuffle) {
 // }}}
 // finish_map {{{
 void PeerMR::finish_map (int job_id_) {
-  FinishShuffle fs;
-  fs.job_id_ = job_id_;
-  fs.map_id_ = 0;
+    FinishShuffle fs;
+    fs.job_id_ = job_id_;
 
-  for (uint8_t i = 0; i < net_size_; i++) {
-    if (i != id) {
-      network->send(i, &fs);
+    for (uint8_t i = 0; i < net_size_; i++) {
+      if (i != id) {
+        network->send(i, &fs);
+      }
     }
-  }
-  process(&fs);
+    process(&fs);
 }
 // }}}
 // process_reduce {{{
 bool PeerMR::process_reduce (messages::Task* m) {
-  m->job_id = 0;
-  m->map_id = 0;
   for (uint8_t i = 0; i < net_size_; i++) {
     if (i != id) {
       network->send(i, m);
     }
   }
   process(m);
+}
+// }}}
+// map_leader {{{
+void PeerMR::map_leader (messages::Task* m) {
+  auto file = m->input_path;
+  FileInfo fi;
+  fi.num_block = 0;
+
+  directory.select_file_metadata(file, &fi);
+
+  int num_blocks = fi.num_block;
+  if (num_blocks == 0) return;
+
+  map<int, Task> tasks;
+  for (int i = 0; i< num_blocks; i++) {
+    BlockInfo bi;
+    directory.select_block_metadata (file, i, &bi);
+    auto block_name = bi.block_name;
+    auto hash_key = bi.block_hash_key;
+
+    auto block_node = boundaries->get_index(hash_key);
+    tasks.insert({block_node, *m});
+    tasks[block_node].blocks.push_back({hash_key, block_name});
+  }
+  remaining_follower_map_nodes = tasks.size();
+  logger->info ("%d nodes will run maps", remaining_follower_map_nodes);
+
+  for (auto& task : tasks) {
+    if (task.first == id) {
+      map_follower(&task.second);
+    
+    } else {
+      logger->info ("Forwaring Map task to %d jobid:%" PRIu32, task.first, m->job_id);
+      network->send (task.first, &task.second);
+    }
+  }
+}
+// }}}
+// map_follower {{{
+void PeerMR::map_follower (messages::Task* m) {
+  logger->info ("Executing map jobid:%d", m->job_id);
+  remaining_maps = m->blocks.size();
+  for (auto& block : m->blocks)
+      request(block.first, block.second, std::bind(
+            &PeerMR::process_map_block, this, 
+            std::placeholders::_1,
+            std::placeholders::_2, m));
+
+}
+// }}}
+// format {{{
+bool PeerMR::format () {
+  PeerDFS::format();
+  directory.init_db();
+}
+// }}}
+// is_leader {{{
+bool PeerMR::is_leader(std::string f) {
+  return (id == (h(f) % nodes.size()));
+}
+// }}}
+// notify_map_leader {{{
+void PeerMR::notify_map_leader (messages::Task* m) {
+  auto leader_node = h(m->input_path) % nodes.size();
+
+  TaskStatus ts;
+  ts.is_success = true;
+  ts.job_id = m->job_id;
+
+  if (leader_node == id) {
+    process(&ts);
+
+  } else {
+    network->send(leader_node, &ts);
+  }
 }
 // }}}
 }  // namespace eclipse

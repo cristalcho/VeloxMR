@@ -76,7 +76,7 @@ void AsyncChannel::on_write (const boost::system::error_code& ec,
 // do_read {{{
 void AsyncChannel::do_read () {
   logger->info("Connection established, starting to read");
-  spawn(iosvc, bind(&AsyncChannel::read_coroutine, this, _1));
+  spawn(iosvc, boost::bind(&AsyncChannel::read_coroutine, this, _1));
 }
 // }}}
 // read_coroutine {{{

@@ -29,3 +29,4 @@ BOOST_CLASS_EXPORT(eclipse::messages::IBlockInfoRequest);
 BOOST_CLASS_EXPORT(eclipse::messages::FileExist);
 BOOST_CLASS_EXPORT(eclipse::messages::KeyValueShuffle);
 BOOST_CLASS_EXPORT(eclipse::messages::FinishShuffle);
+BOOST_CLASS_EXPORT(eclipse::messages::TaskStatus);

@@ -2,44 +2,33 @@
 
 #include <utility>
 #include <string>
+#include <sstream>
 
 using namespace eclipse;
 using namespace std;
 
 extern "C" {
-  pair<string, string> myfunc (string);
+  pair<string, string> mymapper(string);
   string myreducer (string, string);
 }
 
-pair<string, string> myfunc (string a) {
+pair<string, string> mymapper(string a) {
 
-  int total = 0;
-  char *p = new char[a.length()];
-  strncpy (p, a.c_str(), a.length());
-  p = strtok(p, " ");
-  while (p) {
-    if (p[0] != '\n' or strlen(p) == 0)
-    total++;
-    p = strtok(NULL, " ");
-  }
+  std::stringstream  stream(a);
+  std::string        oneWord;
+  unsigned int       count = 0;
 
-  delete p;
+  while(stream >> oneWord) { ++count;}
   
-  auto output = to_string(total);
-  return {"Total", output};
+  return {"Total", to_string(count)};
 }
 
 string myreducer (string a, string b) {
-  auto a_ = atoi (a.c_str());
-  auto b_ = atoi (b.c_str());
-
-  auto out = to_string(a_ + b_);
-  
-  return out;
+  return to_string(stoi(a) + stoi(b));
 }
 
 int main (int argc, char** argv) {
   DataSet& A = DataSet::open(argv[1]);
-  A.map("myfunc");
+  A.map("mymapper");
   A.reduce("myreducer");
 }
