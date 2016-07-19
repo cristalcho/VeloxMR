@@ -37,10 +37,10 @@ class IReader: public IReader_interface {
   bool is_next_value() override;
 
  private:
-  tcp::socket* connect(uint32_t net_id);
-  void send_message(tcp::socket *socket, messages::Message *msg);
-  messages::IGroupInfo* read_igroup_info(tcp::socket *socket);
-  messages::IBlockInfo* read_iblock_info(tcp::socket *socket);
+//  tcp::socket* connect(uint32_t net_id);
+//  void send_message(tcp::socket *socket, messages::Message *msg);
+//  messages::IGroupInfo* read_igroup_info(tcp::socket *socket);
+//  messages::IBlockInfo* read_iblock_info(tcp::socket *socket);
   uint32_t get_num_block();
   void SetNext();
   void SetNextAsCurrent();

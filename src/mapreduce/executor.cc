@@ -46,7 +46,7 @@ bool Executor::run_map (messages::Task* m, std::string input) {
       pair<string, string> key_value = _map_ (string(next_line));
 
       auto key        = key_value.first;
-      auto hash_key   = h(key.c_str());
+//      auto hash_key   = h(key.c_str());
       auto& value     = key_value.second;
       context.logger->info ("Generated value: %s -> %s", next_line, value.c_str());
 
@@ -105,17 +105,17 @@ bool Executor::run_reduce (messages::Task* task) {
       context.logger->info ("Key %s #iterations: %i", key.c_str(), total_iterations);
 
       FileInfo fi;
-      fi.file_name = key;
+      fi.name = key;
       fi.num_block = 1;
-      fi.file_size = last_output.length();
-      fi.file_hash_key = h(key.c_str());
+      fi.size = last_output.length();
+      fi.hash_key = h(key.c_str());
 
       BlockInfo bi;
       bi.file_name = key;
-      bi.block_name = key + "_0";
-      bi.block_seq = 0;
-      bi.block_hash_key = h(bi.block_name);
-      bi.block_size = last_output.length();
+      bi.name = key + "_0";
+      bi.seq = 0;
+      bi.hash_key = h(bi.name);
+      bi.size = last_output.length();
       bi.content = last_output;
 
       dynamic_cast<PeerDFS*>(peer)->process(&fi);
