@@ -8,7 +8,7 @@
 
 namespace eclipse {
 // Constructors {{{
-PeerMR::PeerMR() {
+PeerMR::PeerMR(network::Network* net) : PeerDFS(net) {
   auto ip_list = context.settings.get<std::vector<std::string>>("network.nodes");
   net_size_ = ip_list.size();
   directory.init_db();
@@ -16,7 +16,7 @@ PeerMR::PeerMR() {
 // }}}
 // process_map_block {{{
 void PeerMR::process_map_block (string ignoreme, string block, Task* task) {
-  auto leader_node = h(task->input_path) % nodes.size();
+  auto leader_node = h(task->input_path) % network_size;
   Reply reply;
 
   logger->info ("Executing map");
@@ -256,8 +256,8 @@ void PeerMR::map_leader (messages::Task* m) {
   for (int i = 0; i< num_blocks; i++) {
     BlockInfo bi;
     directory.select_block_metadata (file, i, &bi);
-    auto block_name = bi.block_name;
-    auto hash_key = bi.block_hash_key;
+    auto block_name = bi.name;
+    auto hash_key = bi.hash_key;
 
     auto block_node = boundaries->get_index(hash_key);
     tasks.insert({block_node, *m});
@@ -297,12 +297,12 @@ bool PeerMR::format () {
 // }}}
 // is_leader {{{
 bool PeerMR::is_leader(std::string f) {
-  return (id == (h(f) % nodes.size()));
+  return (id == (h(f) % network_size));
 }
 // }}}
 // notify_map_leader {{{
 void PeerMR::notify_map_leader (messages::Task* m) {
-  auto leader_node = h(m->input_path) % nodes.size();
+  auto leader_node = h(m->input_path) % network_size;
 
   TaskStatus ts;
   ts.is_success = true;

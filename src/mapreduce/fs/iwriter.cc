@@ -132,24 +132,24 @@ void IWriter::finalize() {
 //   delete ep;
 //   return socket;
 // }
-void IWriter::send_message(tcp::socket *socket, messages::Message *msg) {
-  string out = save_message(msg);
-  stringstream ss;
-  ss << setfill('0') << setw(16) << out.length() << out;
-  socket->send(boost::asio::buffer(ss.str()));
-}
-messages::Reply* IWriter::read_reply(tcp::socket* socket) {
-  char header[17] = {0};
-  header[16] = '\0';
-  socket->receive(boost::asio::buffer(header, 16));
-  size_t size_of_msg = atoi(header);
-  char* body = new char[size_of_msg];
-  socket->receive(boost::asio::buffer(body, size_of_msg));
-  string recv_msg(body, size_of_msg);
-  messages::Message* m = messages::load_message(recv_msg);
-  delete[] body;
-  return dynamic_cast<eclipse::messages::Reply*>(m);
-}
+//void IWriter::send_message(tcp::socket *socket, messages::Message *msg) {
+//  string out = save_message(msg);
+//  stringstream ss;
+//  ss << setfill('0') << setw(16) << out.length() << out;
+//  socket->send(boost::asio::buffer(ss.str()));
+//}
+//messages::Reply* IWriter::read_reply(tcp::socket* socket) {
+//  char header[17] = {0};
+//  header[16] = '\0';
+//  socket->receive(boost::asio::buffer(header, 16));
+//  size_t size_of_msg = atoi(header);
+//  char* body = new char[size_of_msg];
+//  socket->receive(boost::asio::buffer(body, size_of_msg));
+//  string recv_msg(body, size_of_msg);
+//  messages::Message* m = messages::load_message(recv_msg);
+//  delete[] body;
+//  return dynamic_cast<eclipse::messages::Reply*>(m);
+//}
 void IWriter::run(IWriter *obj) {
   obj->seek_writable_block();
 }

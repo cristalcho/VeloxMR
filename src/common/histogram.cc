@@ -132,7 +132,7 @@ void Histogram::set_count (int index, double count)
 void Histogram::updateboundary()   // update the boundary according to the query counts
 {
     // sum up the count of all bin and divide it by number of servers(query per server)
-    double qps = 0.0;
+    double qps = 0.0;              // query per server
     double temp = 0.0;
     double stmeter = 0.0;
     int j = 0;
@@ -247,6 +247,7 @@ int Histogram::get_index (unsigned query)     // return the server index range o
 
 // random_within_boundaries {{{
 uint32_t Histogram::random_within_boundaries (uint32_t index) {
+  srand((uint32_t)time(NULL));
   uint32_t which_server = index;
   uint32_t lower_boundary ;
 

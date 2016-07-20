@@ -1,29 +1,34 @@
 include tests/Makefile.am
 
-AM_CPPFLAGS      = -I@srcdir@/src/common -I@srcdir@/src -include ./config.h
-AM_CXXFLAGS      = -Wall -std=c++14 -ggdb3 
+AM_CPPFLAGS      = -I@srcdir@/src/common -I@srcdir@/src -include ./config.h $(BOOST_CPPFLAGS)
+AM_CXXFLAGS      = $(CXXFLAGS) -Wall
 
-bin_PROGRAMS     = eclipse_node dfs eclipse_wc
+bin_PROGRAMS     = eclipse_node dfs #eclipse_wc
 
-messages_files   = src/messages/boundaries.cc        \
-                   src/messages/message.cc           \
-                   src/messages/keyvalue.cc          \
-                   src/messages/keyrequest.cc        \
-                   src/messages/control.cc           \
-                   src/messages/boost_impl.cc        \
-                   src/messages/factory.cc           \
-                   src/messages/fileinfo.cc          \
-                   src/messages/blockinfo.cc         \
-                   src/messages/task.cc              \
-                   src/messages/reply.cc             \
-                   src/messages/filerequest.cc       \
-                   src/messages/blockrequest.cc      \
-                   src/messages/filelist.cc          \
-                   src/messages/filedescription.cc   \
-                   src/messages/cacheinfo.cc         \
-                   src/messages/blockdel.cc          \
-                   src/messages/filedel.cc           \
-									 src/messages/formatrequest.cc     \
+messages_files   = src/messages/boundaries.cc      \
+                   src/messages/message.cc         \
+                   src/messages/keyvalue.cc        \
+                   src/messages/offsetkv.cc        \
+                   src/messages/keyrequest.cc      \
+                   src/messages/control.cc         \
+                   src/messages/boost_impl.cc      \
+                   src/messages/factory.cc         \
+                   src/messages/fileinfo.cc        \
+                   src/messages/fileupdate.cc      \
+                   src/messages/blockinfo.cc       \
+                   src/messages/blockupdate.cc     \
+                   src/messages/task.cc            \
+                   src/messages/reply.cc           \
+                   src/messages/filerequest.cc     \
+                   src/messages/blockrequest.cc    \
+                   src/messages/filelist.cc        \
+                   src/messages/filedescription.cc \
+                   src/messages/cacheinfo.cc       \
+                   src/messages/blockdel.cc        \
+                   src/messages/filedel.cc         \
+                   src/messages/formatrequest.cc   \
+                   src/messages/fileexist.cc       \
+                   src/messages/metadata.cc        \
                    src/mapreduce/messages/idatainsert.cc       \
                    src/mapreduce/messages/igroupinsert.cc      \
                    src/mapreduce/messages/iblockinsert.cc      \
@@ -35,57 +40,59 @@ messages_files   = src/messages/boundaries.cc        \
                    src/mapreduce/messages/iblockinfo.cc        \
                    src/mapreduce/messages/key_value_shuffle.cc \
                    src/mapreduce/messages/finish_shuffle.cc    \
-                   src/messages/taskstatus.cc        \
-									 src/messages/fileexist.cc
+                   src/messages/taskstatus.cc
 
 # libs -----
 lib_LTLIBRARIES     = libecfs.la
 libecfs_la_SOURCES  = src/common/hash.cc src/common/settings.cc \
-											src/common/logger.cc src/common/histogram.cc \
-											src/common/context.cc src/common/dl_loader.cc \
-											src/mapreduce/dataset.cc
+                      src/common/logger.cc src/common/histogram.cc \
+                      src/common/context.cc src/common/dl_loader.cc \
+                      src/common/context_singleton.cc
 
-libecfs_la_LDFLAGS  = -version-info 0:0:0 
-libecfs_la_LIBADD   =  -lboost_thread -lboost_system
+libecfs_la_LDFLAGS  = $(BOOST_LDFLAGS) -version-info 0:0:0
 
 # Binaries ----
-AM_LDFLAGS          = -static
-LDADD               = libecfs.la -lboost_system -lboost_thread -lboost_serialization -lboost_system -lboost_coroutine -lboost_context -ldl
+if BOOST_STATIC
+AM_LDFLAGS          = -static $(BOOST_LDFLAGS) -Wl,--start-group -Wl,-Bstatic,-lboost_system,-lboost_serialization,-lboost_coroutine,-lboost_thread,-lboost_context,-Bdynamic
+LDADD               = libecfs.la -lrt -ldl
+else
+AM_LDFLAGS          = -static $(BOOST_LDFLAGS)
+LDADD               = libecfs.la -lboost_system -lboost_serialization -lboost_coroutine -lboost_thread -lboost_context
+endif
 
 eclipse_node_SOURCES = src/targets/node_main_mr.cc \
-											 src/network/channel.cc \
-											 src/network/asyncchannel.cc \
-											 src/network/p2p.cc \
-											 src/network/server.cc \
-											 src/network/acceptor.cc \
-											 src/network/connector.cc \
-											 src/nodes/machine.cc \
-											 src/nodes/peerdfs.cc \
-											 src/nodes/remotedfs.cc \
+                       src/network/channel.cc \
+                       src/network/asyncchannel.cc \
+                       src/network/p2p.cc \
+                       src/network/server.cc \
+                       src/network/acceptor.cc \
+                       src/network/connector.cc \
+                       src/nodes/machine.cc \
+                       src/nodes/peerdfs.cc \
+                       src/nodes/local_io.cc \
+                       src/nodes/remotedfs.cc \
+                       src/nodes/router.cc \
+                       src/nodes/node.cc \
                        src/mapreduce/nodes/peermr.cc \
                        src/mapreduce/nodes/remotemr.cc \
-											 src/nodes/router.cc \
-											 src/fs/directory.cc \
+                       src/fs/directory.cc \
                        src/mapreduce/fs/directorymr.cc \
-											 src/mapreduce/fs/iwriter.cc \
-											 src/mapreduce/fs/ireader.cc \
-											 src/nodes/node.cc \
-											 src/mapreduce/executor.cc \
-											 $(messages_files)
-
-eclipse_node_LDADD  = $(LDADD) -lsqlite3
+                       src/mapreduce/fs/iwriter.cc \
+                       src/mapreduce/fs/ireader.cc \
+                       src/mapreduce/executor.cc \
+                       $(messages_files)
 
 dfs_SOURCES         = src/fs/dfs.cc \
                       src/fs/directory.cc \
                       src/fs/main.cc \
-											$(messages_files)
+                      $(messages_files)
 
-dfs_LDADD           = $(LDADD) -lsqlite3
+dfs_CXXFLAGS        = $(AM_CXXFLAGS)
 
-eclipse_wc_SOURCES    = src/targets/wc.cc \
-          						$(messages_files)
-         
-eclipse_wc_LDADD      = $(LDADD) -lsqlite3
+#eclipse_wc_SOURCES    = src/targets/wc.cc \
+#                        $(messages_files)
+
+#eclipse_wc_LDADD      = $(LDADD) -lsqlite3
 
 pkginclude_HEADERS  = src/common/ecfs.hh src/common/settings.hh
 
@@ -97,4 +104,4 @@ dist_doc_DATA       = README.md LICENSE doc/eclipse.json
 man1_MANS           = doc/eclipsefs.1
 
 EXTRA_DIST          = doc .autotools_aux $(shell find @srcdir@/src -name "*.hh" -o -name "*.in") \
-											$(sh_scripts) doc/eclipse.json
+                      $(sh_scripts) doc/eclipse.json

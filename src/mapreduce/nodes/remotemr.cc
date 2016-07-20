@@ -19,7 +19,8 @@ using namespace messages;
 namespace ph = std::placeholders;
 using std::bind;
 
-RemoteMR::RemoteMR() {
+RemoteMR::RemoteMR(PeerMR* p, network::Network* net): RemoteDFS(p, net) {
+  peer = dynamic_cast<PeerMR*>(peer_dfs);
   auto& rt = routing_table;
   rt.insert({"IBlockInsert", bind(&RemoteMR::insert_idata, this, ph::_1)});
   rt.insert({"IGroupInsert", bind(&RemoteMR::insert_igroup, this, ph::_1)});
@@ -29,13 +30,6 @@ RemoteMR::RemoteMR() {
   rt.insert({"IBlockInfoRequest", bind(&RemoteMR::request_iblock, this, ph::_1)});
   rt.insert({"KeyValueShuffle", bind(&RemoteMR::shuffle, this, ph::_1)});
   rt.insert({"Task", bind(&RemoteMR::map, this, ph::_1)});
-}
-bool RemoteMR::establish() {
-  peer_dfs = new PeerMR(); 
-  peer = dynamic_cast<PeerMR*>(peer_dfs);
-  peer->establish();
-  Router::establish();
-  return true;
 }
 // map {{{
 void RemoteMR::map (messages::Message* _m) {
