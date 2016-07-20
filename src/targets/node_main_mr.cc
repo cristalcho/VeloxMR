@@ -1,5 +1,10 @@
 #include <mapreduce/nodes/remotemr.h>
-#include <common/context.hh>
+#include <nodes/remotedfs.hh>
+#include <common/context_singleton.hh>
+#include <network/p2p.hh>
+#include <network/server.hh>
+#include <network/asyncnetwork.hh>
+#include <memory>
 #include <string>
 
 using namespace eclipse;

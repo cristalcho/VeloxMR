@@ -60,7 +60,7 @@ AM_LDFLAGS          = -static $(BOOST_LDFLAGS)
 LDADD               = libecfs.la -lboost_system -lboost_serialization -lboost_coroutine -lboost_thread -lboost_context
 endif
 
-eclipse_node_SOURCES = src/targets/node_main.cc \
+eclipse_node_SOURCES = src/targets/node_main_mr.cc \
                        src/network/channel.cc \
                        src/network/asyncchannel.cc \
                        src/network/p2p.cc \
