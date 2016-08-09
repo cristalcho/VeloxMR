@@ -36,7 +36,12 @@
 #include "offsetkv.hh"
 #include "blockupdate.hh"
 #include "fileupdate.hh"
+#include "job.hh"
+#include "jobstatus.hh"
+#include "subjob.hh"
+#include "subjobstatus.hh"
 #include "metadata.hh"
+#include "idatakeys.hh"
 
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/access.hpp>
@@ -154,11 +159,13 @@ template <typename Archive>
     ar & BASE_OBJECT(Message, c);
     ar & BOOST_SERIALIZATION_NVP(c.type);
     ar & BOOST_SERIALIZATION_NVP(c.library);
-    ar & BOOST_SERIALIZATION_NVP(c.input_path);
     ar & BOOST_SERIALIZATION_NVP(c.func_name);
-    ar & BOOST_SERIALIZATION_NVP(c.job_id);
-    ar & BOOST_SERIALIZATION_NVP(c.map_id);
+    ar & BOOST_SERIALIZATION_NVP(c.input_path);
     ar & BOOST_SERIALIZATION_NVP(c.blocks);
+    ar & BOOST_SERIALIZATION_NVP(c.subjob_id);
+    ar & BOOST_SERIALIZATION_NVP(c.job_id);
+    ar & BOOST_SERIALIZATION_NVP(c.leader);
+    ar & BOOST_SERIALIZATION_NVP(c.file_output);
   }
 template <typename Archive>
   void serialize (Archive& ar, eclipse::messages::FileList& c, unsigned int) {
@@ -315,6 +322,56 @@ template <typename Archive>
     ar & BASE_OBJECT(Message, c);
     ar & BOOST_SERIALIZATION_NVP(c.is_success);
     ar & BOOST_SERIALIZATION_NVP(c.job_id);
+    ar & BOOST_SERIALIZATION_NVP(c.subjob_id);
+    ar & BOOST_SERIALIZATION_NVP(c.type);
+  }
+
+template <typename Archive>
+  void serialize (Archive& ar, eclipse::messages::Job& c, unsigned int) {
+    ar & BASE_OBJECT(Message, c);
+    ar & BOOST_SERIALIZATION_NVP(c.type);
+    ar & BOOST_SERIALIZATION_NVP(c.library);
+    ar & BOOST_SERIALIZATION_NVP(c.map_name);
+    ar & BOOST_SERIALIZATION_NVP(c.reduce_name);
+    ar & BOOST_SERIALIZATION_NVP(c.files);
+    ar & BOOST_SERIALIZATION_NVP(c.job_id);
+    ar & BOOST_SERIALIZATION_NVP(c.file_output);
+  }
+
+template <typename Archive>
+  void serialize(Archive& ar, eclipse::messages::JobStatus& c,
+      unsigned int) {
+    ar & BASE_OBJECT(Message, c);
+    ar & BOOST_SERIALIZATION_NVP(c.is_success);
+    ar & BOOST_SERIALIZATION_NVP(c.job_id);
+  }
+
+template <typename Archive>
+  void serialize (Archive& ar, eclipse::messages::SubJob& c, unsigned int) {
+    ar & BASE_OBJECT(Message, c);
+    ar & BOOST_SERIALIZATION_NVP(c.type);
+    ar & BOOST_SERIALIZATION_NVP(c.library);
+    ar & BOOST_SERIALIZATION_NVP(c.map_name);
+    ar & BOOST_SERIALIZATION_NVP(c.reduce_name);
+    ar & BOOST_SERIALIZATION_NVP(c.file);
+    ar & BOOST_SERIALIZATION_NVP(c.job_id);
+  }
+
+template <typename Archive>
+  void serialize(Archive& ar, eclipse::messages::SubJobStatus& c,
+      unsigned int) {
+    ar & BASE_OBJECT(Message, c);
+    ar & BOOST_SERIALIZATION_NVP(c.is_success);
+    ar & BOOST_SERIALIZATION_NVP(c.job_id);
+    ar & BOOST_SERIALIZATION_NVP(c.subjob_id);
+  }
+
+template <typename Archive>
+  void serialize(Archive& ar, eclipse::messages::IDataKeys& c,
+      unsigned int) {
+    ar & BASE_OBJECT(Message, c);
+    ar & BOOST_SERIALIZATION_NVP(c.keys);
+    ar & BOOST_SERIALIZATION_NVP(c.job_id);
   }
 
 }  // namespace messages
@@ -355,5 +412,10 @@ BOOST_CLASS_TRACKING(ECNS::IBlockInfoRequest, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::KeyValueShuffle, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::FinishShuffle, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::TaskStatus, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::Job, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::JobStatus, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::SubJob, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::SubJobStatus, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::IDataKeys, TRACK_NEVER);
 #undef ECNS
 #undef TRACK_NEVER 

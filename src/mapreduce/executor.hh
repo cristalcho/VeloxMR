@@ -16,8 +16,6 @@ class Executor {
 
   protected:
     PeerMR* peer;
-    static uint32_t map_ids;
-
 };
 
 } /* eclipse  */ 

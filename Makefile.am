@@ -3,7 +3,7 @@ include tests/Makefile.am
 AM_CPPFLAGS      = -I@srcdir@/src/common -I@srcdir@/src -include ./config.h $(BOOST_CPPFLAGS)
 AM_CXXFLAGS      = $(CXXFLAGS) -Wall
 
-bin_PROGRAMS     = eclipse_node dfs #eclipse_wc
+bin_PROGRAMS     = eclipse_node dfs eclipse_wc
 
 messages_files   = src/messages/boundaries.cc      \
                    src/messages/message.cc         \
@@ -40,7 +40,12 @@ messages_files   = src/messages/boundaries.cc      \
                    src/mapreduce/messages/iblockinfo.cc        \
                    src/mapreduce/messages/key_value_shuffle.cc \
                    src/mapreduce/messages/finish_shuffle.cc    \
-                   src/messages/taskstatus.cc
+                   src/messages/taskstatus.cc     \
+                   src/messages/job.cc            \
+                   src/messages/jobstatus.cc      \
+                   src/messages/subjob.cc         \
+                   src/messages/subjobstatus.cc   \
+                   src/messages/idatakeys.cc 
 
 # libs -----
 lib_LTLIBRARIES     = libecfs.la
@@ -53,11 +58,11 @@ libecfs_la_LDFLAGS  = $(BOOST_LDFLAGS) -version-info 0:0:0
 
 # Binaries ----
 if BOOST_STATIC
-AM_LDFLAGS          = -static $(BOOST_LDFLAGS) -Wl,--start-group -Wl,-Bstatic,-lboost_system,-lboost_serialization,-lboost_coroutine,-lboost_thread,-lboost_context,-Bdynamic
-LDADD               = libecfs.la -lrt -ldl
+AM_LDFLAGS          = -static $(BOOST_LDFLAGS) -Wl,--start-group -Wl,-Bstatic,-lm,-lboost_system,-lboost_serialization,-lboost_coroutine,-lboost_thread,-lboost_context,-Bdynamic
+LDADD               = libecfs.la -lrt -ldl -lm
 else
 AM_LDFLAGS          = -static $(BOOST_LDFLAGS)
-LDADD               = libecfs.la -lboost_system -lboost_serialization -lboost_coroutine -lboost_thread -lboost_context
+LDADD               = libecfs.la -lboost_system -lboost_serialization -lboost_coroutine -lboost_thread -lboost_context -lrt -ldl -lm
 endif
 
 eclipse_node_SOURCES = src/targets/node_main_mr.cc \
@@ -89,10 +94,12 @@ dfs_SOURCES         = src/fs/dfs.cc \
 
 dfs_CXXFLAGS        = $(AM_CXXFLAGS)
 
-#eclipse_wc_SOURCES    = src/targets/wc.cc \
-#                        $(messages_files)
+eclipse_wc_SOURCES  = src/targets/wc.cc \
+                      src/mapreduce/dataset.cc \
+                      $(messages_files)
 
-#eclipse_wc_LDADD      = $(LDADD) -lsqlite3
+#eclipse_wc_LDFLAGS  = -static $(BOOST_LDFLAGS)
+#eclipse_wc_LDADD    = $(LDADD) -lsqlite3 libecfs.la
 
 pkginclude_HEADERS  = src/common/ecfs.hh src/common/settings.hh
 

@@ -26,7 +26,7 @@ PeerDFS::PeerDFS (Network* net) : Node () {
   boundaries.reset( new Histogram {network_size, 0});
   boundaries->initialize();
 
-  directory.init_db();
+  directory.open_db();
 }
 
 PeerDFS::~PeerDFS() { }

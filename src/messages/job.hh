@@ -7,15 +7,16 @@
 namespace eclipse {
 namespace messages {
 
-struct Task: public Message {
+struct Job: public Message {
   std::string get_type() const override;
+  uint32_t job_id = 0;
+
   std::string type;
-  std::string library, func_name, input_path;
+  std::string library;
+  std::string map_name;
+  std::string reduce_name;
   std::string file_output;
-  std::vector<std::pair<uint32_t, std::string>> blocks;
-  uint32_t subjob_id;
-  uint32_t job_id;
-  uint32_t leader;
+  std::vector<std::string> files;
 };
 
 }

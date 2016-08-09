@@ -23,10 +23,10 @@ void DirectoryMR::init_db() {
   // Execute SQL statement
   rc = sqlite3_exec(db, sql, NULL, 0, &zErrMsg);
   if(rc != SQLITE_OK) {
-    context.logger->error("SQL error: %s\n", zErrMsg);
+    context.logger->error("SQL error: %s", zErrMsg);
     sqlite3_free(zErrMsg);
   } else {
-    context.logger->info("idata_table created successfully\n");
+    context.logger->info("idata_table created successfully");
   }
   // Create SQL statement of IGroup
   sprintf(sql, "CREATE TABLE igroup_table( \
@@ -41,7 +41,7 @@ void DirectoryMR::init_db() {
     context.logger->error("SQL error: %s\n", zErrMsg);
     sqlite3_free(zErrMsg);
   } else {
-    context.logger->info("igroup_table created successfully\n");
+    context.logger->info("igroup_table created successfully");
   }
   // Create SQL statement of IBlock
   sprintf(sql, "CREATE TABLE iblock_table( \
@@ -53,10 +53,10 @@ void DirectoryMR::init_db() {
   // Execute SQL statement
   rc = sqlite3_exec(db, sql, NULL, 0, &zErrMsg);
   if(rc != SQLITE_OK) {
-    context.logger->error("SQL error: %s\n", zErrMsg);
+    context.logger->error("SQL error: %s", zErrMsg);
     sqlite3_free(zErrMsg);
   } else {
-    context.logger->info("iblock_table created successfully\n");
+    context.logger->info("iblock_table created successfully");
   }
   sqlite3_close(db);
 }

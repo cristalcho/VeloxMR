@@ -1,17 +1,16 @@
 #pragma once
 #include "message.hh"
+#include <vector>
 
 namespace eclipse {
 namespace messages {
 
-struct TaskStatus: public Message {
+struct IDataKeys: public Message {
   std::string get_type() const override;
 
+  std::vector<std::string> keys;
   uint32_t job_id = 0;
-  uint32_t subjob_id = 0;
-  bool is_success = false;
-  std::string type;
 };
-  
-} /* messages  */ 
+
+}
 }

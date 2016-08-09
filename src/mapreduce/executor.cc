@@ -13,8 +13,6 @@
 using namespace eclipse;
 using namespace std;
 
-uint32_t eclipse::Executor::map_ids(0);
-
 namespace eclipse {
 // Constructor {{{
 Executor::Executor(PeerMR* p) : peer(p) { }
@@ -46,17 +44,16 @@ bool Executor::run_map (messages::Task* m, std::string input) {
       pair<string, string> key_value = _map_ (string(next_line));
 
       auto key        = key_value.first;
-//      auto hash_key   = h(key.c_str());
       auto& value     = key_value.second;
-      context.logger->info ("Generated value: %s -> %s", next_line, value.c_str());
+//      context.logger->info ("Generated value: %s -> %s", next_line, value.c_str());
 
       KeyValueShuffle kv; 
-      kv.job_id_ = m->job_id;
+      kv.job_id_ = m->job_id;           // :TODO:
       kv.map_id_ = 0;
       kv.key_ = key;
       kv.value_ = value; 
       peer->process(&kv);
-      delete next_line;
+      delete[] next_line;
     }
 
     return true;
@@ -64,24 +61,24 @@ bool Executor::run_map (messages::Task* m, std::string input) {
 // }}}
 // run_reduce {{{
 bool Executor::run_reduce (messages::Task* task) {
-    auto path_lib = context.settings.get<string>("path.applications");
-    path_lib += ("/" + task->library);
-    DL_loader loader (path_lib);
+  auto path_lib = context.settings.get<string>("path.applications");
+  path_lib += ("/" + task->library);
+  DL_loader loader (path_lib);
 
-    try {
-      loader.init_lib();
-    } catch (std::exception& e) {
-      context.logger->error ("Not found library path[%s]", path_lib.c_str());
-    }
+  try {
+    loader.init_lib();
+  } catch (std::exception& e) {
+    context.logger->error ("Not found library path[%s]", path_lib.c_str());
+  }
 
-    function<string(string,string)> _reducer_ = 
-        loader.load_function_reduce(task->func_name);
+  function<string(string,string)> _reducer_ = 
+    loader.load_function_reduce(task->func_name);
 
-    try {
+  try {
 
     IReader ireader;
     ireader.set_job_id(task->job_id);
-    ireader.set_map_id(task->map_id);
+    ireader.set_map_id(0);                 // :TODO:
     ireader.set_reducer_id(0);
     ireader.init();
 
@@ -92,7 +89,7 @@ bool Executor::run_reduce (messages::Task* task) {
       int total_iterations = 0;
       string last_output;
       if (ireader.is_next_value()) 
-          ireader.get_next_value(last_output);
+        ireader.get_next_value(last_output);
 
       while (ireader.is_next_value()) {
         string value;
@@ -105,26 +102,32 @@ bool Executor::run_reduce (messages::Task* task) {
       context.logger->info ("Key %s #iterations: %i", key.c_str(), total_iterations);
 
       FileInfo fi;
-      fi.name = key;
+      fi.name = task->file_output;
       fi.num_block = 1;
       fi.size = last_output.length();
-      fi.hash_key = h(key.c_str());
+      fi.hash_key = h(task->file_output.c_str());
 
       BlockInfo bi;
-      bi.file_name = key;
-      bi.name = key + "_0";
+      bi.file_name = task->file_output;
+      bi.name = task->file_output + "_0";
       bi.seq = 0;
       bi.hash_key = h(bi.name);
       bi.size = last_output.length();
       bi.content = last_output;
+      bi.replica = 1;
+      bi.node = "";
+      bi.l_node = "";
+      bi.r_node = "";
+      bi.is_committed = 1;
 
       dynamic_cast<PeerDFS*>(peer)->process(&fi);
       dynamic_cast<PeerDFS*>(peer)->insert_block(&bi);
     }
-    } catch (std::exception& e) {
-      context.logger->error ("Error in the executer: %s", e.what());
-      exit(1);
-    }
+  } catch (std::exception& e) {
+    context.logger->error ("Error in the executer: %s", e.what());
+    exit(EXIT_FAILURE);
+  }
+  return true;
 }
 // }}}
 } /* eclipse  */

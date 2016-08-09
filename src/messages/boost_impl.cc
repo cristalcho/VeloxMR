@@ -36,3 +36,8 @@ BOOST_CLASS_EXPORT(eclipse::messages::KeyValueShuffle);
 BOOST_CLASS_EXPORT(eclipse::messages::FinishShuffle);
 BOOST_CLASS_EXPORT(eclipse::messages::TaskStatus);
 BOOST_CLASS_EXPORT(eclipse::messages::MetaData);
+BOOST_CLASS_EXPORT(eclipse::messages::Job);
+BOOST_CLASS_EXPORT(eclipse::messages::JobStatus);
+BOOST_CLASS_EXPORT(eclipse::messages::SubJob);
+BOOST_CLASS_EXPORT(eclipse::messages::SubJobStatus);
+BOOST_CLASS_EXPORT(eclipse::messages::IDataKeys);

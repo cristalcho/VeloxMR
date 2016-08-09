@@ -46,7 +46,7 @@ class PeerDFS: public Node, public AsyncNode {
     bool delete_block (messages::BlockDel*);
     bool delete_file (messages::FileDel*);
     bool list (messages::FileList*);
-    bool format ();
+    virtual bool format ();
     FileDescription request_file (messages::FileRequest*);
     bool file_exist (std::string);
     template <typename T> void process (T);
