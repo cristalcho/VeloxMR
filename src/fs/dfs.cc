@@ -292,11 +292,13 @@ namespace eclipse{
         auto socket = connect(net_id);
         send_message(socket.get(), &idata_list); // get idata list
         auto idata_list_reply = read_reply<IDataList>(socket.get());
-        std::copy(idata_list_reply -> data.begin(), idata_list_reply -> data.end(), back_inserter(idata_vect));
+        std::copy(idata_list_reply->data.begin(), idata_list_reply->data.end(), back_inserter(idata_vect));
       }
+
       std::sort(idata_vect.begin(), idata_vect.end(), [] (const IDataInfo &a, const IDataInfo &b) {
           return (a.job_id < b.job_id);
           });
+
       cout 
         << setw(25) << "Job ID"
         << setw(14) << "Map ID"
@@ -309,9 +311,9 @@ namespace eclipse{
           << setw(25) << fl.job_id
           << setw(14) << fl.map_id
           << setw(14) << fl.num_reducer
-          << endl;	
+          << endl;
       }
-      return 0;
+      return EXIT_SUCCESS;
     }
 
     for (unsigned int net_id=0; net_id<NUM_NODES; net_id++) {
