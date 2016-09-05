@@ -1,6 +1,7 @@
 #ifndef ECLIPSEMR_NODES_PEERMR_H_
 #define ECLIPSEMR_NODES_PEERMR_H_
 #include <string>
+#include <vector>
 #include <unordered_map>
 #include "../../nodes/peerdfs.hh"
 #include "../fs/directorymr.hh"
@@ -13,6 +14,7 @@
 #include "../messages/igroupinforequest.hh"
 #include "../messages/iblockinforequest.hh"
 #include "../messages/idatainfo.hh"
+#include "../messages/idatalist.hh"
 #include "../messages/igroupinfo.hh"
 #include "../messages/iblockinfo.hh"
 #include "../messages/key_value_shuffle.h"
@@ -31,6 +33,7 @@ class PeerMR: public PeerDFS {
   bool insert_igroup(messages::IGroupInsert *msg);
   bool insert_iblock(messages::IBlockInsert *msg);
   IDataInfo request_idata(messages::IDataInfoRequest *idata_info_request);
+  IDataList request_idata_list();
   IGroupInfo request_igroup(messages::IGroupInfoRequest *igroup_info_request);
   IBlockInfo request_iblock(messages::IBlockInfoRequest *iblock_info_request);
   void write_key_value(messages::KeyValueShuffle *key_value);

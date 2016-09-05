@@ -121,14 +121,28 @@ void DirectoryMR::insert_iblock_metadata(IBlockInsert iblock_insert) {
   sqlite3_close(db);
 }
 
-int DirectoryMR::idata_callback(void *idata_info, int argc, char **argv,
-    char **azColName) {
+int DirectoryMR::idata_callback(void *idata_info, int argc, char **argv, char **azColName) 
+{
   auto idata = reinterpret_cast<IDataInfo*>(idata_info);
   idata->job_id = atoi(argv[0]);
   idata->map_id = atoi(argv[1]);
   idata->num_reducer = atoi(argv[2]);
   return 0;
 }
+
+int DirectoryMR::idata_list_callback(void *list, int argc, char **argv, char **azColName) 
+{
+    auto idata_list = reinterpret_cast<IDataList*> (list);
+    for (int i = 0; i < argc; i++) {
+      IDataInfo tmp_idata;
+      tmp_idata.job_id = atoi(argv[i++]);
+      tmp_idata.map_id = atoi(argv[i++]);
+      tmp_idata.num_reducer = atoi(argv[i]); 
+      idata_list->data.push_back(tmp_idata);
+    }
+    return 0;
+}
+
 int DirectoryMR::igroup_callback(void *igroup_info, int argc, char **argv,
     char **azColName) {
   auto igroup = reinterpret_cast<IGroupInfo*>(igroup_info);
@@ -165,6 +179,30 @@ void DirectoryMR::select_idata_metadata(uint32_t job_id, uint32_t map_id,
   // Close Database
   sqlite3_close(db);
 }
+
+void DirectoryMR::select_all_idata_metadata(IDataList &idata_list)
+{
+     // open database
+     open_db();
+     mutex.lock();
+     // create sql statement
+     sprintf(sql, "SELECT * from idata_table;"); 
+     // execute sql statement
+     rc = sqlite3_exec(db, sql, idata_list_callback, (void*)&idata_list, &zErrMsg);
+     if (rc != SQLITE_OK)
+     {
+       context.logger -> error("SQL error: %s\n", zErrMsg);
+       sqlite3_free(zErrMsg);
+     } 
+     else
+     {
+       context.logger -> info("idata_metadata selected successfully\n");
+     }
+     // close database
+     sqlite3_close(db);
+     mutex.unlock();
+}
+
 void DirectoryMR::select_igroup_metadata(uint32_t job_id, uint32_t map_id,
     uint32_t reducer_id, IGroupInfo *igroup_info) {
   // Open database
@@ -184,6 +222,7 @@ void DirectoryMR::select_igroup_metadata(uint32_t job_id, uint32_t map_id,
   // Close Database
   sqlite3_close(db);
 }
+
 void DirectoryMR::select_iblock_metadata(uint32_t job_id, uint32_t map_id,
     uint32_t reducer_id, uint32_t block_seq, IBlockInfo *iblock_info) {
   // Open database

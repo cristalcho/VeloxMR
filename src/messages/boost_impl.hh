@@ -13,7 +13,9 @@
 #include "keyrequest.hh"
 #include "task.hh"
 #include "fileinfo.hh"
+#include "../mapreduce/messages/idatainfo.hh"
 #include "filelist.hh"
+#include "../mapreduce/messages/idatalist.hh"
 #include "blockinfo.hh"
 #include "reply.hh"
 #include "cacheinfo.hh"
@@ -93,8 +95,16 @@ template <typename Archive>
     ar & BOOST_SERIALIZATION_NVP(c.file_size);
     ar & BOOST_SERIALIZATION_NVP(c.num_block);
     ar & BOOST_SERIALIZATION_NVP(c.replica);
-  }
+ }
 
+template <typename Archive>
+  void serialize (Archive& ar, eclipse::messages::IDataInfo& c, unsigned int) {
+    ar & BASE_OBJECT(Message, c); 
+    ar & BOOST_SERIALIZATION_NVP(c.job_id);
+    ar & BOOST_SERIALIZATION_NVP(c.map_id);
+    ar & BOOST_SERIALIZATION_NVP(c.num_reducer);
+  }
+  
 template <typename Archive>
   void serialize (Archive& ar, eclipse::messages::BlockInfo& c, unsigned int) {
     ar & BASE_OBJECT(Message, c);
@@ -124,6 +134,12 @@ template <typename Archive>
   }
 template <typename Archive>
   void serialize (Archive& ar, eclipse::messages::FileList& c, unsigned int) {
+    ar & BASE_OBJECT(Message, c);
+    ar & BOOST_SERIALIZATION_NVP(c.data);
+  }
+
+template <typename Archive>
+  void serialize (Archive& ar, eclipse::messages::IDataList& c, unsigned int) {
     ar & BASE_OBJECT(Message, c);
     ar & BOOST_SERIALIZATION_NVP(c.data);
   }
@@ -281,9 +297,11 @@ BOOST_CLASS_TRACKING(ECNS::KeyValue, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::Control, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::KeyRequest, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::FileInfo, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::IDataInfo, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::BlockInfo, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::Task, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::FileList, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::IDataList, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::Reply, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::CacheInfo, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::FileRequest, TRACK_NEVER);

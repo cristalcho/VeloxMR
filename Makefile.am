@@ -23,7 +23,7 @@ messages_files   = src/messages/boundaries.cc        \
                    src/messages/cacheinfo.cc         \
                    src/messages/blockdel.cc          \
                    src/messages/filedel.cc           \
-									 src/messages/formatrequest.cc     \
+		   src/messages/formatrequest.cc     \
                    src/mapreduce/messages/idatainsert.cc       \
                    src/mapreduce/messages/igroupinsert.cc      \
                    src/mapreduce/messages/iblockinsert.cc      \
@@ -31,12 +31,13 @@ messages_files   = src/messages/boundaries.cc        \
                    src/mapreduce/messages/igroupinforequest.cc \
                    src/mapreduce/messages/iblockinforequest.cc \
                    src/mapreduce/messages/idatainfo.cc         \
+                   src/mapreduce/messages/idatalist.cc         \
                    src/mapreduce/messages/igroupinfo.cc        \
                    src/mapreduce/messages/iblockinfo.cc        \
                    src/mapreduce/messages/key_value_shuffle.cc \
                    src/mapreduce/messages/finish_shuffle.cc    \
                    src/messages/taskstatus.cc        \
-									 src/messages/fileexist.cc
+		   src/messages/fileexist.cc
 
 # libs -----
 lib_LTLIBRARIES     = libecfs.la
