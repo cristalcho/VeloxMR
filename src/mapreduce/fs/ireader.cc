@@ -100,49 +100,49 @@ bool IReader::get_next_value(string &value) {
   }
   return true;
 }
-tcp::socket* IReader::connect(uint32_t net_id) {
-  tcp::socket *socket = new tcp::socket(io_service_);
-  int port = context.settings.get<int>("network.port_mapreduce");
-  vector<string> nodes = context.settings.get<vector<string>>("network.nodes");
-  string host = nodes[net_id];
-  tcp::resolver resolver(io_service_);
-  tcp::resolver::query query(host, std::to_string(port));
-  tcp::resolver::iterator it(resolver.resolve(query));
-  auto ep = new tcp::endpoint(*it);
-  socket->connect(*ep);
-  delete ep;
-  return socket;
-}
-void IReader::send_message(tcp::socket *socket, messages::Message *msg) {
-  string out = save_message(msg);
-  stringstream ss;
-  ss << setfill('0') << setw(16) << out.length() << out;
-  socket->send(boost::asio::buffer(ss.str()));
-}
-messages::IGroupInfo* IReader::read_igroup_info(tcp::socket *socket) {
-  char header[17] = {0};
-  header[16] = '\0';
-  socket->receive(boost::asio::buffer(header, 16));
-  size_t size_of_msg = atoi(header);
-  char *body = new char[size_of_msg];
-  socket->receive(boost::asio::buffer(body, size_of_msg));
-  string recv_msg(body, size_of_msg);
-  messages::Message *msg = messages::load_message(recv_msg);
-  delete[] body;
-  return dynamic_cast<messages::IGroupInfo*>(msg);
-}
-messages::IBlockInfo* IReader::read_iblock_info(tcp::socket *socket) {
-  char header[17] = {0};
-  header[16] = '\0';
-  socket->receive(boost::asio::buffer(header, 16));
-  size_t size_of_msg = atoi(header);
-  char *body = new char[size_of_msg];
-  socket->receive(boost::asio::buffer(body, size_of_msg));
-  string recv_msg(body, size_of_msg);
-  messages::Message *msg = messages::load_message(recv_msg);
-  delete[] body;
-  return dynamic_cast<messages::IBlockInfo*>(msg);
-}
+//tcp::socket* IReader::connect(uint32_t net_id) {
+//  tcp::socket *socket = new tcp::socket(io_service_);
+//  int port = context.settings.get<int>("network.port_mapreduce");
+//  vector<string> nodes = context.settings.get<vector<string>>("network.nodes");
+//  string host = nodes[net_id];
+//  tcp::resolver resolver(io_service_);
+//  tcp::resolver::query query(host, std::to_string(port));
+//  tcp::resolver::iterator it(resolver.resolve(query));
+//  auto ep = new tcp::endpoint(*it);
+//  socket->connect(*ep);
+//  delete ep;
+//  return socket;
+//}
+//void IReader::send_message(tcp::socket *socket, messages::Message *msg) {
+//  string out = save_message(msg);
+//  stringstream ss;
+//  ss << setfill('0') << setw(16) << out.length() << out;
+//  socket->send(boost::asio::buffer(ss.str()));
+//}
+//messages::IGroupInfo* IReader::read_igroup_info(tcp::socket *socket) {
+//  char header[17] = {0};
+//  header[16] = '\0';
+//  socket->receive(boost::asio::buffer(header, 16));
+//  size_t size_of_msg = atoi(header);
+//  char *body = new char[size_of_msg];
+//  socket->receive(boost::asio::buffer(body, size_of_msg));
+//  string recv_msg(body, size_of_msg);
+//  messages::Message *msg = messages::load_message(recv_msg);
+//  delete[] body;
+//  return dynamic_cast<messages::IGroupInfo*>(msg);
+//}
+//messages::IBlockInfo* IReader::read_iblock_info(tcp::socket *socket) {
+//  char header[17] = {0};
+//  header[16] = '\0';
+//  socket->receive(boost::asio::buffer(header, 16));
+//  size_t size_of_msg = atoi(header);
+//  char *body = new char[size_of_msg];
+//  socket->receive(boost::asio::buffer(body, size_of_msg));
+//  string recv_msg(body, size_of_msg);
+//  messages::Message *msg = messages::load_message(recv_msg);
+//  delete[] body;
+//  return dynamic_cast<messages::IBlockInfo*>(msg);
+//}
 uint32_t IReader::get_num_block() {
   // tcp::socket *socket = connect(net_id_);
   messages::IGroupInfoRequest ig_request;

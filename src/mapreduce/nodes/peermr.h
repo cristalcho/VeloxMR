@@ -25,7 +25,7 @@ namespace eclipse {
 
 class PeerMR: public PeerDFS {
  public:
-  PeerMR();
+  PeerMR(network::Network*);
   ~PeerMR() = default;
 
   void on_read(messages::Message *msg, int) override;

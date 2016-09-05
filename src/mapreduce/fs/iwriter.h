@@ -38,8 +38,8 @@ class IWriter: public IWriter_interface {
 
  private:
   // tcp::socket* connect(uint32_t net_id);
-  void send_message(tcp::socket *socket, messages::Message *msg);
-  messages::Reply* read_reply(tcp::socket *socket);
+//  void send_message(tcp::socket *socket, messages::Message *msg);
+//  messages::Reply* read_reply(tcp::socket *socket);
   static void run(IWriter *obj);
   void seek_writable_block();
   void async_flush(const uint32_t index);

@@ -1,12 +1,27 @@
 #include <mapreduce/nodes/remotemr.h>
-#include <common/context.hh>
+#include <nodes/remotedfs.hh>
+#include <common/context_singleton.hh>
+#include <network/p2p.hh>
+#include <network/server.hh>
+#include <network/asyncnetwork.hh>
+#include <memory>
 #include <string>
 
 using namespace eclipse;
 
 int main (int argc, char ** argv) {
-  RemoteMR nl;
-  nl.establish();
+  int in_port = context.settings.get<int>("network.ports.internal");
+  int ex_port = context.settings.get<int>("network.ports.client");
 
-  return context.join();
+  auto internal_net = make_unique<network::AsyncNetwork<P2P>> (in_port);
+  PeerMR peer (internal_net.get());
+  internal_net->establish();
+
+  auto external_net = make_unique<network::AsyncNetwork<Server>> (ex_port);
+  RemoteMR remote (&peer, external_net.get());
+  external_net->establish();
+
+  context.join();
+
+  return EXIT_SUCCESS;
 }

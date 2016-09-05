@@ -7,9 +7,8 @@ namespace eclipse {
 
 class RemoteMR: public RemoteDFS {
  public: 
-  RemoteMR();
+   RemoteMR (PeerMR*, network::Network*);
 
-  bool establish();
   void insert_idata(messages::Message*);
   void insert_igroup(messages::Message*);
   void insert_iblock(messages::Message*);
@@ -18,8 +17,8 @@ class RemoteMR: public RemoteDFS {
   void request_iblock(messages::Message*);
   void shuffle(messages::Message*);
   void list_idata(messages::Message*);
-  void map (messages::Message*);
-  void reply_map (messages::Message*);
+  void map(messages::Message*);
+  void reply_map(messages::Message*);
 
  protected:
   PeerMR* peer;
