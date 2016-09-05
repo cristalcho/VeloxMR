@@ -13,7 +13,9 @@
 #include "keyrequest.hh"
 #include "task.hh"
 #include "fileinfo.hh"
+#include "../mapreduce/messages/idatainfo.hh"
 #include "filelist.hh"
+#include "../mapreduce/messages/idatalist.hh"
 #include "blockinfo.hh"
 #include "reply.hh"
 #include "cacheinfo.hh"
@@ -108,8 +110,16 @@ template <typename Archive>
     ar & BOOST_SERIALIZATION_NVP(c.num_block);
     ar & BOOST_SERIALIZATION_NVP(c.type);
     ar & BOOST_SERIALIZATION_NVP(c.replica);
-  }
+ }
 
+template <typename Archive>
+  void serialize (Archive& ar, eclipse::messages::IDataInfo& c, unsigned int) {
+    ar & BASE_OBJECT(Message, c); 
+    ar & BOOST_SERIALIZATION_NVP(c.job_id);
+    ar & BOOST_SERIALIZATION_NVP(c.map_id);
+    ar & BOOST_SERIALIZATION_NVP(c.num_reducer);
+  }
+  
 template <typename Archive>
   void serialize (Archive& ar, eclipse::messages::FileUpdate& c, unsigned int) {
     ar & BASE_OBJECT(Message, c);
@@ -162,6 +172,12 @@ template <typename Archive>
   }
 template <typename Archive>
   void serialize (Archive& ar, eclipse::messages::FileList& c, unsigned int) {
+    ar & BASE_OBJECT(Message, c);
+    ar & BOOST_SERIALIZATION_NVP(c.data);
+  }
+
+template <typename Archive>
+  void serialize (Archive& ar, eclipse::messages::IDataList& c, unsigned int) {
     ar & BASE_OBJECT(Message, c);
     ar & BOOST_SERIALIZATION_NVP(c.data);
   }

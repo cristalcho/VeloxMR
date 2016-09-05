@@ -13,6 +13,8 @@
 #include "../messages/igroupinforequest.hh"
 #include "../messages/iblockinforequest.hh"
 #include "../messages/key_value_shuffle.h"
+#include "../messages/idatainfo.hh"
+#include "../messages/idatalist.hh"
 
 namespace eclipse {
 using namespace messages;
@@ -30,6 +32,7 @@ RemoteMR::RemoteMR(PeerMR* p, network::Network* net): RemoteDFS(p, net) {
   rt.insert({"IBlockInfoRequest", bind(&RemoteMR::request_iblock, this, ph::_1)});
   rt.insert({"KeyValueShuffle", bind(&RemoteMR::shuffle, this, ph::_1)});
   rt.insert({"Task", bind(&RemoteMR::map, this, ph::_1)});
+  rt.insert({"IDataList", bind(&RemoteMR::list_idata, this, ph::_1)});
 }
 // map {{{
 void RemoteMR::map (messages::Message* _m) {
@@ -112,6 +115,11 @@ void RemoteMR::request_iblock(messages::Message *msg) {
 void RemoteMR::shuffle(messages::Message *msg) {
   auto kv_msg = dynamic_cast<messages::KeyValueShuffle*>(msg);
   peer->receive_kv(kv_msg);
+}
+
+void RemoteMR::list_idata(messages::Message *msg) {
+  auto reply = peer->request_idata_list();
+  network->send(0, &reply);
 }
 
 }  // namespace eclipse

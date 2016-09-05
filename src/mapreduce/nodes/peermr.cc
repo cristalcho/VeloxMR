@@ -5,6 +5,7 @@
 #include <iostream>
 #include <sstream>
 #include <memory>
+#include <vector>
 
 namespace eclipse {
 // Constructors {{{
@@ -175,6 +176,13 @@ IDataInfo PeerMR::request_idata(messages::IDataInfoRequest *idata_info_request) 
   directory.select_idata_metadata(idata_info_request->job_id,
       idata_info_request->map_id, &idata_info);
   return idata_info;
+}
+// }}}
+// request_idata {{{
+IDataList PeerMR::request_idata_list() {
+  IDataList output;
+  directory.select_all_idata_metadata(output);
+  return output;
 }
 // }}}
 // request_igroup {{{

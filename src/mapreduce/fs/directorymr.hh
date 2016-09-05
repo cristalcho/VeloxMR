@@ -1,4 +1,5 @@
 #pragma once
+#include <vector>
 #include "../../fs/directory.hh"
 #include "../messages/idatainfo.hh"
 #include "../messages/igroupinfo.hh"
@@ -6,6 +7,7 @@
 #include "../messages/idatainsert.hh"
 #include "../messages/igroupinsert.hh"
 #include "../messages/iblockinsert.hh"
+#include "../messages/idatalist.hh"
 
 namespace eclipse {
 
@@ -17,6 +19,7 @@ class DirectoryMR: public Directory {
   void insert_iblock_metadata(IBlockInsert iblock_insert);
   void select_idata_metadata(uint32_t job_id, uint32_t map_id,
       IDataInfo *idata_info);
+  void select_all_idata_metadata(IDataList &idata_list);
   void select_igroup_metadata(uint32_t job_id, uint32_t map_id,
       uint32_t reducer_id, IGroupInfo *igroup_info);
   void select_iblock_metadata(uint32_t job_id, uint32_t map_id,
@@ -25,6 +28,8 @@ class DirectoryMR: public Directory {
 
  protected:
   static int idata_callback(void *idata_info, int argc, char **argv,
+      char **azColName);
+  static int idata_list_callback(void *list, int argc, char **argv,
       char **azColName);
   static int igroup_callback(void *igroup_info, int argc, char **argv,
       char **azColName);

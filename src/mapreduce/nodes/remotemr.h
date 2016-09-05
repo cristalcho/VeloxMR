@@ -16,6 +16,7 @@ class RemoteMR: public RemoteDFS {
   void request_igroup(messages::Message*);
   void request_iblock(messages::Message*);
   void shuffle(messages::Message*);
+  void list_idata(messages::Message*);
   void map(messages::Message*);
   void reply_map(messages::Message*);
 
