@@ -1,12 +1,14 @@
 #ifndef ECLIPSEMR_NODES_PEERMR_H_
 #define ECLIPSEMR_NODES_PEERMR_H_
 #include <string>
+#include <vector>
 #include <unordered_map>
 #include <set>
 #include "../../nodes/peerdfs.hh"
 #include "../fs/directorymr.hh"
 #include "../fs/iwriter_interface.hh"
 #include "../../messages/message.hh"
+#include "../messages/idatalist.hh"
 #include "../messages/key_value_shuffle.h"
 #include "../messages/finish_shuffle.h"
 #include "../messages/job.hh"
@@ -22,6 +24,7 @@ class PeerMR: public PeerDFS {
 
   void on_read(messages::Message *msg, int) override;
   bool format();
+  IDataList request_idata_list();
 
   bool process_job(messages::Job*, std::function<void(void)>);
   template<typename T> void process(T);

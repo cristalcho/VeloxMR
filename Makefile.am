@@ -36,6 +36,7 @@ messages_files   = src/messages/boundaries.cc      \
                    src/mapreduce/messages/igroupinforequest.cc \
                    src/mapreduce/messages/iblockinforequest.cc \
                    src/mapreduce/messages/idatainfo.cc         \
+                   src/mapreduce/messages/idatalist.cc         \
                    src/mapreduce/messages/igroupinfo.cc        \
                    src/mapreduce/messages/iblockinfo.cc        \
                    src/mapreduce/messages/key_value_shuffle.cc \

@@ -5,6 +5,7 @@
 #include <iostream>
 #include <sstream>
 #include <memory>
+#include <vector>
 
 namespace eclipse {
 // Constructors {{{
@@ -153,6 +154,13 @@ void PeerMR::on_read(messages::Message *msg, int) {
   } else {
     PeerDFS::on_read(msg, 0);
   }
+}
+// }}}
+// request_idata {{{
+IDataList PeerMR::request_idata_list() {
+  IDataList output;
+  directory.select_all_idata_metadata(output);
+  return output;
 }
 // }}}
 // write_key_value {{{

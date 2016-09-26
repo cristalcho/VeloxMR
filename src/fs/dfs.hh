@@ -5,7 +5,6 @@
 #include "../messages/boost_impl.hh"
 #include "../messages/fileinfo.hh"
 #include "../messages/factory.hh"
-#include "../messages/fileinfo.hh"
 #include "../messages/blockinfo.hh"
 #include "../messages/blockupdate.hh"
 #include "../messages/fileexist.hh"
@@ -16,6 +15,8 @@
 #include "../messages/reply.hh"
 #include "../messages/blockrequest.hh"
 #include "directory.hh"
+#include "../mapreduce/messages/idatainfo.hh"
+#include "../mapreduce/messages/idatalist.hh"
 
 #include <iostream>
 #include <fstream>
