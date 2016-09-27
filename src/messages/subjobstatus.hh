@@ -4,14 +4,13 @@
 namespace eclipse {
 namespace messages {
 
-struct TaskStatus: public Message {
+struct SubJobStatus: public Message {
   std::string get_type() const override;
 
   uint32_t job_id = 0;
   uint32_t subjob_id = 0;
   bool is_success = false;
-  std::string type;
 };
-  
-} /* messages  */ 
+
+}
 }

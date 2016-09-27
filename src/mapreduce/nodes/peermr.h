@@ -3,22 +3,16 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <set>
 #include "../../nodes/peerdfs.hh"
 #include "../fs/directorymr.hh"
 #include "../fs/iwriter_interface.hh"
 #include "../../messages/message.hh"
-#include "../messages/idatainsert.hh"
-#include "../messages/igroupinsert.hh"
-#include "../messages/iblockinsert.hh"
-#include "../messages/idatainforequest.hh"
-#include "../messages/igroupinforequest.hh"
-#include "../messages/iblockinforequest.hh"
-#include "../messages/idatainfo.hh"
 #include "../messages/idatalist.hh"
-#include "../messages/igroupinfo.hh"
-#include "../messages/iblockinfo.hh"
 #include "../messages/key_value_shuffle.h"
 #include "../messages/finish_shuffle.h"
+#include "../messages/job.hh"
+#include "../messages/subjob.hh"
 #include "../messages/task.hh"
 
 namespace eclipse {
@@ -29,37 +23,34 @@ class PeerMR: public PeerDFS {
   ~PeerMR() = default;
 
   void on_read(messages::Message *msg, int) override;
-  bool insert_idata(messages::IDataInsert *msg);
-  bool insert_igroup(messages::IGroupInsert *msg);
-  bool insert_iblock(messages::IBlockInsert *msg);
-  IDataInfo request_idata(messages::IDataInfoRequest *idata_info_request);
+  bool format();
   IDataList request_idata_list();
-  IGroupInfo request_igroup(messages::IGroupInfoRequest *igroup_info_request);
-  IBlockInfo request_iblock(messages::IBlockInfoRequest *iblock_info_request);
-  void write_key_value(messages::KeyValueShuffle *key_value);
-  void receive_kv(messages::KeyValueShuffle *kv_shuffle);
+
+  bool process_job(messages::Job*, std::function<void(void)>);
   template<typename T> void process(T);
-  bool format ();
-
-  void process_map_block (std::string, std::string, messages::Task*);
-  bool process_map_file (messages::Task*, std::function<void(void)>);
-  void map_leader (messages::Task*);
-  void map_follower (messages::Task*);
-  bool process_reduce (messages::Task*);
-
-  void finish_map (int);
 
  protected:
   bool is_leader(std::string);
-  void notify_map_leader (messages::Task*);
+  void notify_task_leader(int, uint32_t, std::string);
 
-  uint32_t net_size_;
-  uint32_t job_ids = 0;
-  uint32_t remaining_follower_map_nodes = 0;
-  uint32_t remaining_maps = 0;
-  DirectoryMR directory;
-  std::unordered_map<uint32_t, std::function<void(void)>> task_callbacks;
+  void schedule_map(messages::SubJob*);
+  void schedule_reduce(messages::Job*);
+
+  void request_local_map(messages::Task*);
+  void request_local_reduce(messages::Task*);
+  void request_save_idata(int);
+
+  void run_map_onto_block(std::string, std::string, messages::Task*);
+  void write_key_value(messages::KeyValueShuffle *key_value);
+
+  std::unordered_map<uint32_t, uint32_t> subjobs_remaining;
+  std::unordered_map<uint32_t, uint32_t> tasks_remaining;
+  std::unordered_map<uint32_t, std::function<void(void)>> jobs_callback;
   std::unordered_map<uint32_t, std::shared_ptr<IWriter_interface>> iwriters_;
+  std::unordered_map<uint32_t, std::set<int>> shuffled_nodes;
+  std::unordered_map<uint32_t, std::set<std::string>> shuffled_keys;
+  std::unordered_map<uint32_t, std::vector<std::string>> stored_idata;
+  DirectoryMR directory;
 };
 
 }  // namespace eclipse
