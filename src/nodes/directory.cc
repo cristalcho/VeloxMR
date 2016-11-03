@@ -16,7 +16,7 @@ namespace eclipse {
     if (rc) {
       context.logger->error("Can't open database: %s\n", sqlite3_errmsg(db));
     } else {
-      context.logger->info("Opened database successfully\n");
+      context.logger->debug("Opened database successfully\n");
     }
     mutex.unlock();
   }

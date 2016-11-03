@@ -58,7 +58,11 @@ unique_ptr<tcp::socket> DFS::connect(uint32_t hash_value) {
   tcp::resolver::query query(host, to_string(port));
   tcp::resolver::iterator it(resolver.resolve(query));
   auto ep = make_unique<tcp::endpoint>(*it);
-  socket->connect(*ep);
+  boost::system::error_code ec;
+  socket->connect(*ep, ec);
+  if (ec) {
+    cerr << "Connection was not possible : " << ec.message() << endl;
+  }
   return socket;
 }
 

@@ -62,9 +62,10 @@ void Context::init() {
   settings.load();
   string logname = settings.get<string> ("log.name");
   string logtype = settings.get<string> ("log.type");
+  string logmask = settings.get<string> ("log.mask");
   string ip = settings.getip();
   vector<string> nodes  = settings.get<vector<string>> ("network.nodes");
-  logger.reset(Logger::connect(logname, logtype));
+  logger.reset(Logger::connect(logname, logtype, logmask));
 
   id = find(nodes.begin(), nodes.end(), ip) - nodes.begin();
 }

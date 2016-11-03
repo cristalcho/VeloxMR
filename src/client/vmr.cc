@@ -1,0 +1,100 @@
+#include "vmr.hh"
+#include "../common/context_singleton.hh"
+#include "../messages/boost_impl.hh"
+#include "../messages/factory.hh"
+#include "../messages/job.hh"
+#include "../common/ecfs.hh"
+#include "../common/hash.hh"
+#include <vector>
+#include <iomanip>
+#include <random>
+#include <cstdlib>
+
+using namespace std;
+using namespace velox;
+using namespace eclipse::messages;
+using vec_str = std::vector<std::string>;
+
+// Free functions {{{
+uint32_t random_number() {
+  std::mt19937 rng;
+  rng.seed(std::random_device()());
+  std::uniform_int_distribution<std::mt19937::result_type> dist(1, 
+      std::numeric_limits<uint32_t>::max());
+
+  return dist(rng);
+}
+
+tcp::endpoint* find_local_master(uint32_t job_id) {
+
+  int port      = GET_INT("network.ports.client");
+  vec_str nodes = GET_VEC_STR("network.nodes");
+
+  string host = nodes[ job_id % nodes.size() ];
+
+  //cout << "[CLIENT] submitting Job id: "<< job_id << " to LEADER " << job_id % nodes.size() << endl;
+  tcp::resolver resolver (context.io);
+  tcp::resolver::query query (host, to_string(port));
+  tcp::resolver::iterator it (resolver.resolve(query));
+  auto ep = new tcp::endpoint (*it);
+
+  return ep;
+}
+
+std::string base_name(std::string const & path) {
+  return path.substr(path.find_last_of("/\\") + 1);
+}
+// }}}
+// Constructors {{{
+dataset::dataset(vmr* vmr_, std::vector<std::string> files) {
+  this->vmr_ = vmr_;
+  this->files = files;
+  this->job_id = random_number();
+
+  //socket->connect(*find_local_master(job_id));
+}
+//}}}
+// map {{{
+void dataset::map(std::string func) {
+  tcp::socket socket (context.io);
+  socket.connect(*find_local_master(job_id));
+
+  Job job;
+  job.type = "MAP";
+  job.library = base_name(getenv("_")) + ".so";
+  job.map_name = func;
+  job.files = files;
+  job.job_id = job_id;
+
+  send_message(&socket, &job);
+  auto reply = read_reply<Reply> (&socket);
+  socket.close();
+}
+// }}}
+// reduce {{{
+void dataset::reduce(std::string func, std::string output) {
+  tcp::socket socket (context.io);
+  socket.connect(*find_local_master(job_id));
+
+  Job job;
+  job.type = "REDUCE";
+  job.library = base_name(getenv("_")) + ".so";
+  job.reduce_name = func;
+  job.job_id = job_id;
+  job.file_output = output;
+
+  send_message(&socket, &job);
+  auto reply = read_reply<Reply> (&socket);
+  socket.close();
+}
+// }}}
+// Constructor vmr {{{
+vmr::vmr(vdfs* vdfs_) {
+  this->vdfs_ = vdfs_;
+}
+// }}}
+// make_dataset {{{
+dataset vmr::make_dataset(std::vector<std::string> files) {
+  return dataset(this, files);
+}
+// }}}

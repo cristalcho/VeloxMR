@@ -140,9 +140,16 @@ template<> void PeerDFS::process(MetaData* m) {
 // }}}
 // process (BlockInfo* m) {{{
 template<> void PeerDFS::process(BlockInfo* m) {
-  local_io.write(m->name, m->content);
-  logger->info("ideal host = %s", m->node.c_str());
-  logger->info("real host = %d", id);
+  int which_node = h(m->file_name) % network_size;
+
+  if (which_node == id) {
+    insert_block(m);
+
+  } else {
+    local_io.write(m->name, m->content);
+    logger->info("ideal host = %s", m->node.c_str());
+    logger->info("real host = %d", id);
+  }
 }
 // }}}
 // process (BlockUpdate* m) {{{

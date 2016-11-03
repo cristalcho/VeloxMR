@@ -17,7 +17,12 @@ Router::~Router() { }
 // on_read {{{
 void Router::on_read (Message* m, int n_channel) {
   string type = m->get_type();
-  routing_table[type](m, n_channel);
+  try {
+    routing_table[type](m, n_channel);
+  } catch (std::exception& e) {
+    ERROR("Can not find message type(ROUTER) : %s", type.c_str());
+  
+  }
 }
 // }}}
 // on_disconnect {{{
