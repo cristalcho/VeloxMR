@@ -6,6 +6,7 @@
 #include <sstream>
 #include <memory>
 #include <vector>
+#include <random>
 
 namespace eclipse {
 // Constructors {{{
@@ -91,11 +92,11 @@ template<> void PeerMR::process(Task* m) {
 template<> void PeerMR::process(TaskStatus* m) {
   INFO("I got a TaskStatus: %d  jobid: %u", m->is_success, m->job_id);
   if (m->is_success) {
-    tasks_remaining[m->job_id]--;
+    tasks_remaining[m->subjob_id]--;
   }
 
   INFO("Task remaining for job id:%lu = %i", m->job_id, tasks_remaining[m->job_id]);
-  if (tasks_remaining[m->job_id] == 0) {
+  if (tasks_remaining[m->subjob_id] == 0) {
 
     SubJobStatus sjob_status;
     sjob_status.job_id = m->job_id;
@@ -196,12 +197,15 @@ void PeerMR::request_save_idata (int job_id_) {
 // }}}
 // request_local_map {{{
 void PeerMR::request_local_map (messages::Task* m) {
-  logger->info ("Executing map jobid:%lu", m->job_id);
-  for (auto& block : m->blocks)
+  logger->info ("Executing map subjobid:%lu", m->subjob_id);
+  for (auto& block : m->blocks) {
+    logger->info ("Executing map on block: %s", block.second.c_str());
       request(block.first, block.second, std::bind(
             &PeerMR::run_map_onto_block, this,
             std::placeholders::_1,
             std::placeholders::_2, m));
+  }
+
 }
 // }}}
 // request_local_reduce {{{
@@ -227,7 +231,7 @@ void PeerMR::request_local_reduce (messages::Task* m) {
       reply.message = "MAPFAILED";
   }
 
-  notify_task_leader(m->leader, m->job_id, "REDUCE");
+  notify_task_leader(m->leader, m->job_id, m->job_id, "REDUCE");
 }
 // }}}
 // is_leader {{{
@@ -297,16 +301,17 @@ void PeerMR::run_map_onto_block(string ignoreme, string block, Task* stask) {
     else
       network->send(which_node, &fs);
   }
-  notify_task_leader (stask->leader, stask->job_id, "MAP");
+  notify_task_leader (stask->leader, stask->subjob_id, stask->job_id, "MAP");
 }
 // }}}
 // notify_task_leader {{{
-void PeerMR::notify_task_leader(int leader, uint32_t job_id, string type) {
+void PeerMR::notify_task_leader(int leader, uint32_t subjob_id, uint32_t job_id, string type) {
   int leader_node = (int) leader;
 
   TaskStatus ts;
   ts.is_success = true;
   ts.job_id = job_id;
+  ts.subjob_id = subjob_id;
   ts.type = type;
 
   if (leader_node == id) {
@@ -329,6 +334,15 @@ void PeerMR::schedule_map(messages::SubJob* m) {
   int num_blocks = fi.num_block;
   if (num_blocks == 0) return;  //! Not file found in the db
 
+
+  // Generate random subjob id
+  std::mt19937 rng;
+  rng.seed(std::random_device()());
+  std::uniform_int_distribution<std::mt19937::result_type> dist(1, 
+      std::numeric_limits<uint32_t>::max());
+
+  uint32_t subjob_id = dist(rng);
+
   map<int, Task> tasks;
   for (int i = 0; i < num_blocks; i++) {
     BlockInfo bi;
@@ -339,6 +353,7 @@ void PeerMR::schedule_map(messages::SubJob* m) {
 
     Task task;
     task.job_id = m->job_id;
+    task.subjob_id = subjob_id;
     task.func_name = m->map_name;
     task.type = m->type;
     task.library = m->library;
@@ -349,7 +364,7 @@ void PeerMR::schedule_map(messages::SubJob* m) {
     tasks[block_node].blocks.push_back({hash_key, block_name});
   }
 
-  tasks_remaining[m->job_id] = tasks.size();
+  tasks_remaining[subjob_id] = tasks.size();
   INFO("%d nodes will run maps", tasks.size());
 
   for (auto& task : tasks) {

@@ -31,7 +31,7 @@ class PeerMR: public PeerDFS {
 
  protected:
   bool is_leader(std::string);
-  void notify_task_leader(int, uint32_t, std::string);
+  void notify_task_leader(int, uint32_t, uint32_t, std::string);
 
   void schedule_map(messages::SubJob*);
   void schedule_reduce(messages::Job*);

@@ -14,29 +14,29 @@ using namespace eclipse::messages;
 using vec_str = std::vector<std::string>;
 
 // Network {{{
-template <typename T>
-auto read_reply(tcp::socket* socket) {
-  using namespace boost::asio;
-  char header[17] = {0};
-  header[16] = '\0';
-  boost::asio::streambuf buf;
-
-  read(*socket, buffer(header, 16));
-  size_t size_of_msg = atoi(header);
-
-  read(*socket, buf, transfer_exactly(size_of_msg));
-
-  Message* msg = nullptr;
-  msg = load_message(buf);
-  T* m = dynamic_cast<T*>(msg);
-  return unique_ptr<T>(m);
-}
-
-void send_message (tcp::socket* socket, eclipse::messages::Message* msg) {
-  string*  out = save_message(msg);
-  socket->send(boost::asio::buffer(*out));
-}
-// }}}
+//template <typename T>
+//auto read_reply(tcp::socket* socket) {
+//  using namespace boost::asio;
+//  char header[17] = {0};
+//  header[16] = '\0';
+//  boost::asio::streambuf buf;
+//
+//  read(*socket, buffer(header, 16));
+//  size_t size_of_msg = atoi(header);
+//
+//  read(*socket, buf, transfer_exactly(size_of_msg));
+//
+//  Message* msg = nullptr;
+//  msg = load_message(buf);
+//  T* m = dynamic_cast<T*>(msg);
+//  return unique_ptr<T>(m);
+//}
+//
+//void send_message (tcp::socket* socket, eclipse::messages::Message* msg) {
+//  string*  out = save_message(msg);
+//  socket->send(boost::asio::buffer(*out));
+//}
+//// }}}
 
 DataSet& DataSet::open (std::string in) {
   std::mt19937 rng;

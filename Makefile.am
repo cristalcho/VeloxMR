@@ -49,21 +49,26 @@ messages_files   = src/messages/boundaries.cc      \
                    src/messages/idatakeys.cc 
 
 # libs -----
-lib_LTLIBRARIES     = libecfs.la
-libecfs_la_SOURCES  = src/common/hash.cc src/common/settings.cc \
+lib_LTLIBRARIES     = libvdfs.la
+libvdfs_la_SOURCES  = $(messages_files) \
+                      src/client/dfs.cc \
+                      src/client/vdfs.cc \
+                      src/common/hash.cc src/common/settings.cc \
                       src/common/logger.cc src/common/histogram.cc \
                       src/common/context.cc src/common/dl_loader.cc \
-                      src/common/context_singleton.cc
+                      src/common/context_singleton.cc \
+                      src/mapreduce/dataset.cc
 
-libecfs_la_LDFLAGS  = $(BOOST_LDFLAGS) -version-info 0:0:0
+libvdfs_la_LDFLAGS  = $(BOOST_LDFLAGS) -version-info 0:0:0
+libvdfs_la_LIBADD   = -lboost_system -lboost_serialization -lboost_coroutine -lboost_thread -lboost_context -ldl
 
 # Binaries ----
 if BOOST_STATIC
-AM_LDFLAGS          = -static $(BOOST_LDFLAGS) -Wl,--start-group -Wl,-Bstatic,-lm,-lboost_system,-lboost_serialization,-lboost_coroutine,-lboost_thread,-lboost_context,-Bdynamic
-LDADD               = libecfs.la -lrt -ldl -lm
+AM_LDFLAGS          = -static $(BOOST_LDFLAGS) -Wl,--start-group -Wl,-Bstatic,-lboost_system,-lboost_serialization,-lboost_coroutine,-lboost_thread,-lboost_context,-Bdynamic
+LDADD               = libvdfs.la -lrt -ldl -lm
 else
-AM_LDFLAGS          = -static $(BOOST_LDFLAGS)
-LDADD               = libecfs.la -lboost_system -lboost_serialization -lboost_coroutine -lboost_thread -lboost_context -lrt -ldl -lm
+AM_LDFLAGS          = $(BOOST_LDFLAGS)
+LDADD               = libvdfs.la -lboost_system -lboost_serialization -lboost_coroutine -lboost_thread -lboost_context -lrt -ldl -lm
 endif
 
 eclipse_node_SOURCES = src/targets/node_main_mr.cc \
@@ -78,31 +83,21 @@ eclipse_node_SOURCES = src/targets/node_main_mr.cc \
                        src/nodes/local_io.cc \
                        src/nodes/remotedfs.cc \
                        src/nodes/router.cc \
+                       src/nodes/directory.cc \
                        src/nodes/node.cc \
                        src/mapreduce/nodes/peermr.cc \
                        src/mapreduce/nodes/remotemr.cc \
-                       src/fs/directory.cc \
                        src/mapreduce/fs/directorymr.cc \
                        src/mapreduce/fs/iwriter.cc \
                        src/mapreduce/fs/ireader.cc \
-                       src/mapreduce/executor.cc \
-                       $(messages_files)
+                       src/mapreduce/executor.cc
 
-dfs_SOURCES         = src/fs/dfs.cc \
-                      src/fs/directory.cc \
-                      src/fs/main.cc \
-                      $(messages_files)
+dfs_SOURCES         = src/client/client.cc
+eclipse_wc_SOURCES  = src/targets/wc.cc
 
-dfs_CXXFLAGS        = $(AM_CXXFLAGS)
-
-eclipse_wc_SOURCES  = src/targets/wc.cc \
-                      src/mapreduce/dataset.cc \
-                      $(messages_files)
-
-#eclipse_wc_LDFLAGS  = -static $(BOOST_LDFLAGS)
-#eclipse_wc_LDADD    = $(LDADD) -lsqlite3 libecfs.la
-
-pkginclude_HEADERS  = src/common/ecfs.hh src/common/settings.hh
+pkginclude_HEADERS  = src/client/vdfs.hh \
+                      src/client/dfs.hh \
+											src/mapreduce/dataset.hh
 
 if COPY_SAMPLES
 sysconf_DATA        = doc/eclipse.json

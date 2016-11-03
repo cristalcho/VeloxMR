@@ -13,9 +13,9 @@ struct Task: public Message {
   std::string library, func_name, input_path;
   std::string file_output;
   std::vector<std::pair<uint32_t, std::string>> blocks;
-  uint32_t subjob_id;
-  uint32_t job_id;
-  uint32_t leader;
+  uint32_t subjob_id = 0;
+  uint32_t job_id = 0;
+  uint32_t leader = 0;
 };
 
 }

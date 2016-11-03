@@ -13,6 +13,18 @@
 
 using std::string;
 
+static std::unordered_map<string, int> syslog_facilities {
+  {"LOG_LOCAL1" , LOG_LOCAL1},
+  {"LOG_LOCAL2" , LOG_LOCAL2},
+  {"LOG_LOCAL3" , LOG_LOCAL3},
+  {"LOG_LOCAL4" , LOG_LOCAL4},
+  {"LOG_LOCAL5" , LOG_LOCAL5},
+  {"LOG_LOCAL6" , LOG_LOCAL6},
+  {"LOG_LOCAL7" , LOG_LOCAL7},
+  {"LOG_DAEMON" , LOG_DAEMON},
+  {"LOG_USER" , LOG_USER}
+};
+
 Logger* Logger::singleton = nullptr;
 
 Logger* Logger::connect (string title, string type) {
@@ -35,17 +47,17 @@ void Logger::disconnect (Logger* in) {
 }
 
 Logger::Logger (char* title, const string& type) { 
-  std::unordered_map<string, int> syslog_facilities; 
-  syslog_facilities["LOG_LOCAL1"] = LOG_LOCAL1;
-  syslog_facilities["LOG_LOCAL2"] = LOG_LOCAL2;
-  syslog_facilities["LOG_LOCAL3"] = LOG_LOCAL3;
-  syslog_facilities["LOG_LOCAL4"] = LOG_LOCAL4;
-  syslog_facilities["LOG_LOCAL5"] = LOG_LOCAL5;
-  syslog_facilities["LOG_LOCAL6"] = LOG_LOCAL6;
-  syslog_facilities["LOG_LOCAL7"] = LOG_LOCAL7;
-  syslog_facilities["LOG_DAEMON"] = LOG_DAEMON;
-  syslog_facilities["LOG_USER"] = LOG_USER;
-
+  std::unordered_map<string, int> syslog_facilities {
+    {"LOG_LOCAL1" , LOG_LOCAL1},
+      {"LOG_LOCAL2" , LOG_LOCAL2},
+      {"LOG_LOCAL3" , LOG_LOCAL3},
+      {"LOG_LOCAL4" , LOG_LOCAL4},
+      {"LOG_LOCAL5" , LOG_LOCAL5},
+      {"LOG_LOCAL6" , LOG_LOCAL6},
+      {"LOG_LOCAL7" , LOG_LOCAL7},
+      {"LOG_DAEMON" , LOG_DAEMON},
+      {"LOG_USER" , LOG_USER}
+  };
   int type_ = syslog_facilities[type];
   openlog (title, LOG_CONS, type_); 
 }
