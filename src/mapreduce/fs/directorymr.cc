@@ -23,10 +23,10 @@ void DirectoryMR::init_db() {
   // Execute SQL statement
   rc = sqlite3_exec(db, sql, NULL, 0, &zErrMsg);
   if(rc != SQLITE_OK) {
-    context.logger->error("SQL error: %s", zErrMsg);
+    ERROR("SQL error: %s", zErrMsg);
     sqlite3_free(zErrMsg);
   } else {
-    context.logger->info("idata_table created successfully");
+    DEBUG("idata_table created successfully");
   }
   // Create SQL statement of IGroup
   sprintf(sql, "CREATE TABLE igroup_table( \
@@ -38,10 +38,10 @@ void DirectoryMR::init_db() {
   // Execute SQL statement
   rc = sqlite3_exec(db, sql, NULL, 0, &zErrMsg);
   if(rc != SQLITE_OK) {
-    context.logger->error("SQL error: %s\n", zErrMsg);
+    ERROR("SQL error: %s\n", zErrMsg);
     sqlite3_free(zErrMsg);
   } else {
-    context.logger->info("igroup_table created successfully");
+    DEBUG("igroup_table created successfully");
   }
   // Create SQL statement of IBlock
   sprintf(sql, "CREATE TABLE iblock_table( \
@@ -53,10 +53,10 @@ void DirectoryMR::init_db() {
   // Execute SQL statement
   rc = sqlite3_exec(db, sql, NULL, 0, &zErrMsg);
   if(rc != SQLITE_OK) {
-    context.logger->error("SQL error: %s", zErrMsg);
+    ERROR("SQL error: %s", zErrMsg);
     sqlite3_free(zErrMsg);
   } else {
-    context.logger->info("iblock_table created successfully");
+    DEBUG("iblock_table created successfully");
   }
   sqlite3_close(db);
 }
@@ -72,10 +72,10 @@ void DirectoryMR::insert_idata_metadata(IDataInsert idata_insert) {
   // Execute SQL statement
   rc = sqlite3_exec(db, sql, NULL, 0, &zErrMsg);
   if(rc != SQLITE_OK) {
-    context.logger->error("SQL error: %s\n", zErrMsg);
+    ERROR("SQL error: %s\n", zErrMsg);
     sqlite3_free(zErrMsg);
   } else {
-    context.logger->info("idata_metadata inserted successfully\n");
+    DEBUG("idata_metadata inserted successfully\n");
   }
   // Close Database
   sqlite3_close(db);
@@ -92,10 +92,10 @@ void DirectoryMR::insert_igroup_metadata(IGroupInsert igroup_insert) {
   // Execute SQL statement
   rc = sqlite3_exec(db, sql, NULL, 0, &zErrMsg);
   if(rc != SQLITE_OK) {
-    context.logger->error("SQL error: %s\n", zErrMsg);
+    ERROR("SQL error: %s\n", zErrMsg);
     sqlite3_free(zErrMsg);
   } else {
-    context.logger->info("igroup_metadata inserted successfully\n");
+    DEBUG("igroup_metadata inserted successfully\n");
   }
   // Close Database
   sqlite3_close(db);
@@ -112,10 +112,10 @@ void DirectoryMR::insert_iblock_metadata(IBlockInsert iblock_insert) {
   // Execute SQL statement
   rc = sqlite3_exec(db, sql, NULL, 0, &zErrMsg);
   if(rc != SQLITE_OK) {
-    context.logger->error("SQL error: %s\n", zErrMsg);
+    ERROR("SQL error: %s\n", zErrMsg);
     sqlite3_free(zErrMsg);
   } else {
-    context.logger->info("iblock_metadata inserted successfully\n");
+    DEBUG("iblock_metadata inserted successfully\n");
   }
   // Close Database
   sqlite3_close(db);
@@ -171,10 +171,10 @@ void DirectoryMR::select_idata_metadata(uint32_t job_id, uint32_t map_id,
   // Execute SQL statement
   rc = sqlite3_exec(db, sql, idata_callback, (void*)idata_info, &zErrMsg);
   if(rc != SQLITE_OK) {
-    context.logger->error("SQL error: %s\n", zErrMsg);
+    ERROR("SQL error: %s\n", zErrMsg);
     sqlite3_free(zErrMsg);
   } else {
-    context.logger->info("idata_metadata selected successfully\n");
+    DEBUG("idata_metadata selected successfully\n");
   }
   // Close Database
   sqlite3_close(db);
@@ -196,7 +196,7 @@ void DirectoryMR::select_all_idata_metadata(IDataList &idata_list)
      } 
      else
      {
-       context.logger -> info("idata_metadata selected successfully\n");
+       DEBUG("idata_metadata selected successfully\n");
      }
      // close database
      sqlite3_close(db);
@@ -214,10 +214,10 @@ void DirectoryMR::select_igroup_metadata(uint32_t job_id, uint32_t map_id,
   // Execute SQL statement
   rc = sqlite3_exec(db, sql, igroup_callback, (void*)igroup_info, &zErrMsg);
   if(rc != SQLITE_OK) {
-    context.logger->error("SQL error: %s\n", zErrMsg);
+    ERROR("SQL error: %s\n", zErrMsg);
     sqlite3_free(zErrMsg);
   } else {
-    context.logger->info("igroup_metadata selected successfully\n");
+    DEBUG("igroup_metadata selected successfully\n");
   }
   // Close Database
   sqlite3_close(db);
@@ -234,10 +234,10 @@ void DirectoryMR::select_iblock_metadata(uint32_t job_id, uint32_t map_id,
   // Execute SQL statement
   rc = sqlite3_exec(db, sql, iblock_callback, (void*)iblock_info, &zErrMsg);
   if(rc != SQLITE_OK) {
-    context.logger->error("SQL error: %s\n", zErrMsg);
+    ERROR("SQL error: %s\n", zErrMsg);
     sqlite3_free(zErrMsg);
   } else {
-    context.logger->info("iblock_metadata selected successfully\n");
+    DEBUG("iblock_metadata selected successfully\n");
   }
   // Close Database
   sqlite3_close(db);

@@ -27,6 +27,7 @@ class PeerMR: public PeerDFS {
   IDataList request_idata_list();
 
   bool process_job(messages::Job*, std::function<void(void)>);
+  void submit_block(messages::BlockInfo*);
   template<typename T> void process(T);
 
  protected:

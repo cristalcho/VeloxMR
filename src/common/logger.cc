@@ -5,6 +5,7 @@
 #include "logger.hh"
 
 #include <stdarg.h>
+#define SYSLOG_NAMES
 #include <syslog.h>
 #include <unordered_map>
 #include <stdlib.h>
@@ -27,13 +28,13 @@ static std::unordered_map<string, int> syslog_facilities {
 
 Logger* Logger::singleton = nullptr;
 
-Logger* Logger::connect (string title, string type) {
+Logger* Logger::connect (string title, string type, string mask) {
 
   static char t [16];
   title.copy(t, 16);
   t[15] = '\0';
   if (singleton == nullptr)
-    singleton = new Logger(t, type);
+    singleton = new Logger(t, type, mask);
 
   return singleton;
 }
@@ -46,7 +47,7 @@ void Logger::disconnect (Logger* in) {
   in = nullptr;
 }
 
-Logger::Logger (char* title, const string& type) { 
+Logger::Logger (char* title, const string& type, string mask_) { 
   std::unordered_map<string, int> syslog_facilities {
     {"LOG_LOCAL1" , LOG_LOCAL1},
       {"LOG_LOCAL2" , LOG_LOCAL2},
@@ -58,8 +59,17 @@ Logger::Logger (char* title, const string& type) {
       {"LOG_DAEMON" , LOG_DAEMON},
       {"LOG_USER" , LOG_USER}
   };
-  int type_ = syslog_facilities[type];
-  openlog (title, LOG_CONS, type_); 
+  this->type = syslog_facilities[type];
+
+  int mask = 0;
+  for (auto i = 0; prioritynames[i].c_name; i++) {
+    if (prioritynames[i].c_name == mask_) {
+      mask = prioritynames[i].c_val;
+    }
+  }
+  this->title = title;
+  openlog (title, LOG_CONS, this->type); 
+  setlogmask(LOG_UPTO(mask));
 }
 
 Logger::~Logger () { closelog (); }
@@ -67,17 +77,21 @@ Logger::~Logger () { closelog (); }
 void Logger::debug (const char* fmt, ...) { 
   va_list ap;
 
+  //openlog (title.c_str(), LOG_CONS, type); 
   va_start(ap, fmt);
   log(LOG_DEBUG, fmt, ap);
   va_end(ap);
+  //closelog ();
 }
 
 void Logger::info (const char* fmt, ...) {
   va_list ap;
 
+  //openlog (title.c_str(), LOG_CONS, type); 
   va_start(ap, fmt);
   log(LOG_INFO, fmt, ap);
   va_end(ap);
+  //closelog ();
 }
 
 void Logger::notice (const char* fmt, ...) { 
@@ -99,12 +113,14 @@ void Logger::warn (const char* fmt, ...) {
 void Logger::error (const char* fmt, ...) { 
   va_list ap;
   char msg [256];
+  //openlog (title.c_str(), LOG_CONS, type); 
   strncpy(msg,"ERROR ", 256);
   strncat(msg, fmt, 256);
   strncat(msg," ERRSTR:%m", 256);
   va_start(ap, fmt);
   log(LOG_ERR, msg, ap);
   va_end(ap);
+  //closelog ();
 }
 
 void Logger::panic (const char* fmt, ...) { 

@@ -3,7 +3,7 @@ include tests/Makefile.am
 AM_CPPFLAGS      = -I@srcdir@/src/common -I@srcdir@/src -include ./config.h $(BOOST_CPPFLAGS)
 AM_CXXFLAGS      = $(CXXFLAGS) -Wall
 
-bin_PROGRAMS     = eclipse_node dfs eclipse_wc
+bin_PROGRAMS     = eclipse_node dfs
 
 messages_files   = src/messages/boundaries.cc      \
                    src/messages/message.cc         \
@@ -57,7 +57,7 @@ libvdfs_la_SOURCES  = $(messages_files) \
                       src/common/logger.cc src/common/histogram.cc \
                       src/common/context.cc src/common/dl_loader.cc \
                       src/common/context_singleton.cc \
-                      src/mapreduce/dataset.cc
+                      src/client/vmr.cc
 
 libvdfs_la_LDFLAGS  = $(BOOST_LDFLAGS) -version-info 0:0:0
 libvdfs_la_LIBADD   = -lboost_system -lboost_serialization -lboost_coroutine -lboost_thread -lboost_context -ldl
@@ -93,11 +93,10 @@ eclipse_node_SOURCES = src/targets/node_main_mr.cc \
                        src/mapreduce/executor.cc
 
 dfs_SOURCES         = src/client/client.cc
-eclipse_wc_SOURCES  = src/targets/wc.cc
 
 pkginclude_HEADERS  = src/client/vdfs.hh \
                       src/client/dfs.hh \
-											src/mapreduce/dataset.hh
+											src/client/vmr.hh
 
 if COPY_SAMPLES
 sysconf_DATA        = doc/eclipse.json

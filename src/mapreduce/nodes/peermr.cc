@@ -284,8 +284,9 @@ void PeerMR::run_map_onto_block(string ignoreme, string block, Task* stask) {
   auto job_keys = shuffled_keys[stask->job_id];
   IDataKeys idata;
   idata.job_id = stask->job_id;
-  idata.keys.push_back(""); //= vector<string>;
-  copy(job_keys.begin(), job_keys.end(), idata.keys.begin());
+  idata.keys = std::vector<string>(job_keys.begin(), job_keys.end()); //push_back(""); //= vector<string>;
+  //idata.keys.push_back(""); //= vector<string>;
+  //copy(job_keys.begin(), job_keys.end(), idata.keys.begin());
 
   auto which_node = stask->job_id % network_size;
   if ((int)which_node == id)
@@ -301,6 +302,7 @@ void PeerMR::run_map_onto_block(string ignoreme, string block, Task* stask) {
     else
       network->send(which_node, &fs);
   }
+ // sleep(1);
   notify_task_leader (stask->leader, stask->subjob_id, stask->job_id, "MAP");
 }
 // }}}
@@ -404,6 +406,18 @@ void PeerMR::schedule_reduce(messages::Job* m) {
     else
       network->send(which_node, &task);
   }
+}
+// }}}
+// submit_block {{{
+void PeerMR::submit_block(messages::BlockInfo* m) {
+ auto file_name = m->file_name;
+ int which_node = h(file_name) % network_size;
+
+ if (which_node == id) {
+  insert_block(m);
+ } else {
+  network->send(which_node, m);
+ }
 }
 // }}}
 }  // namespace eclipse

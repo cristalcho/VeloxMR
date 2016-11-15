@@ -97,12 +97,16 @@ void AsyncChannel::read_coroutine (yield_context yield) {
   boost::system::error_code ec;
   char header [header_size + 1] = {'\0'}; 
   header[16] = '\0';
+  Message* msg = nullptr;
 
-  try {
-    while (true) {
+  while (true) {
+    try {
       size_t l = async_read(*receiver, buffer(header, header_size), yield[ec]);
-      if (l != (size_t)header_size or ec)  {
+      if (l != (size_t)header_size)
         throw std::runtime_error("header size");
+
+      if (ec) {
+        throw std::runtime_error("EC error");
       }
 
       DEBUG("Package have arrived");
@@ -112,24 +116,23 @@ void AsyncChannel::read_coroutine (yield_context yield) {
         throw std::runtime_error("body size");
       }
 
-      Message* msg = nullptr;
-      msg = load_message(buf);
+    } catch (std::exception& e) {
+      if (ec == boost::asio::error::eof)
+        INFO("AsyncChannel: Closing channel and socket");
 
-      DEBUG("Package has been deserialized");
-      node->on_read(msg, id);
-      delete msg;
-      msg=nullptr;
+      else
+        INFO("AsyncChannel: unformed header arrived from host %s, ex: %s", 
+            receiver->remote_endpoint().address().to_string().c_str(), e.what());
+
+      node->on_disconnect(nullptr, id);
+      break;
     }
-  } catch (std::exception& e) {
-    if (ec == boost::asio::error::eof)
-      INFO("AsyncChannel: Closing server socket to client");
 
-    else
-      INFO("AsyncChannel: unformed header arrived from host %s, ex: %s", 
-          receiver->remote_endpoint().address().to_string().c_str(), e.what());
-
-    node->on_disconnect(nullptr, id);
+    msg = load_message(buf);
+    DEBUG("Package has been deserialized");
+    node->on_read(msg, id);
+    delete msg;
+    msg=nullptr;
   }
-
 }
 // }}}

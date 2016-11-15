@@ -45,7 +45,7 @@ bool Executor::run_map (messages::Task* m, std::string input) {
 
       auto key        = key_value.first;
       auto& value     = key_value.second;
-//      context.logger->info ("Generated value: %s -> %s", next_line, value.c_str());
+      context.logger->debug ("Generated value: %s -> %s", next_line, value.c_str());
 
       KeyValueShuffle kv; 
       kv.job_id_ = m->job_id;           // :TODO:
@@ -82,47 +82,56 @@ bool Executor::run_reduce (messages::Task* task) {
     ireader.set_reducer_id(0);
     ireader.init();
 
+    uint32_t iterations = 0;
+    uint32_t total_size = 0;
     while (ireader.is_next_key()) {
       string key;
       ireader.get_next_key(key);
 
       int total_iterations = 0;
       string last_output;
-      if (ireader.is_next_value()) 
+      if (ireader.is_next_value()) {
         ireader.get_next_value(last_output);
+        total_iterations = 1;
 
-      while (ireader.is_next_value()) {
-        string value;
-        ireader.get_next_value(value);
+        while (ireader.is_next_value()) {
+          string value;
+          ireader.get_next_value(value);
 
-        last_output = _reducer_ (value, last_output);
+          last_output = _reducer_ (value, last_output);
 
-        total_iterations++;
+          total_iterations++;
+        }
       }
       context.logger->info ("Key %s #iterations: %i", key.c_str(), total_iterations);
 
-      FileInfo fi;
-      fi.name = task->file_output;
-      fi.num_block = 1;
-      fi.size = last_output.length();
-      fi.hash_key = h(task->file_output.c_str());
 
       BlockInfo bi;
       bi.file_name = task->file_output;
-      bi.name = task->file_output + "_0";
-      bi.seq = 0;
+      bi.name = task->file_output + "_" + to_string(iterations);
+      bi.seq = iterations;
       bi.hash_key = h(bi.name);
       bi.size = last_output.length();
-      bi.content = last_output;
+      bi.content = key + ":" + last_output + "\n";
       bi.replica = 1;
       bi.node = "";
       bi.l_node = "";
       bi.r_node = "";
       bi.is_committed = 1;
 
-      dynamic_cast<PeerDFS*>(peer)->process(&fi);
-      dynamic_cast<PeerDFS*>(peer)->insert_block(&bi);
+      dynamic_cast<PeerMR*>(peer)->submit_block(&bi);
+      iterations++;
+      total_size += last_output.length();
     }
+
+    FileInfo fi;
+    fi.name = task->file_output;
+    fi.num_block = iterations;
+    fi.size = total_size;
+    fi.hash_key = h(fi.name);
+
+    dynamic_cast<PeerDFS*>(peer)->process(&fi);
+
   } catch (std::exception& e) {
     context.logger->error ("Error in the executer: %s", e.what());
     exit(EXIT_FAILURE);
