@@ -22,33 +22,39 @@ namespace eclipse {
   }
 
   int Directory::file_callback(void *file_info, int argc, char **argv, char **azColName) {
-    int i = 0;
-    auto file = reinterpret_cast<FileInfo*>(file_info);
-    file->name          = argv[i++];
-    file->hash_key      = atoi(argv[i++]);
-    file->size          = atoll(argv[i++]);
-    file->num_block     = atoi(argv[i++]);
-    file->type          = atoi(argv[i++]);
-    file->replica       = atoi(argv[i]);
+    if(argc > 0) {
+      int i = 0;
+      auto file = reinterpret_cast<FileInfo*>(file_info);
+      file->name          = argv[i++];
+      file->hash_key      = atoi(argv[i++]);
+      file->size          = atoll(argv[i++]);
+      file->num_block     = atoi(argv[i++]);
+      file->type          = atoi(argv[i++]);
+      file->replica       = atoi(argv[i]);
+      file->is_valid      = true;
+    }
     return 0;
   }
 
   int Directory::block_callback(void *block_info, int argc, char **argv, char **azColName) {
-    int i = 0;
-    auto block = reinterpret_cast<BlockInfo*>(block_info);
-    block->name         = argv[i++];
-    block->file_name    = argv[i++];
-    block->seq          = atoi(argv[i++]);
-    block->hash_key     = atoi(argv[i++]);
-    block->size         = atoi(argv[i++]);
-    block->type         = atoi(argv[i++]);
-    block->replica      = atoi(argv[i++]);
-    block->node         = argv[i++];
-    block->l_node       = argv[i] ? argv[i] : "NULL";
-    i++;
-    block->r_node       = argv[i] ? argv[i] : "NULL";
-    i++;
-    block->is_committed = argv[i] ? atoi(argv[i]) : 0;
+    if(argc > 0) { 
+      int i = 0;
+      auto block = reinterpret_cast<BlockInfo*>(block_info);
+      block->name         = argv[i++];
+      block->file_name    = argv[i++];
+      block->seq          = atoi(argv[i++]);
+      block->hash_key     = atoi(argv[i++]);
+      block->size         = atoi(argv[i++]);
+      block->type         = atoi(argv[i++]);
+      block->replica      = atoi(argv[i++]);
+      block->node         = argv[i++];
+      block->l_node       = argv[i] ? argv[i] : "NULL";
+      i++;
+      block->r_node       = argv[i] ? argv[i] : "NULL";
+      i++;
+      block->is_committed = argv[i] ? atoi(argv[i]) : 0;
+      block->is_valid     = true;
+    }
     return 0;
   } 
 
@@ -137,7 +143,11 @@ namespace eclipse {
         l_node        TEXT              , \
         r_node        TEXT              , \
         is_committed  INT               , \
-        PRIMARY KEY (name));"); 
+        PRIMARY KEY (name)); \
+        CREATE INDEX index_file_name_on_block_table \
+        ON block_table(file_name); \
+        CREATE INDEX index_file_name_seq_on_block_table \
+        ON block_table(file_name, seq);");
 
     // Execute SQL statement
     rc = sqlite3_exec(db, sql, NULL, 0, &zErrMsg);
@@ -364,4 +374,17 @@ namespace eclipse {
     sqlite3_close(db);
     return result;
   }
+
+  void Directory::select_last_block_metadata(string file_name, BlockInfo *block_info) {
+    open_db();
+    sprintf(sql, "SELECT * FROM block_table WHERE (file_name='%s') ORDER BY seq DESC LIMIT 1;", file_name.c_str());
+    rc = sqlite3_exec(db, sql, block_callback, (void*)block_info, &zErrMsg);
+    if (rc != SQLITE_OK) {
+      context.logger->error("SQL error: %s\n", zErrMsg);
+      sqlite3_free(zErrMsg);
+    } else {
+      context.logger->info("the last block_metadata selected successfully\n");
+    }
+    sqlite3_close(db);
+  } 
 }

@@ -33,7 +33,7 @@ vdfs::~vdfs() {
 // }}}
 // open {{{
 file vdfs::open(std::string name) {
-  if (!dfs->exists(name)) 
+  //if (!dfs->exists(name)) 
     dfs->touch(name);
 
   return velox::file(this, name);

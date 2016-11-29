@@ -1,5 +1,6 @@
 #pragma once
 #include "vdfs.hh"
+#include "../mapreduce/map_output_collection.hh"
 #include <memory>
 
 namespace velox {

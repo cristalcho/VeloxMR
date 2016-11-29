@@ -120,7 +120,12 @@ template<> void PeerMR::process(IDataKeys* m) {
   }
 }
 // }}}
-// on_read {{{
+// process (FileInfo* m) {{{
+template<> void PeerMR::process (FileInfo* m) {
+  PeerDFS::process(m);
+}
+// }}}
+// on_read {{j
 void PeerMR::on_read(messages::Message *msg, int) {
   std::string type = msg->get_type();
 
@@ -410,14 +415,53 @@ void PeerMR::schedule_reduce(messages::Job* m) {
 // }}}
 // submit_block {{{
 void PeerMR::submit_block(messages::BlockInfo* m) {
- auto file_name = m->file_name;
- int which_node = h(file_name) % network_size;
+  auto file_name = m->file_name;
+  int which_node = h(file_name) % network_size;
 
- if (which_node == id) {
-  insert_block(m);
- } else {
-  network->send(which_node, m);
- }
+  if (which_node == id) {
+    insert_block(m);
+  } else {
+    network->send(which_node, m);
+  }
+}
+// }}}
+// insert_file {{{
+bool PeerMR::insert_file(messages::FileInfo* f) {
+  //bool ret = directory.file_exist(f->name.c_str());
+
+  messages::FileInfo sel_fi;
+  directory.select_file_metadata(f->name.c_str(), &sel_fi);
+  bool ret = (sel_fi.is_valid && strcmp(sel_fi.name.c_str(), f->name.c_str()) == 0);
+
+  if (ret) {
+    FileUpdate fu;
+    fu.name = f->name;
+    fu.size = f->size + sel_fi.size;
+    fu.num_block = f->num_block + sel_fi.num_block;
+    directory.update_file_metadata(fu);
+    replicate_metadata();
+
+    INFO("File:%s exists in db, Updated to (%u, %u)", fu.name.c_str(), fu.size, fu.num_block);
+    
+    return false;
+  }
+
+  directory.insert_file_metadata(*f);
+  replicate_metadata();
+
+  logger->info("Saving to SQLite db");
+  return true;
+}
+// }}}
+// insert_block {{{
+bool PeerMR::insert_block(messages::BlockInfo* m) {
+  // A block from other nodes should be last in the sequence.
+  messages::BlockInfo last_block;
+  directory.select_last_block_metadata(m->file_name.c_str(), &last_block);
+  if(last_block.is_valid)
+    m->seq = last_block.seq + 1;
+
+  return PeerDFS::insert_block(m);
 }
 // }}}
 }  // namespace eclipse

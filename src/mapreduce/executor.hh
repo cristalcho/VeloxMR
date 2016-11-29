@@ -5,8 +5,8 @@
 
 namespace eclipse {
 class Executor {
-  typedef std::pair<string, string> (*maptype)(std::string);
-  typedef std::string (*reducetype)(std::string, std::string);
+  //typedef std::pair<string, string> (*maptype)(std::string);
+  //typedef std::string (*reducetype)(std::string, std::string);
   public:
     Executor (PeerMR*);
     ~Executor ();
