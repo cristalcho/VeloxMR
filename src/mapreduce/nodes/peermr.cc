@@ -125,7 +125,7 @@ template<> void PeerMR::process (FileInfo* m) {
   PeerDFS::process(m);
 }
 // }}}
-// on_read {{j
+// on_read {{{
 void PeerMR::on_read(messages::Message *msg, int) {
   std::string type = msg->get_type();
 

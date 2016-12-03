@@ -97,7 +97,8 @@ dfs_SOURCES         = src/client/client.cc
 
 pkginclude_HEADERS  = src/client/vdfs.hh \
                       src/client/dfs.hh \
-											src/client/vmr.hh
+											src/client/vmr.hh \
+                      src/mapreduce/map_output_collection.hh
 
 if COPY_SAMPLES
 sysconf_DATA        = doc/eclipse.json
