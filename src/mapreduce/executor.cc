@@ -21,7 +21,7 @@ Executor::~Executor() { }
 // }}}
 // run_map {{{
 bool Executor::run_map (messages::Task* m, std::string input) {
-    auto path_lib = context.settings.get<string>("path.applications");
+    auto path_lib = GET_STR("path.applications");
     path_lib += ("/" + m->library);
     DL_loader loader (path_lib);
 
@@ -34,7 +34,7 @@ bool Executor::run_map (messages::Task* m, std::string input) {
     mapper_t _map_ = loader.load_function(m->func_name);
     stringstream ss (input);
 
-    char* next_line =  new char[256]; //! :TODO: change to DFS line limit
+    char next_line[256]; //! :TODO: change to DFS line limit
     velox::MapOutputCollection results;
 
     while (!ss.eof()) {
@@ -44,11 +44,6 @@ bool Executor::run_map (messages::Task* m, std::string input) {
         continue;
 
       _map_ (string(next_line), results);
-      //auto key        = key_value.first;
-      //auto& value     = key_value.second;
-      //      context.logger->info ("Generated value: %s -> %s", next_line, value.c_str());
-
-      /* TODO: the type of value in KeyValueShuffle should be changed to vector */
     }
 
     auto run_block = [&m, &peer = this->peer](std::string key, std::string value) mutable {
@@ -61,9 +56,6 @@ bool Executor::run_map (messages::Task* m, std::string input) {
     };
 
     results.travel(run_block);
-
-
-    delete[] next_line;
 
     return true;
   }
@@ -137,6 +129,7 @@ bool Executor::run_reduce (messages::Task* task) {
     fi.num_block = iterations;
     fi.size = total_size;
     fi.hash_key = h(fi.name);
+    fi.replica = 1;
 
     dynamic_cast<PeerMR*>(peer)->process(&fi);
 

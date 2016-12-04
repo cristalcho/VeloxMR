@@ -416,9 +416,9 @@ void PeerMR::schedule_reduce(messages::Job* m) {
 // submit_block {{{
 void PeerMR::submit_block(messages::BlockInfo* m) {
   auto file_name = m->file_name;
-  int which_node = h(file_name) % network_size;
+  int which_node = h(file_name) % network_size; 
 
-  if (which_node == id) {
+  if (which_node == id) { //If it is its leader node
     insert_block(m);
   } else {
     network->send(which_node, m);

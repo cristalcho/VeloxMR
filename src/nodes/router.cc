@@ -20,8 +20,7 @@ void Router::on_read (Message* m, int n_channel) {
   try {
     routing_table[type](m, n_channel);
   } catch (std::exception& e) {
-    ERROR("Can not find message type(ROUTER) : %s", type.c_str());
-  
+    ERROR("Can not find message type(ROUTER) : %s : E: %s ", type.c_str(), e.what());
   }
 }
 // }}}
