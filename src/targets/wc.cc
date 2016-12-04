@@ -1,50 +1,52 @@
-#include "../mapreduce/dataset.hh"
-
+#include <eclipsedfs/vmr.hh>
 #include <utility>
 #include <string>
 #include <sstream>
+#include <iostream>
 
-using namespace eclipse;
 using namespace std;
+using namespace velox;
 
 extern "C" {
-  pair<string, string> mymapper(string);
-  pair<string, string> mymapper2(string);
+  void mymapper(std::string, velox::MapOutputCollection&);
   string myreducer (string, string);
-}
-
-pair<string, string> mymapper(string line) {
-
-  std::stringstream  stream(line);
-  std::string        oneWord;
-  unsigned int       count = 0;
-
-  while(stream >> oneWord) { ++count;}
-  
-  return {"Total", to_string(count)};
-}
-
-pair<string, string> mymapper2(string line) {
-
-  std::stringstream  stream(line);
-  std::string        oneWord;
-  unsigned int       count = 0;
-
-  while(stream >> oneWord) { ++count;}
-  
-  return {"Total1", to_string(count)};
 }
 
 string myreducer (string a, string b) {
   return to_string(stoi(a) + stoi(b));
 }
 
-int main (int argc, char** argv) {
-  DataSet& A = DataSet::open(argv[1]);
-  A.map("mymapper");
-  A.reduce("myreducer", "iteration_1");
+void mymapper(std::string line, velox::MapOutputCollection& mapper_results) {
+  std::stringstream  stream(line);
+  std::string token;
 
-  DataSet& B = DataSet::open("iteration_1");
-  B.map("mymapper2");
-  B.reduce("myreducer", "output");
+  while(stream >> token) 
+    mapper_results.insert(token, to_string(1));
+}
+
+int main (int argc, char** argv) {
+  vdfs cloud;
+  file myfile = cloud.open("BUM");
+  myfile.append(
+      "HELLO HOLA HELLO\n"
+      "HELLO BYE\n"
+      "BYE\n"
+      "BYE\n"
+      "HOLA MCCREE\n"
+      "HOLA ANA\n"
+      "BYE ZZ\n"
+      "HOLA\n"
+      "BYE\n"
+      "ADIOS\n");
+  cout << myfile.get() << endl;
+  vmr mr(&cloud);
+  dataset A = mr.make_dataset({"BUM"});
+  A.map("mymapper");
+  A.reduce("myreducer", "wc.result");
+  cloud.rm("BUM");
+
+  file result_file = cloud.open("wc.result");
+  cout << result_file.get() << endl;
+  
+  return 0;
 }

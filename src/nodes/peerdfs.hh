@@ -39,9 +39,9 @@ class PeerDFS: public Node, public AsyncNode {
     virtual void request (uint32_t, std::string, req_func);
 
     void close ();
-    bool insert_block (messages::BlockInfo*);
+    virtual bool insert_block (messages::BlockInfo*);
     bool update_block (messages::BlockUpdate*);
-    bool insert_file (messages::FileInfo*);
+    virtual bool insert_file (messages::FileInfo*);
     bool update_file (messages::FileUpdate*);
     bool delete_block (messages::BlockDel*);
     bool delete_file (messages::FileDel*);

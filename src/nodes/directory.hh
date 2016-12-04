@@ -48,5 +48,6 @@ namespace eclipse {
       void display_file_metadata();
       void display_block_metadata();
       bool file_exist(std::string file_name);
+      void select_last_block_metadata(std::string file_name, BlockInfo *block_info);
   };
 }

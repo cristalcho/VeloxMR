@@ -20,9 +20,9 @@ bool DL_loader::init_lib () {
 }
 // }}}
 // load_function {{{
-maptype DL_loader::load_function (std::string fun) {
-  maptype func_ = 
-    reinterpret_cast<maptype>(dlsym(lib, fun.c_str())); 
+mapper_t DL_loader::load_function (std::string fun) {
+  mapper_t func_ = 
+    reinterpret_cast<mapper_t>(dlsym(lib, fun.c_str())); 
   char* err = dlerror();
 
   if (err) throw std::runtime_error("DL_LOADER: Symbol not found");

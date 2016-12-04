@@ -26,6 +26,7 @@ struct Message {
   Message& set_destination(int);
 
   int origin, destination;
+  bool is_valid = false;
 };
 
 }

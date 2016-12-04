@@ -2,6 +2,7 @@
 #include "../common/dl_loader.hh"
 #include "../common/hash.hh"
 #include "../mapreduce/messages/key_value_shuffle.h"
+#include "../mapreduce/map_output_collection.hh"
 #include "../mapreduce/fs/ireader.h"
 #include "../messages/keyvalue.hh"
 
@@ -20,7 +21,7 @@ Executor::~Executor() { }
 // }}}
 // run_map {{{
 bool Executor::run_map (messages::Task* m, std::string input) {
-    auto path_lib = context.settings.get<string>("path.applications");
+    auto path_lib = GET_STR("path.applications");
     path_lib += ("/" + m->library);
     DL_loader loader (path_lib);
 
@@ -30,31 +31,31 @@ bool Executor::run_map (messages::Task* m, std::string input) {
       context.logger->error ("Not found library path[%s]", path_lib.c_str());
     }
 
-    function<pair<string, string>(string)> _map_ = 
-        loader.load_function(m->func_name);
+    mapper_t _map_ = loader.load_function(m->func_name);
     stringstream ss (input);
 
+    char next_line[256]; //! :TODO: change to DFS line limit
+    velox::MapOutputCollection results;
+
     while (!ss.eof()) {
-      char* next_line =  new char[256]; //! :TODO: change to DFS line limit
       bzero(next_line, 256);
       ss.getline (next_line, 256);
       if (strnlen(next_line, 256) == 0) 
         continue;
 
-      pair<string, string> key_value = _map_ (string(next_line));
+      _map_ (string(next_line), results);
+    }
 
-      auto key        = key_value.first;
-      auto& value     = key_value.second;
-      context.logger->debug ("Generated value: %s -> %s", next_line, value.c_str());
-
+    auto run_block = [&m, &peer = this->peer](std::string key, std::string value) mutable {
       KeyValueShuffle kv; 
       kv.job_id_ = m->job_id;           // :TODO:
       kv.map_id_ = 0;
       kv.key_ = key;
-      kv.value_ = value; 
+      kv.value_ = value;
       peer->process(&kv);
-      delete[] next_line;
-    }
+    };
+
+    results.travel(run_block);
 
     return true;
   }
@@ -105,10 +106,9 @@ bool Executor::run_reduce (messages::Task* task) {
       }
       context.logger->info ("Key %s #iterations: %i", key.c_str(), total_iterations);
 
-
       BlockInfo bi;
       bi.file_name = task->file_output;
-      bi.name = task->file_output + "_" + to_string(iterations);
+      bi.name = task->file_output + "-" + key.c_str();
       bi.seq = iterations;
       bi.hash_key = h(bi.name);
       bi.size = last_output.length();
@@ -129,8 +129,9 @@ bool Executor::run_reduce (messages::Task* task) {
     fi.num_block = iterations;
     fi.size = total_size;
     fi.hash_key = h(fi.name);
+    fi.replica = 1;
 
-    dynamic_cast<PeerDFS*>(peer)->process(&fi);
+    dynamic_cast<PeerMR*>(peer)->process(&fi);
 
   } catch (std::exception& e) {
     context.logger->error ("Error in the executer: %s", e.what());

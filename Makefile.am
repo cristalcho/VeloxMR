@@ -57,7 +57,8 @@ libvdfs_la_SOURCES  = $(messages_files) \
                       src/common/logger.cc src/common/histogram.cc \
                       src/common/context.cc src/common/dl_loader.cc \
                       src/common/context_singleton.cc \
-                      src/client/vmr.cc
+                      src/client/vmr.cc \
+                      src/mapreduce/map_output_collection.cc
 
 libvdfs_la_LDFLAGS  = $(BOOST_LDFLAGS) -version-info 0:0:0
 libvdfs_la_LIBADD   = -lboost_system -lboost_serialization -lboost_coroutine -lboost_thread -lboost_context -ldl
@@ -96,7 +97,8 @@ dfs_SOURCES         = src/client/client.cc
 
 pkginclude_HEADERS  = src/client/vdfs.hh \
                       src/client/dfs.hh \
-											src/client/vmr.hh
+											src/client/vmr.hh \
+                      src/mapreduce/map_output_collection.hh
 
 if COPY_SAMPLES
 sysconf_DATA        = doc/eclipse.json

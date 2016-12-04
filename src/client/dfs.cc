@@ -434,25 +434,22 @@ int DFS::rm(vec_str argv) {
 
       send_message(socket.get(), &fr);
       auto fd = read_reply<FileDescription>(socket.get());
-      socket->close();
 
       unsigned int block_seq = 0;
       for (auto block_name : fd->blocks) {
         uint32_t block_hash_key = fd->hash_keys[block_seq];
-        auto tmp_socket = connect(boundaries.get_index(block_hash_key));
         BlockDel bd;
         bd.name = block_name;
         bd.file_name = file_name;
         bd.hash_key = block_hash_key;
         bd.seq = block_seq++;
         bd.replica = fd->replica;
-        send_message(tmp_socket.get(), &bd);
-        auto msg = read_reply<Reply>(tmp_socket.get());
+        send_message(socket.get(), &bd);
+        auto msg = read_reply<Reply>(socket.get());
         if (msg->message != "OK") {
           cerr << "[ERR] " << block_name << "doesn't exist." << endl;
           return EXIT_FAILURE;
         }
-        socket->close();
       }
 
       FileDel file_del;
