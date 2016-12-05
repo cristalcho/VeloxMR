@@ -93,7 +93,10 @@ eclipse_node_SOURCES = src/targets/node_main_mr.cc \
                        src/mapreduce/fs/directorymr.cc \
                        src/mapreduce/fs/iwriter.cc \
                        src/mapreduce/fs/ireader.cc \
-                       src/mapreduce/executor.cc
+                       src/mapreduce/executor.cc \
+                       src/mapreduce/py_executor.cc
+
+eclipse_node_LDADD  = $(LDADD) -lpython2.7
 
 dfs_SOURCES         = src/client/client.cc
 

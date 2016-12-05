@@ -12,12 +12,14 @@ class dataset {
     void map(std::string);
     void reduce(std::string, std::string);
 
+    void pymap(std::string);
+    void pyreduce(std::string, std::string);
+
   protected:
     dataset(vmr*, std::vector<std::string>);
 
     uint32_t job_id = 0;
     std::vector<std::string> files;
-    //std::unique_ptr<boost::asio::ip::tcp::socket> socket;
     vmr* vmr_ = nullptr;
 };
 

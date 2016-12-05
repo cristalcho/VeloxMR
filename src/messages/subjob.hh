@@ -15,6 +15,8 @@ struct SubJob: public Message {
   std::string map_name;
   std::string reduce_name;
   std::string file;
+  std::string func_body;
+  std::string lang;
 };
 
 }

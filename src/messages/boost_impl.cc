@@ -119,6 +119,8 @@ template <typename Archive>
     ar & BOOST_SERIALIZATION_NVP(c.file_output);
     ar & BOOST_SERIALIZATION_NVP(c.blocks);
     ar & BOOST_SERIALIZATION_NVP(c.leader);
+    ar & BOOST_SERIALIZATION_NVP(c.func_body);
+    ar & BOOST_SERIALIZATION_NVP(c.lang);
   }
 template <typename Archive>
   void serialize (Archive& ar, eclipse::messages::FileList& c, unsigned int) {
@@ -304,6 +306,8 @@ template <typename Archive>
     ar & BOOST_SERIALIZATION_NVP(c.files);
     ar & BOOST_SERIALIZATION_NVP(c.job_id);
     ar & BOOST_SERIALIZATION_NVP(c.file_output);
+    ar & BOOST_SERIALIZATION_NVP(c.func_body);
+    ar & BOOST_SERIALIZATION_NVP(c.lang);
   }
 
 template <typename Archive>
@@ -323,6 +327,8 @@ template <typename Archive>
     ar & BOOST_SERIALIZATION_NVP(c.reduce_name);
     ar & BOOST_SERIALIZATION_NVP(c.file);
     ar & BOOST_SERIALIZATION_NVP(c.job_id);
+    ar & BOOST_SERIALIZATION_NVP(c.func_body);
+    ar & BOOST_SERIALIZATION_NVP(c.lang);
   }
 
 template <typename Archive>

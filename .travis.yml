@@ -24,6 +24,7 @@ addons:
       - gcc-4.9
       - g++-4.9
       - libunittest++-dev
+      - python2.7-dev
 
 before_script:
   - export CXX=g++-4.9

@@ -17,6 +17,8 @@ struct Job: public Message {
   std::string reduce_name;
   std::string file_output;
   std::vector<std::string> files;
+  std::string func_body;
+  std::string lang;
 };
 
 }

@@ -10,6 +10,7 @@
 #include "peermr.h"
 #include "../messages/boost_impl.hh"
 #include "../executor.hh"
+#include "../py_executor.hh"
 #include "../fs/iwriter.h"
 #include <iostream>
 #include <sstream>
@@ -246,6 +247,8 @@ bool PeerMR::process_job (messages::Job* m, std::function<void(void)> f) {
       sjob.reduce_name = m->reduce_name;
       sjob.file = file;
       sjob.job_id = m->job_id;
+      sjob.func_body = m->func_body;
+      sjob.lang = m->lang;
 
       if (which_node == id)
         process(&sjob);
@@ -297,6 +300,8 @@ void PeerMR::schedule_map(messages::SubJob* m) {
     task.library = m->library;
     task.input_path = m->file;
     task.leader = id;
+    task.func_body = m->func_body;
+    task.lang = m->lang;
 
     tasks.insert({block_node, task});
     tasks[block_node].blocks.push_back({hash_key, block_name});
@@ -334,12 +339,22 @@ void PeerMR::run_map_onto_block(string ignoreme, string block, Task* stask) {
   Reply reply;
 
   INFO("Executing map");
-  Executor exec(this);
+  if (stask->lang == "C++") {
+    Executor exec(this);
 
-  if (exec.run_map(stask, block))
-    reply.message = "MAPDONE";
-  else
-    reply.message = "MAPFAILED";
+    if (exec.run_map(stask, block))
+      reply.message = "MAPDONE";
+    else
+      reply.message = "MAPFAILED";
+
+  } else if (stask->lang == "Python") {
+    PYexecutor exec(this);
+
+    if (exec.run_map(stask, block))
+      reply.message = "MAPDONE";
+    else
+      reply.message = "MAPFAILED";
+  }
 
   auto job_nodes = shuffled_nodes[stask->job_id];
   NodesShuffling ns;
@@ -409,6 +424,8 @@ void PeerMR::schedule_reduce(messages::Job* m) {
     task.library = m->library;
     task.leader = id;
     task.file_output = m->file_output;
+    task.func_body = m->func_body;
+    task.lang = m->lang;
 
     if (which_node == id)
       process(&task);
@@ -431,13 +448,24 @@ void PeerMR::request_local_reduce (messages::Task* m) {
 
   if (di.num_reducer > 0) { //! Perform reduce operation
     logger->info("Performing reduce operation");
-    Executor exec(this);
-    Reply reply;
+    if (m->lang == "C++") {
+      Executor exec(this);
+      Reply reply;
 
-    if (exec.run_reduce(m))
-      reply.message = "MAPDONE";
-    else
-      reply.message = "MAPFAILED";
+      if (exec.run_reduce(m))
+        reply.message = "MAPDONE";
+      else
+        reply.message = "MAPFAILED";
+
+    } else if (m->lang == "Python") {
+      PYexecutor exec(this);
+      Reply reply;
+
+      if (exec.run_reduce(m))
+        reply.message = "MAPDONE";
+      else
+        reply.message = "MAPFAILED";
+    }
   }
 
   notify_task_leader(m->leader, m->job_id, m->job_id, "REDUCE");

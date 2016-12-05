@@ -61,6 +61,7 @@ void dataset::map(std::string func) {
 
   Job job;
   job.type = "MAP";
+  job.lang = "C++";
   job.library = base_name(getenv("_")) + ".so";
   job.map_name = func;
   job.files = files;
@@ -78,9 +79,45 @@ void dataset::reduce(std::string func, std::string output) {
 
   Job job;
   job.type = "REDUCE";
+  job.lang = "C++";
   job.library = base_name(getenv("_")) + ".so";
   job.reduce_name = func;
   job.job_id = job_id;
+  job.file_output = output;
+
+  send_message(&socket, &job);
+  auto reply = read_reply<Reply> (&socket);
+  socket.close();
+}
+// }}}
+// pymap {{{
+void dataset::pymap(std::string func) {
+  tcp::socket socket (context.io);
+  socket.connect(*find_local_master(job_id));
+
+  Job job;
+  job.type = "MAP";
+  job.lang = "Python";
+  job.files = files;
+  job.job_id = job_id;
+  job.func_body = func;
+
+  send_message(&socket, &job);
+  auto reply = read_reply<Reply> (&socket);
+  socket.close();
+}
+// }}}
+// pyreduce {{{
+void dataset::pyreduce(std::string func, std::string output) {
+  tcp::socket socket (context.io);
+  socket.connect(*find_local_master(job_id));
+
+  Job job;
+  job.type = "REDUCE";
+  job.lang = "Python";
+  job.files = files;
+  job.job_id = job_id;
+  job.func_body = func;
   job.file_output = output;
 
   send_message(&socket, &job);

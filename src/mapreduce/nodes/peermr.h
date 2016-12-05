@@ -42,7 +42,6 @@ class PeerMR: public PeerDFS {
 
   void request_local_map(messages::Task*);
   void request_local_reduce(messages::Task*);
-  void request_save_idata(int);
 
   void run_map_onto_block(std::string, std::string, messages::Task*);
   void write_key_value(messages::KeyValueShuffle *key_value);
