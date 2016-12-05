@@ -1,6 +1,7 @@
 #ifndef ECLIPSEMR_MAPREDUCE_MESSAGES_KEYVALUESHUFFLE_H_
 #define ECLIPSEMR_MAPREDUCE_MESSAGES_KEYVALUESHUFFLE_H_
 #include <string>
+#include <vector>
 #include "../../messages/message.hh"
 namespace eclipse {
 namespace messages {
@@ -12,9 +13,8 @@ struct KeyValueShuffle: public Message {
 
   uint32_t job_id_;
   uint32_t map_id_;
-  // bool is_last_kv_;
   std::string key_;
-  std::string value_;
+  std::vector<std::string> value_;
 };
 
 }  // namespace messages

@@ -46,7 +46,9 @@ messages_files   = src/messages/boundaries.cc      \
                    src/messages/jobstatus.cc      \
                    src/messages/subjob.cc         \
                    src/messages/subjobstatus.cc   \
-                   src/messages/idatakeys.cc 
+                   src/messages/idatakeys.cc      \
+                   src/messages/finishmap.cc      \
+                   src/messages/nodes_shuffling.cc
 
 # libs -----
 lib_LTLIBRARIES     = libvdfs.la

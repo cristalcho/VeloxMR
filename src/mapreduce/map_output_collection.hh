@@ -18,7 +18,7 @@ namespace velox {
       auto end();
 
       /* TODO: arguments for any types */
-      void travel(std::function<void(std::string, std::string)>);
+      void travel(std::function<void(std::string, std::vector<std::string>*)>);
 
       void print_all();
 

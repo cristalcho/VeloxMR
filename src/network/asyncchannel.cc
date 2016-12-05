@@ -109,7 +109,6 @@ void AsyncChannel::read_coroutine (yield_context yield) {
         throw std::runtime_error("EC error");
       }
 
-      DEBUG("Package have arrived");
       size_t size = atoi(header);
       l = read (*receiver, buf, transfer_exactly(size));
       if (l != size)  {
@@ -129,7 +128,6 @@ void AsyncChannel::read_coroutine (yield_context yield) {
     }
 
     msg = load_message(buf);
-    DEBUG("Package has been deserialized");
     node->on_read(msg, id);
     delete msg;
     msg=nullptr;

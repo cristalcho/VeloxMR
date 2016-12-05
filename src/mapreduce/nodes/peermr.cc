@@ -1,3 +1,12 @@
+//
+//
+//
+//
+//
+//
+//
+//
+//
 #include "peermr.h"
 #include "../messages/boost_impl.hh"
 #include "../executor.hh"
@@ -21,6 +30,19 @@ bool PeerMR::format () {
   return true;
 }
 // }}}
+// request_idata {{{
+IDataList PeerMR::request_idata_list() {
+  IDataList output;
+  directory.select_all_idata_metadata(output);
+  return output;
+}
+// }}}
+// is_leader {{{
+bool PeerMR::is_leader(std::string f) {
+  return (id == (int)(h(f) % network_size));
+}
+// }}}
+// ------------- MAPREDUCE ROUTINES ------------------
 // process KeyValueShuffle {{{
 template<> void PeerMR::process(KeyValueShuffle *kv_shuffle) {
   auto key = kv_shuffle->key_;
@@ -41,6 +63,32 @@ template<> void PeerMR::process(KeyValueShuffle *kv_shuffle) {
   }
 }
 // }}}
+// process FinishMap {{{
+template<> void PeerMR::process(FinishMap *m) {
+  current_nodes_shuffling--;
+
+  if (current_nodes_shuffling <= 0 && subjobs_remaining[m->job_id] <= 0) {
+    jobs_callback[m->job_id]();
+  }
+}
+// }}}
+// process NodesShuffling {{{
+template<> void PeerMR::process(NodesShuffling* m) {
+  DEBUG("I got a list of %i keys from map", m->nodes.size());
+
+  if (nodes_shuffling.find(m->job_id) == nodes_shuffling.end()) {
+    nodes_shuffling[m->job_id] = vector<int> (m->nodes.begin(), m->nodes.end());
+  } else {
+    std::copy(nodes_shuffling[m->job_id].end(), m->nodes.begin(), m->nodes.end());
+  }
+
+  // Remote repeated elements on the list
+  auto v = nodes_shuffling[m->job_id];
+  std::sort(v.begin(), v.end());
+  auto last = std::unique(v.begin(), v.end());
+  v.erase(last, v.end()); 
+}
+// }}}
 // process FinishShuffle {{{
 template<> void PeerMR::process(FinishShuffle *m) {
   DEBUG("I got Finish shuffle jobid: %lu", m->job_id_);
@@ -53,9 +101,20 @@ template<> void PeerMR::process(FinishShuffle *m) {
       it->second->finalize();
       iwriters_.erase(it);
     }
+
+
   } catch (std::exception& e) {
     ERROR("Iwriter exception");
   }
+
+  FinishMap fm;
+  fm.job_id = m->job_id_;
+  uint32_t leader = m->job_id_ % network_size;
+
+  if ((int32_t)leader == id)
+    process(&fm);
+  else 
+    network->send(leader, &fm);
 }
 // }}}
 // process SubJob{{{
@@ -74,7 +133,19 @@ template<> void PeerMR::process(messages::SubJobStatus* m) {
 
   DEBUG("Subjob remaining : %i",  subjobs_remaining[m->job_id]);
   if (subjobs_remaining[m->job_id] <= 0) {
-    jobs_callback[m->job_id]();
+    if (m->type == "MAP") {
+      current_nodes_shuffling = nodes_shuffling[m->job_id].size();
+      for (auto node : nodes_shuffling[m->job_id]) {
+        FinishShuffle fs;
+        fs.job_id_ = m->job_id;
+        if (node == id)
+          process(&fs);
+        else
+          network->send(node, &fs);
+      }
+    } else if (m->type == "REDUCE") {
+      jobs_callback[m->job_id]();
+    }
   }
 }
 // }}}
@@ -101,6 +172,7 @@ template<> void PeerMR::process(TaskStatus* m) {
     SubJobStatus sjob_status;
     sjob_status.job_id = m->job_id;
     sjob_status.is_success = true;
+    sjob_status.type = m->type;
 
     int which_node = m->job_id % network_size;
     if (which_node == id)
@@ -110,17 +182,7 @@ template<> void PeerMR::process(TaskStatus* m) {
   }
 }
 // }}}
-// process IDataKeys {{{
-template<> void PeerMR::process(IDataKeys* m) {
-  DEBUG("I got a list of %i keys from map", m->keys.size());
-  if (stored_idata.find(m->job_id) == stored_idata.end()) {
-    stored_idata[m->job_id] = vector<string> (m->keys.begin(), m->keys.end());
-  } else {
-    std::copy(stored_idata[m->job_id].end(), m->keys.begin(), m->keys.end());
-  }
-}
-// }}}
-// process (FileInfo* m) {{{
+// process FileInfo {{{
 template<> void PeerMR::process (FileInfo* m) {
   PeerDFS::process(m);
 }
@@ -153,95 +215,17 @@ void PeerMR::on_read(messages::Message *msg, int) {
     auto task_ = dynamic_cast<SubJobStatus*>(msg);
     process(task_);
 
-  } else if (type == "IDataKeys") {
-    auto task_ = dynamic_cast<IDataKeys*>(msg);
+  } else if (type == "FinishMap") {
+    auto task_ = dynamic_cast<FinishMap*>(msg);
+    process(task_);
+
+  } else if (type == "NodesShuffling") {
+    auto task_ = dynamic_cast<NodesShuffling*>(msg);
     process(task_);
 
   } else {
     PeerDFS::on_read(msg, 0);
   }
-}
-// }}}
-// request_idata {{{
-IDataList PeerMR::request_idata_list() {
-  IDataList output;
-  directory.select_all_idata_metadata(output);
-  return output;
-}
-// }}}
-// write_key_value {{{
-void PeerMR::write_key_value(messages::KeyValueShuffle *kv_shuffle) {
-  const uint32_t job_id = kv_shuffle->job_id_;
-  std::shared_ptr<IWriter_interface> iwriter;
-  auto it = iwriters_.find(job_id);
-  if (it == iwriters_.end()) {
-    const uint32_t map_id = kv_shuffle->map_id_;
-    iwriter = std::make_shared<IWriter>(job_id, map_id);
-    iwriters_.emplace(job_id, iwriter);
-  }
-  else {
-    iwriter = it->second;
-  }
-  const std::string& key = kv_shuffle->key_;
-  const std::string& value = kv_shuffle->value_;
-  iwriters_[job_id]->add_key_value(key, value);
-}
-// }}}
-// request_save_idata {{{
-void PeerMR::request_save_idata (int job_id_) {
-    FinishShuffle fs;
-    fs.job_id_ = job_id_;
-
-    for (uint8_t i = 0; i < network_size; i++) {
-      if (i != id) {
-        network->send(i, &fs);
-      }
-    }
-    process(&fs);
-}
-// }}}
-// request_local_map {{{
-void PeerMR::request_local_map (messages::Task* m) {
-  logger->info ("Executing map subjobid:%lu", m->subjob_id);
-  for (auto& block : m->blocks) {
-    logger->info ("Executing map on block: %s", block.second.c_str());
-      request(block.first, block.second, std::bind(
-            &PeerMR::run_map_onto_block, this,
-            std::placeholders::_1,
-            std::placeholders::_2, m));
-  }
-
-}
-// }}}
-// request_local_reduce {{{
-void PeerMR::request_local_reduce (messages::Task* m) {
-  logger->info ("Executing reduce jobid:%lu", m->job_id);
-  auto map_id = 0;
-  auto job_id = m->job_id;
-
-  IDataInfo di;
-  di.map_id = map_id;
-  di.job_id = job_id;
-  di.num_reducer = 0;
-  directory.select_idata_metadata(job_id, map_id, &di);
-
-  if (di.num_reducer > 0) { //! Perform reduce operation
-    logger->info("Performing reduce operation");
-    Executor exec(this);
-    Reply reply;
-
-    if (exec.run_reduce(m))
-      reply.message = "MAPDONE";
-    else
-      reply.message = "MAPFAILED";
-  }
-
-  notify_task_leader(m->leader, m->job_id, m->job_id, "REDUCE");
-}
-// }}}
-// is_leader {{{
-bool PeerMR::is_leader(std::string f) {
-  return (id == (int)(h(f) % network_size));
 }
 // }}}
 // process_job {{{
@@ -274,61 +258,7 @@ bool PeerMR::process_job (messages::Job* m, std::function<void(void)> f) {
   return true;
 }
 // }}}
-// run_map_onto_block {{{
-void PeerMR::run_map_onto_block(string ignoreme, string block, Task* stask) {
-  Reply reply;
-
-  INFO("Executing map");
-  Executor exec(this);
-
-  if (exec.run_map(stask, block))
-    reply.message = "MAPDONE";
-  else
-    reply.message = "MAPFAILED";
-
-  auto job_keys = shuffled_keys[stask->job_id];
-  IDataKeys idata;
-  idata.job_id = stask->job_id;
-  idata.keys = std::vector<string>(job_keys.begin(), job_keys.end()); //push_back(""); //= vector<string>;
-  //idata.keys.push_back(""); //= vector<string>;
-  //copy(job_keys.begin(), job_keys.end(), idata.keys.begin());
-
-  auto which_node = stask->job_id % network_size;
-  if ((int)which_node == id)
-    process(&idata);
-  else
-    network->send(which_node, &idata);
-
-  for (auto which_node: shuffled_nodes[stask->job_id]) {
-    FinishShuffle fs;
-    fs.job_id_ = stask->job_id;
-    if (which_node == id)
-      process(&fs);
-    else
-      network->send(which_node, &fs);
-  }
- // sleep(1);
-  notify_task_leader (stask->leader, stask->subjob_id, stask->job_id, "MAP");
-}
-// }}}
-// notify_task_leader {{{
-void PeerMR::notify_task_leader(int leader, uint32_t subjob_id, uint32_t job_id, string type) {
-  int leader_node = (int) leader;
-
-  TaskStatus ts;
-  ts.is_success = true;
-  ts.job_id = job_id;
-  ts.subjob_id = subjob_id;
-  ts.type = type;
-
-  if (leader_node == id) {
-    process(&ts);
-
-  } else {
-    network->send(leader_node, &ts);
-  }
-}
-// }}}
+// ------------- MAP ROUTINES ------------------
 // schedule_map {{{
 void PeerMR::schedule_map(messages::SubJob* m) {
   INFO("File leader %i schedules a map task", id);
@@ -337,6 +267,7 @@ void PeerMR::schedule_map(messages::SubJob* m) {
   fi.num_block = 0;
 
   directory.select_file_metadata(file, &fi);
+  current_nodes_shuffling = network_size;
 
   int num_blocks = fi.num_block;
   if (num_blocks == 0) return;  //! Not file found in the db
@@ -385,15 +316,88 @@ void PeerMR::schedule_map(messages::SubJob* m) {
   }
 }
 // }}}
+// request_local_map {{{
+void PeerMR::request_local_map (messages::Task* m) {
+  logger->info ("Executing map subjobid:%lu", m->subjob_id);
+  for (auto& block : m->blocks) {
+    logger->info ("Executing map on block: %s", block.second.c_str());
+      request(block.first, block.second, std::bind(
+            &PeerMR::run_map_onto_block, this,
+            std::placeholders::_1,
+            std::placeholders::_2, m));
+  }
+
+}
+// }}}
+// run_map_onto_block {{{
+void PeerMR::run_map_onto_block(string ignoreme, string block, Task* stask) {
+  Reply reply;
+
+  INFO("Executing map");
+  Executor exec(this);
+
+  if (exec.run_map(stask, block))
+    reply.message = "MAPDONE";
+  else
+    reply.message = "MAPFAILED";
+
+  auto job_nodes = shuffled_nodes[stask->job_id];
+  NodesShuffling ns;
+  ns.job_id = stask->job_id;
+  ns.nodes = std::vector<int>(job_nodes.begin(), job_nodes.end());
+
+  auto which_node = stask->job_id % network_size;
+  if ((int)which_node == id)
+    process(&ns);
+  else
+    network->send(which_node, &ns);
+
+  notify_task_leader (stask->leader, stask->subjob_id, stask->job_id, "MAP");
+}
+// }}}
+// notify_task_leader {{{
+void PeerMR::notify_task_leader(int leader, uint32_t subjob_id, uint32_t job_id, string type) {
+  int leader_node = (int) leader;
+
+  TaskStatus ts;
+  ts.is_success = true;
+  ts.job_id = job_id;
+  ts.subjob_id = subjob_id;
+  ts.type = type;
+
+  if (leader_node == id) {
+    process(&ts);
+
+  } else {
+    network->send(leader_node, &ts);
+  }
+}
+// }}}
+// write_key_value {{{
+void PeerMR::write_key_value(messages::KeyValueShuffle *kv_shuffle) {
+  const uint32_t job_id = kv_shuffle->job_id_;
+  std::shared_ptr<IWriter_interface> iwriter;
+  auto it = iwriters_.find(job_id);
+  if (it == iwriters_.end()) {
+    const uint32_t map_id = kv_shuffle->map_id_;
+    iwriter = std::make_shared<IWriter>(job_id, map_id);
+    iwriters_.emplace(job_id, iwriter);
+  }
+  else {
+    iwriter = it->second;
+  }
+  const std::string& key = kv_shuffle->key_;
+  auto& values = kv_shuffle->value_;
+  for (auto& v : values) {
+    iwriters_[job_id]->add_key_value(key, v);
+  }
+}
+// }}}
+// ------------- REDUCE ROUTINES ------------------
 // schedule_reduce {{{
 void PeerMR::schedule_reduce(messages::Job* m) {
   subjobs_remaining[m->job_id] = 1;
-
-  set<int> reduce_nodes;
-  for (auto key : stored_idata[m->job_id]) {
-    uint32_t hash = h(key) % network_size;
-    reduce_nodes.insert(hash);
-  }
+  auto reduce_nodes = nodes_shuffling[m->job_id];
 
   tasks_remaining[m->job_id] = reduce_nodes.size();
   logger->info("JOB LEADER %i Processing REDUCE %i jobs", id, reduce_nodes.size());
@@ -413,6 +417,33 @@ void PeerMR::schedule_reduce(messages::Job* m) {
   }
 }
 // }}}
+// request_local_reduce {{{
+void PeerMR::request_local_reduce (messages::Task* m) {
+  logger->info ("Executing reduce jobid:%lu", m->job_id);
+  auto map_id = 0;
+  auto job_id = m->job_id;
+
+  IDataInfo di;
+  di.map_id = map_id;
+  di.job_id = job_id;
+  di.num_reducer = 0;
+  directory.select_idata_metadata(job_id, map_id, &di);
+
+  if (di.num_reducer > 0) { //! Perform reduce operation
+    logger->info("Performing reduce operation");
+    Executor exec(this);
+    Reply reply;
+
+    if (exec.run_reduce(m))
+      reply.message = "MAPDONE";
+    else
+      reply.message = "MAPFAILED";
+  }
+
+  notify_task_leader(m->leader, m->job_id, m->job_id, "REDUCE");
+}
+// }}}
+// ------------- REDUCE OUTPUT ROUTINES ------------------
 // submit_block {{{
 void PeerMR::submit_block(messages::BlockInfo* m) {
   auto file_name = m->file_name;

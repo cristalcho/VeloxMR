@@ -34,24 +34,24 @@ bool Executor::run_map (messages::Task* m, std::string input) {
     mapper_t _map_ = loader.load_function(m->func_name);
     stringstream ss (input);
 
-    char next_line[256]; //! :TODO: change to DFS line limit
+    char next_line[10000]; //! :TODO: change to DFS line limit
     velox::MapOutputCollection results;
 
     while (!ss.eof()) {
-      bzero(next_line, 256);
-      ss.getline (next_line, 256);
-      if (strnlen(next_line, 256) == 0) 
+      bzero(next_line, 10000);
+      ss.getline (next_line, 10000);
+      if (strnlen(next_line, 10000) == 0) 
         continue;
 
       _map_ (string(next_line), results);
     }
 
-    auto run_block = [&m, &peer = this->peer](std::string key, std::string value) mutable {
+    auto run_block = [&m, &peer = this->peer](std::string key, std::vector<std::string>* value) mutable {
       KeyValueShuffle kv; 
       kv.job_id_ = m->job_id;           // :TODO:
       kv.map_id_ = 0;
       kv.key_ = key;
-      kv.value_ = value;
+      kv.value_ = std::move(*value);
       peer->process(&kv);
     };
 
@@ -63,6 +63,7 @@ bool Executor::run_map (messages::Task* m, std::string input) {
 // run_reduce {{{
 bool Executor::run_reduce (messages::Task* task) {
   auto path_lib = context.settings.get<string>("path.applications");
+  auto block_size = GET_INT("filesystem.block");
   path_lib += ("/" + task->library);
   DL_loader loader (path_lib);
 
@@ -85,6 +86,7 @@ bool Executor::run_reduce (messages::Task* task) {
 
     uint32_t iterations = 0;
     uint32_t total_size = 0;
+    std::string block_content;
     while (ireader.is_next_key()) {
       string key;
       ireader.get_next_key(key);
@@ -104,24 +106,50 @@ bool Executor::run_reduce (messages::Task* task) {
           total_iterations++;
         }
       }
-      context.logger->info ("Key %s #iterations: %i", key.c_str(), total_iterations);
+      INFO("Key %s #iterations: %i", key.c_str(), total_iterations);
 
-      BlockInfo bi;
-      bi.file_name = task->file_output;
-      bi.name = task->file_output + "-" + key.c_str();
-      bi.seq = iterations;
-      bi.hash_key = h(bi.name);
-      bi.size = last_output.length();
-      bi.content = key + ":" + last_output + "\n";
-      bi.replica = 1;
-      bi.node = "";
-      bi.l_node = "";
-      bi.r_node = "";
-      bi.is_committed = 1;
+      if (block_content.length() + last_output.length() > (uint32_t)block_size) {
+        BlockInfo bi;
+        bi.file_name = task->file_output;
+        bi.name = task->file_output + "-" + key.c_str();
+        bi.seq = iterations;
+        bi.hash_key = h(bi.name);
+        bi.size = block_content.length();
+        bi.content = block_content;
+        bi.replica = 1;
+        bi.node = "";
+        bi.l_node = "";
+        bi.r_node = "";
+        bi.is_committed = 1;
 
-      dynamic_cast<PeerMR*>(peer)->submit_block(&bi);
-      iterations++;
-      total_size += last_output.length();
+        dynamic_cast<PeerMR*>(peer)->submit_block(&bi);
+        iterations++;
+        total_size += block_content.length();
+        block_content = "";
+
+      } else if (!ireader.is_next_key()) {
+        block_content += key + ":" + last_output + "\n";
+        BlockInfo bi;
+        bi.file_name = task->file_output;
+        bi.name = task->file_output + "-" + key.c_str();
+        bi.seq = iterations;
+        bi.hash_key = h(bi.name);
+        bi.size = block_content.length();
+        bi.content = block_content;
+        bi.replica = 1;
+        bi.node = "";
+        bi.l_node = "";
+        bi.r_node = "";
+        bi.is_committed = 1;
+
+        dynamic_cast<PeerMR*>(peer)->submit_block(&bi);
+        iterations++;
+        total_size += block_content.length();
+        block_content = "";
+      }
+
+      block_content += key + ":" + last_output + "\n";
+
     }
 
     FileInfo fi;

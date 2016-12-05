@@ -53,7 +53,8 @@ class PeerMR: public PeerDFS {
   std::unordered_map<uint32_t, std::shared_ptr<IWriter_interface>> iwriters_;
   std::unordered_map<uint32_t, std::set<int>> shuffled_nodes;
   std::unordered_map<uint32_t, std::set<std::string>> shuffled_keys;
-  std::unordered_map<uint32_t, std::vector<std::string>> stored_idata;
+  std::unordered_map<uint32_t, std::vector<int>> nodes_shuffling;
+  uint32_t current_nodes_shuffling = 0;
   DirectoryMR directory;
 };
 

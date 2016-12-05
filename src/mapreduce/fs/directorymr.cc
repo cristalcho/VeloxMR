@@ -74,8 +74,6 @@ void DirectoryMR::insert_idata_metadata(IDataInsert idata_insert) {
   if(rc != SQLITE_OK) {
     ERROR("SQL error: %s\n", zErrMsg);
     sqlite3_free(zErrMsg);
-  } else {
-    DEBUG("idata_metadata inserted successfully\n");
   }
   // Close Database
   sqlite3_close(db);
@@ -94,8 +92,6 @@ void DirectoryMR::insert_igroup_metadata(IGroupInsert igroup_insert) {
   if(rc != SQLITE_OK) {
     ERROR("SQL error: %s\n", zErrMsg);
     sqlite3_free(zErrMsg);
-  } else {
-    DEBUG("igroup_metadata inserted successfully\n");
   }
   // Close Database
   sqlite3_close(db);
@@ -114,9 +110,7 @@ void DirectoryMR::insert_iblock_metadata(IBlockInsert iblock_insert) {
   if(rc != SQLITE_OK) {
     ERROR("SQL error: %s\n", zErrMsg);
     sqlite3_free(zErrMsg);
-  } else {
-    DEBUG("iblock_metadata inserted successfully\n");
-  }
+  } 
   // Close Database
   sqlite3_close(db);
 }

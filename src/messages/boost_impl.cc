@@ -332,6 +332,7 @@ template <typename Archive>
     ar & BOOST_SERIALIZATION_NVP(c.is_success);
     ar & BOOST_SERIALIZATION_NVP(c.job_id);
     ar & BOOST_SERIALIZATION_NVP(c.subjob_id);
+    ar & BOOST_SERIALIZATION_NVP(c.type);
   }
 
 template <typename Archive>
@@ -339,6 +340,22 @@ template <typename Archive>
       unsigned int) {
     ar & BASE_OBJECT(Message, c);
     ar & BOOST_SERIALIZATION_NVP(c.keys);
+    ar & BOOST_SERIALIZATION_NVP(c.job_id);
+  }
+
+template <typename Archive>
+  void serialize(Archive& ar, eclipse::messages::FinishMap& c,
+      unsigned int) {
+    ar & BASE_OBJECT(Message, c);
+    ar & BOOST_SERIALIZATION_NVP(c.job_id);
+  }
+
+
+template <typename Archive>
+  void serialize(Archive& ar, eclipse::messages::NodesShuffling& c,
+      unsigned int) {
+    ar & BASE_OBJECT(Message, c);
+    ar & BOOST_SERIALIZATION_NVP(c.nodes);
     ar & BOOST_SERIALIZATION_NVP(c.job_id);
   }
 
@@ -531,6 +548,16 @@ template void serialize (boost::archive::xml_iarchive&,  IDataInfo&, unsigned);
 template void serialize (boost::archive::binary_iarchive&,  IDataInfo&, unsigned);
 template void serialize (boost::archive::binary_oarchive&,  IDataInfo&, unsigned);
 
+template void serialize (boost::archive::xml_oarchive&, FinishMap&, unsigned);
+template void serialize (boost::archive::xml_iarchive&,  FinishMap&, unsigned);
+template void serialize (boost::archive::binary_iarchive&,  FinishMap&, unsigned);
+template void serialize (boost::archive::binary_oarchive&,  FinishMap&, unsigned);
+
+template void serialize (boost::archive::xml_oarchive&, NodesShuffling&, unsigned);
+template void serialize (boost::archive::xml_iarchive&,  NodesShuffling&, unsigned);
+template void serialize (boost::archive::binary_iarchive&,  NodesShuffling&, unsigned);
+template void serialize (boost::archive::binary_oarchive&,  NodesShuffling&, unsigned);
+
 }
 }
 
@@ -573,3 +600,5 @@ BOOST_CLASS_EXPORT_IMPLEMENT(eclipse::messages::IGroupInfoRequest);
 BOOST_CLASS_EXPORT_IMPLEMENT(eclipse::messages::IBlockInfoRequest);
 BOOST_CLASS_EXPORT_IMPLEMENT(eclipse::messages::IDataList);
 BOOST_CLASS_EXPORT_IMPLEMENT(eclipse::messages::IDataInfo);
+BOOST_CLASS_EXPORT_IMPLEMENT(eclipse::messages::FinishMap);
+BOOST_CLASS_EXPORT_IMPLEMENT(eclipse::messages::NodesShuffling);

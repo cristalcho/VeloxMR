@@ -27,6 +27,8 @@
 #include "blockupdate.hh"
 #include "fileupdate.hh"
 #include "metadata.hh"
+#include "finishmap.hh"
+#include "nodes_shuffling.hh"
 
 // MapReduce messages
 #include "../mapreduce/messages/idatalist.hh"
@@ -100,6 +102,7 @@ template <typename Archive> void serialize (Archive&, eclipse::messages::IGroupI
 template <typename Archive> void serialize (Archive&, eclipse::messages::IBlockInfoRequest&, unsigned);
 template <typename Archive> void serialize (Archive&, eclipse::messages::IDataList&, unsigned);
 template <typename Archive> void serialize (Archive&, eclipse::messages::IDataInfo&, unsigned);
+template <typename Archive> void serialize (Archive&, eclipse::messages::NodesShuffling&, unsigned);
 }
 }
 
@@ -145,6 +148,8 @@ BOOST_CLASS_EXPORT_KEY(eclipse::messages::IGroupInfoRequest);
 BOOST_CLASS_EXPORT_KEY(eclipse::messages::IBlockInfoRequest);
 BOOST_CLASS_EXPORT_KEY(eclipse::messages::IDataList);
 BOOST_CLASS_EXPORT_KEY(eclipse::messages::IDataInfo);
+BOOST_CLASS_EXPORT_KEY(eclipse::messages::FinishMap);
+BOOST_CLASS_EXPORT_KEY(eclipse::messages::NodesShuffling);
 
 //! 4) and here
 BOOST_CLASS_TRACKING(eclipse::messages::Message, boost::serialization::track_never);
@@ -184,5 +189,7 @@ BOOST_CLASS_TRACKING(ECNS::SubJobStatus, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::IDataKeys, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::IDataList, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::IDataInfo, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::FinishMap, TRACK_NEVER);
+BOOST_CLASS_TRACKING(ECNS::NodesShuffling, TRACK_NEVER);
 #undef ECNS
 #undef TRACK_NEVER 

@@ -6,6 +6,7 @@
 #include <map>
 #include <unordered_map>
 #include <vector>
+#include <mutex>
 #include <list>
 #include <fstream>
 #include <boost/asio.hpp>
@@ -37,9 +38,6 @@ class IWriter: public IWriter_interface {
   void finalize() override;
 
  private:
-  // tcp::socket* connect(uint32_t net_id);
-//  void send_message(tcp::socket *socket, messages::Message *msg);
-//  messages::Reply* read_reply(tcp::socket *socket);
   static void run(IWriter *obj);
   void seek_writable_block();
   void async_flush(const uint32_t index);
@@ -55,14 +53,10 @@ class IWriter: public IWriter_interface {
       const uint32_t index);
   void set_writing_file(const uint32_t index);
   void get_new_path(string &path);
-  //void flush(const uint32_t index);
-  // void write_handler(const boost::system::error_code &ec,
-  //     std::size_t bytes_transferred);
 
   DirectoryMR directory_;
-  boost::asio::io_service io_service_;
   std::unique_ptr<std::thread> writer_thread_;
-  // uint32_t net_id_;
+
   uint32_t job_id_;
   uint32_t map_id_;
   uint32_t reduce_slot_;
@@ -82,7 +76,7 @@ class IWriter: public IWriter_interface {
   vector<int> write_count_;
   unordered_map<string, int> key_index_;  // index of key
   std::ofstream file_;
-  //boost::asio::io_service io_service_;
+  std::mutex mutex;
 };
 
 }  // namespace eclipse
