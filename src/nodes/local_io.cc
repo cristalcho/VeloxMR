@@ -32,7 +32,10 @@ void Local_io::update (std::string name, std::string v, uint32_t pos, uint32_t l
 // }}}
 // read {{{
 std::string Local_io::read (string name) {
-  ifstream in (disk_path + string("/") + name, ios::in | ios::binary | ios::ate);
+  string file_path = disk_path + string("/") + name;
+
+  while(access(file_path.c_str(), F_OK) == -1);
+  ifstream in (file_path, ios::in | ios::binary | ios::ate);
   ifstream::pos_type fileSize = in.tellg();
   in.seekg(0, ios::beg);
 

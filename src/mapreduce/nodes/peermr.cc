@@ -17,6 +17,7 @@
 #include <memory>
 #include <vector>
 #include <random>
+#include <unistd.h>
 
 namespace eclipse {
 // Constructors {{{
@@ -75,16 +76,17 @@ template<> void PeerMR::process(FinishMap *m) {
 // }}}
 // process NodesShuffling {{{
 template<> void PeerMR::process(NodesShuffling* m) {
-  DEBUG("I got a list of %i keys from map", m->nodes.size());
+  DEBUG("I got a list of %i keys from map jobid:%lu", m->nodes.size(), m->job_id);
 
   if (nodes_shuffling.find(m->job_id) == nodes_shuffling.end()) {
     nodes_shuffling[m->job_id] = vector<int> (m->nodes.begin(), m->nodes.end());
   } else {
-    std::copy(nodes_shuffling[m->job_id].end(), m->nodes.begin(), m->nodes.end());
+    //std::copy(.end(), m->nodes.begin(), m->nodes.end());
+    std::copy(m->nodes.begin(), m->nodes.end(), back_inserter(nodes_shuffling[m->job_id]));
   }
 
   // Remote repeated elements on the list
-  auto v = nodes_shuffling[m->job_id];
+  auto& v = nodes_shuffling[m->job_id];
   std::sort(v.begin(), v.end());
   auto last = std::unique(v.begin(), v.end());
   v.erase(last, v.end()); 
@@ -323,9 +325,15 @@ void PeerMR::schedule_map(messages::SubJob* m) {
 // }}}
 // request_local_map {{{
 void PeerMR::request_local_map (messages::Task* m) {
+  auto disk_path = GET_STR("path.scratch");
   logger->info ("Executing map subjobid:%lu", m->subjob_id);
   for (auto& block : m->blocks) {
     logger->info ("Executing map on block: %s", block.second.c_str());
+      
+      //Spin-lock until the block has arrived to the node (iterative workflow patch)
+      string path = disk_path + "/" + block.second;
+      while(access(path.c_str(), F_OK) == -1);
+
       request(block.first, block.second, std::bind(
             &PeerMR::run_map_onto_block, this,
             std::placeholders::_1,
