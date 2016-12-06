@@ -30,9 +30,9 @@ mapper_t DL_loader::load_function (std::string fun) {
 }
 // }}}
 // load_function {{{
-reducetype DL_loader::load_function_reduce (std::string fun) {
-  reducetype func_ = 
-    reinterpret_cast<reducetype>(dlsym(lib, fun.c_str())); 
+reducer_t DL_loader::load_function_reduce (std::string fun) {
+  reducer_t func_ = 
+    reinterpret_cast<reducer_t>(dlsym(lib, fun.c_str())); 
   char* err = dlerror();
 
   if (err) throw std::runtime_error("Symbol not found");
