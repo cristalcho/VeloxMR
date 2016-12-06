@@ -10,6 +10,7 @@
 #include <sstream>
 #include <utility>
 #include <functional>
+#include <list>
 
 using namespace eclipse;
 using namespace std;
@@ -43,7 +44,8 @@ bool Executor::run_map (messages::Task* m, std::string input) {
       if (strnlen(next_line, 10000) == 0) 
         continue;
 
-      _map_ (string(next_line), results);
+      std::string line(next_line);
+      _map_ (line, results);
     }
 
     auto run_block = [&m, &peer = this->peer](std::string key, std::vector<std::string>* value) mutable {
@@ -73,11 +75,9 @@ bool Executor::run_reduce (messages::Task* task) {
     context.logger->error ("Not found library path[%s]", path_lib.c_str());
   }
 
-  function<string(string,string)> _reducer_ = 
-    loader.load_function_reduce(task->func_name);
+  reducer_t _reducer_ = loader.load_function_reduce(task->func_name);
 
   try {
-
     IReader ireader;
     ireader.set_job_id(task->job_id);
     ireader.set_map_id(0);                 // :TODO:
@@ -87,28 +87,44 @@ bool Executor::run_reduce (messages::Task* task) {
     uint32_t iterations = 0;
     uint32_t total_size = 0;
     std::string block_content;
+
+    std::list<std::string> values;
     while (ireader.is_next_key()) {
       string key;
       ireader.get_next_key(key);
 
-      int total_iterations = 0;
-      string last_output;
-      if (ireader.is_next_value()) {
-        ireader.get_next_value(last_output);
-        total_iterations = 1;
+      //int total_iterations = 0;
+      string fianl;
+      velox::MapOutputCollection output;
+      values.clear();
 
+      //if (ireader.is_next_value()) {
+        //ireader.get_next_value(last_output);
+        //total_iterations = 1;
+
+        //TODO: make a function to get values at a time
         while (ireader.is_next_value()) {
           string value;
           ireader.get_next_value(value);
+          values.push_back(value);
 
-          last_output = _reducer_ (value, last_output);
-
-          total_iterations++;
+          //total_iterations++;
         }
-      }
-      INFO("Key %s #iterations: %i", key.c_str(), total_iterations);
 
-      if (block_content.length() + last_output.length() > (uint32_t)block_size) {
+      if(values.size() > 0)
+        _reducer_ (key, values, output);
+      //}
+
+      std::string current_block_content;
+      auto make_block_content = [&current_block_content](std::string key, std::vector<std::string>* values) mutable {
+        for(std::string& value : *values) 
+          current_block_content += key + ": " + value + "\n";
+      };
+
+      output.travel(make_block_content);
+
+      //INFO("Key %s #iterations: %i", key.c_str(), total_iterations);
+      if (block_content.length() + current_block_content.length() > (uint32_t)block_size) {
         BlockInfo bi;
         bi.file_name = task->file_output;
         bi.name = task->file_output + "-" + key.c_str();
@@ -128,7 +144,7 @@ bool Executor::run_reduce (messages::Task* task) {
         block_content = "";
 
       } else if (!ireader.is_next_key()) {
-        block_content += key + ":" + last_output + "\n";
+        block_content += current_block_content;
         BlockInfo bi;
         bi.file_name = task->file_output;
         bi.name = task->file_output + "-" + key.c_str();
@@ -148,8 +164,7 @@ bool Executor::run_reduce (messages::Task* task) {
         block_content = "";
       }
 
-      block_content += key + ":" + last_output + "\n";
-
+      block_content += current_block_content;
     }
 
     FileInfo fi;
