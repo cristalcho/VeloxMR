@@ -1,0 +1,50 @@
+#!/usr/bin/python
+from veloxmr_lib import *
+from subprocess import call
+
+code.interact(local=locals())
+#@staticmethod
+#def parse_argv(opt,arg): 
+#	if opt == 'put':
+#		velox.put(arg)
+#	elif opt == 'rm':
+#		velox.rm(arg)
+#	
+#	elif opt == 'cat':
+#		velox.cat(arg)
+#	
+#	elif opt == 'ls':
+#		velox.ls()
+#	
+#	elif opt == 'format':
+#		velox.formating()
+#
+#	elif opt == 'shell':
+#		velox.shell()
+
+
+#	@staticmethod
+#	def shell(): 
+#		while True:
+#			try:
+#				var = raw_input("VeloxMR>")
+#				opts = var.split()
+#				opt = opts[0]
+#
+#				if (opt == 'mr'):
+#					mapreduce(opts[1], opts[2], opts[3], opts[4])
+#
+#				else:
+#					arg = ''
+#					if len(opts) == 2:
+#						arg= opts[1]
+#					velox.parse_argv(opt, arg)
+#			except (EOFError):
+#				break
+#
+#opt = sys.argv[1]
+#arg = ''
+#if len(sys.argv) == 3:
+#	arg= sys.argv[2]
+#
+#velox.parse_argv(opt, arg)

@@ -3,7 +3,8 @@ include tests/Makefile.am
 AM_CPPFLAGS      = -I@srcdir@/src/common -I@srcdir@/src -include ./config.h $(BOOST_CPPFLAGS)
 AM_CXXFLAGS      = $(CXXFLAGS) -Wall
 
-bin_PROGRAMS     = eclipse_node dfs
+bin_PROGRAMS     = eclipse_node dfs __velox_mapreduce
+bin_SCRIPTS      = src/client/veloxmr src/client/veloxmr_lib.py
 
 messages_files   = src/messages/boundaries.cc      \
                    src/messages/message.cc         \
@@ -97,12 +98,13 @@ eclipse_node_SOURCES = src/targets/node_main_mr.cc \
                        src/mapreduce/py_executor.cc
 
 eclipse_node_LDADD  = $(LDADD) -lpython2.7
+__velox_mapreduce_SOURCES = src/targets/veloxmr_mapreduce.cc
 
 dfs_SOURCES         = src/client/client.cc
 
 pkginclude_HEADERS  = src/client/vdfs.hh \
                       src/client/dfs.hh \
-											src/client/vmr.hh \
+                      src/client/vmr.hh \
                       src/mapreduce/map_output_collection.hh
 
 if COPY_SAMPLES
