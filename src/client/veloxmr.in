@@ -1,8 +1,10 @@
 #!/usr/bin/python
 from veloxmr_lib import *
 from subprocess import call
+from IPython import embed
 
-code.interact(local=locals())
+#code.interact(local=locals())
+embed()
 #@staticmethod
 #def parse_argv(opt,arg): 
 #	if opt == 'put':
