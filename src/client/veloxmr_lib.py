@@ -18,8 +18,11 @@ def cat(file_name):
 def ls(): 
 	call(["dfs", "ls"])
 
-def formating(): 
+def format(): 
 	call(["dfs", "format"])
+
+def show(file_name): 
+	call(["dfs", "show", file_name])
 
 def mapreduce(file_name, mapf, redf, output): 
 	map_src = inspect.getsource(mapf)
