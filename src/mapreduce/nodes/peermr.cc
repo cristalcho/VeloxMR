@@ -19,6 +19,8 @@
 #include <random>
 #include <unistd.h>
 
+static int idebug = 0;
+
 namespace eclipse {
 // Constructors {{{
 PeerMR::PeerMR(network::Network* net) : PeerDFS(net) {
@@ -45,6 +47,42 @@ bool PeerMR::is_leader(std::string f) {
 }
 // }}}
 // ------------- MAPREDUCE ROUTINES ------------------
+// process FinishMap {{{
+template<> void PeerMR::process(FinishMap *m) {
+  current_nodes_shuffling++;
+
+  if (current_nodes_shuffling >= nodes_shuffling[m->job_id].size() && subjobs_remaining[m->job_id] <= 0) {
+    jobs_callback[m->job_id]();
+  }
+}
+// }}}
+// process FinishShuffle {{{
+template<> void PeerMR::process(FinishShuffle *m) {
+  DEBUG("I got Finish shuffle jobid: %lu", m->job_id_);
+
+  //Make sure all the nodes have finished shuffling
+  try {
+    const uint32_t job_id = m->job_id_;
+    auto it = iwriters_.find(job_id);
+    if (it != iwriters_.end()) {
+      it->second->finalize();
+      iwriters_.erase(it);
+    }
+
+  } catch (std::exception& e) {
+    ERROR("Iwriter exception");
+  }
+
+  FinishMap fm;
+  fm.job_id = m->job_id_;
+  uint32_t leader = m->job_id_ % network_size;
+
+  if ((int32_t)leader == id)
+    process(&fm);
+  else 
+    network->send(leader, &fm);
+}
+// }}}
 // process KeyValueShuffle {{{
 template<> void PeerMR::process(KeyValueShuffle *kv_shuffle) {
   auto key = kv_shuffle->key_;
@@ -53,24 +91,28 @@ template<> void PeerMR::process(KeyValueShuffle *kv_shuffle) {
   DEBUG("KVshuffle H=%lu, K=%s, ID=%i, DST=%i", h(key),
       key.c_str(), id, which_node);
 
+  
   shuffled_nodes[kv_shuffle->job_id_].insert(which_node);
-  shuffled_keys[kv_shuffle->job_id_].insert(key);
 
   if (which_node == id) {
+    if (kv_shuffle->is_header){
+      keys_to_be_recv += kv_shuffle->number_of_keys;
+      return;
+    }
     write_key_value(kv_shuffle);
+
+    current_keys++;
+    if (current_keys >= keys_to_be_recv){
+      current_keys = 0;
+      keys_to_be_recv = 0;
+      FinishShuffle fs;
+      fs.job_id_ = kv_shuffle->job_id_;
+      process(&fs);
+    }
 
   } else {
     DEBUG("Forwarding KVS to another node");
     network->send(which_node, kv_shuffle);
-  }
-}
-// }}}
-// process FinishMap {{{
-template<> void PeerMR::process(FinishMap *m) {
-  current_nodes_shuffling--;
-
-  if (current_nodes_shuffling <= 0 && subjobs_remaining[m->job_id] <= 0) {
-    jobs_callback[m->job_id]();
   }
 }
 // }}}
@@ -92,34 +134,6 @@ template<> void PeerMR::process(NodesShuffling* m) {
   v.erase(last, v.end()); 
 }
 // }}}
-// process FinishShuffle {{{
-template<> void PeerMR::process(FinishShuffle *m) {
-  DEBUG("I got Finish shuffle jobid: %lu", m->job_id_);
-
-  //Make sure all the nodes have finished shuffling
-  try {
-    const uint32_t job_id = m->job_id_;
-    auto it = iwriters_.find(job_id);
-    if (it != iwriters_.end()) {
-      it->second->finalize();
-      iwriters_.erase(it);
-    }
-
-
-  } catch (std::exception& e) {
-    ERROR("Iwriter exception");
-  }
-
-  FinishMap fm;
-  fm.job_id = m->job_id_;
-  uint32_t leader = m->job_id_ % network_size;
-
-  if ((int32_t)leader == id)
-    process(&fm);
-  else 
-    network->send(leader, &fm);
-}
-// }}}
 // process SubJob{{{
 template<> void PeerMR::process(messages::SubJob* m) {
   if (m->type == "MAP") {
@@ -134,20 +148,22 @@ template<> void PeerMR::process(messages::SubJobStatus* m) {
     subjobs_remaining[m->job_id]--;
   }
 
-  DEBUG("Subjob remaining : %i",  subjobs_remaining[m->job_id]);
+  DEBUG("Subjob remaining : %i current nodes:%i",  subjobs_remaining[m->job_id], current_nodes_shuffling);
   if (subjobs_remaining[m->job_id] <= 0) {
-    if (m->type == "MAP") {
-      current_nodes_shuffling = nodes_shuffling[m->job_id].size();
-      for (auto node : nodes_shuffling[m->job_id]) {
-        FinishShuffle fs;
-        fs.job_id_ = m->job_id;
-        if (node == id)
-          process(&fs);
-        else
-          network->send(node, &fs);
-      }
+    if (current_nodes_shuffling >= nodes_shuffling[m->job_id].size() && m->type == "MAP") {
+      jobs_callback[m->job_id]();
+      //current_nodes_shuffling = nodes_shuffling[m->job_id].size();
+      //for (auto node : nodes_shuffling[m->job_id]) {
+      //  FinishShuffle fs;
+      //  fs.job_id_ = m->job_id;
+      //  if (node == id)
+      //    process(&fs);
+      //  else
+      //    network->send(node, &fs);
+      //}
     } else if (m->type == "REDUCE") {
       jobs_callback[m->job_id]();
+      idebug =0;
     }
   }
 }
@@ -272,7 +288,8 @@ void PeerMR::schedule_map(messages::SubJob* m) {
   fi.num_block = 0;
 
   directory.select_file_metadata(file, &fi);
-  current_nodes_shuffling = network_size;
+  current_nodes_shuffling = 0;
+  nodes_shuffling[m->job_id] = std::vector<int> ();
 
   int num_blocks = fi.num_block;
   if (num_blocks == 0) return;  //! Not file found in the db
@@ -375,6 +392,7 @@ void PeerMR::run_map_onto_block(string ignoreme, string block, Task* stask) {
   else
     network->send(which_node, &ns);
 
+  //sleep(10);
   notify_task_leader (stask->leader, stask->subjob_id, stask->job_id, "MAP");
 }
 // }}}
@@ -398,13 +416,14 @@ void PeerMR::notify_task_leader(int leader, uint32_t subjob_id, uint32_t job_id,
 // }}}
 // write_key_value {{{
 void PeerMR::write_key_value(messages::KeyValueShuffle *kv_shuffle) {
+
   const uint32_t job_id = kv_shuffle->job_id_;
   std::shared_ptr<IWriter_interface> iwriter;
   auto it = iwriters_.find(job_id);
   if (it == iwriters_.end()) {
     const uint32_t map_id = kv_shuffle->map_id_;
-    iwriter = std::make_shared<IWriter>(job_id, map_id);
-    iwriters_.emplace(job_id, iwriter);
+    //iwriter = std::make_shared<IWriter>(job_id, map_id);
+    iwriters_.insert({job_id, std::make_shared<IWriter>(job_id, map_id)});
   }
   else {
     iwriter = it->second;
@@ -476,7 +495,7 @@ void PeerMR::request_local_reduce (messages::Task* m) {
     }
   }
 
-  notify_task_leader(m->leader, m->job_id, m->job_id, "REDUCE");
+  //notify_task_leader(m->leader, m->job_id, m->job_id, "REDUCE");
 }
 // }}}
 // ------------- REDUCE OUTPUT ROUTINES ------------------
@@ -509,6 +528,13 @@ bool PeerMR::insert_file(messages::FileInfo* f) {
     replicate_metadata();
 
     INFO("File:%s exists in db, Updated to (%u, %u)", fu.name.c_str(), fu.size, fu.num_block);
+
+    if (f->reducer_output) {
+      INFO("RETURNING FROM REDUCER");
+      int leader = f->job_id % network_size;
+      notify_task_leader(leader, f->job_id, f->job_id, "REDUCE");
+
+    }
     
     return false;
   }
@@ -517,6 +543,13 @@ bool PeerMR::insert_file(messages::FileInfo* f) {
   replicate_metadata();
 
   logger->info("Saving to SQLite db");
+
+  if (f->reducer_output) {
+    INFO("RETURNING FROM REDUCER");
+    int leader = f->job_id % network_size;
+    notify_task_leader(leader, f->job_id, f->job_id, "REDUCE");
+  
+  }
   return true;
 }
 // }}}

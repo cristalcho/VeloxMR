@@ -23,6 +23,7 @@ Executor::~Executor() { }
 // run_map {{{
 bool Executor::run_map (messages::Task* m, std::string input) {
     auto path_lib = GET_STR("path.applications");
+    auto network_size = GET_VEC_STR("network.nodes").size();
     path_lib += ("/" + m->library);
     DL_loader loader (path_lib);
 
@@ -48,7 +49,32 @@ bool Executor::run_map (messages::Task* m, std::string input) {
       _map_ (line, results);
     }
 
+    vector<uint32_t> keys_per_node;
+    vector<string> headers_list;
+    keys_per_node.resize(network_size);
+    headers_list.resize(network_size);
+
+    auto run_headers = [&headers_list, &keys_per_node, &network_size](std::string key, std::vector<std::string>* value) mutable {
+      int node = h(key) % network_size;
+      keys_per_node[node]++;
+      headers_list[node] = key;
+    };
+    results.travel(run_headers);
+
+    int i = 0;
+    for (auto node : keys_per_node) {
+      KeyValueShuffle kv; 
+      kv.job_id_ = m->job_id;           // :TODO:
+      kv.map_id_ = 0;
+      kv.key_ = headers_list[i];
+      kv.is_header = true;
+      kv.number_of_keys = node;
+      peer->process(&kv);
+      i++;
+    }
+
     auto run_block = [&m, &peer = this->peer](std::string key, std::vector<std::string>* value) mutable {
+      DEBUG("deukyeon: map result size = %d", value->size());
       KeyValueShuffle kv; 
       kv.job_id_ = m->job_id;           // :TODO:
       kv.map_id_ = 0;
@@ -94,7 +120,6 @@ bool Executor::run_reduce (messages::Task* task) {
       ireader.get_next_key(key);
 
       //int total_iterations = 0;
-      string fianl;
       velox::MapOutputCollection output;
       values.clear();
 
@@ -111,6 +136,7 @@ bool Executor::run_reduce (messages::Task* task) {
           //total_iterations++;
         }
 
+      DEBUG("deukyeon: values.size() = %d", values.size());
       if(values.size() > 0)
         _reducer_ (key, values, output);
       //}
@@ -124,7 +150,7 @@ bool Executor::run_reduce (messages::Task* task) {
       output.travel(make_block_content);
 
       //INFO("Key %s #iterations: %i", key.c_str(), total_iterations);
-      if (block_content.length() + current_block_content.length() > (uint32_t)block_size) {
+      if (block_content.length() + current_block_content.length() > (uint32_t)block_size || current_block_content.length() > (uint32_t)block_size) {
         BlockInfo bi;
         bi.file_name = task->file_output;
         bi.name = task->file_output + "-" + key.c_str();
@@ -173,6 +199,8 @@ bool Executor::run_reduce (messages::Task* task) {
     fi.size = total_size;
     fi.hash_key = h(fi.name);
     fi.replica = 1;
+    fi.reducer_output = true;
+    fi.job_id = task->job_id;
 
     dynamic_cast<PeerMR*>(peer)->process(&fi);
 

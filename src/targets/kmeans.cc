@@ -66,8 +66,7 @@ class Point {
     };
 
     void get_point_from_string(std::string str) {
-      std::istringstream stream(str);
-      stream >> x >> y;
+      sscanf(str.c_str(), "%lf-%lf", &x, &y);
     };
 
     double distance_square(Point& p) {
@@ -83,7 +82,7 @@ class Point {
     };
 
     std::string to_string() {
-      return (std::to_string(x) + " " + std::to_string(y));
+      return (std::to_string(x) + "-" + std::to_string(y));
     };
 };
 
@@ -135,7 +134,7 @@ void myreducer(std::string& key, std::list<std::string>& values, MapOutputCollec
     count++;
 
     value_string += p.to_string();
-    if(count < values.size()) value_string += ", ";
+    if(count < values.size()) value_string += " | ";
   }
 
   Point centroid((sumX / count), (sumY / count));
@@ -157,6 +156,7 @@ int main (int argc, char** argv) {
     double y = ((double)(rand() % 10001) / 100);
     Point centroid(x, y);
     std::string centroid_content = centroid.to_string() + "\n";
+    std::cout << centroid_content;
     os.write(centroid_content.c_str(), centroid_content.size());
   }
   os.close();
@@ -165,30 +165,37 @@ int main (int argc, char** argv) {
 
   vmr mr(&cloud);
 
+  std::string output_name;
   for(int i=0; i<ITERATIONS; i++) {
     std::cout << "MR iteration " << i << std::endl;
 
     dataset A = mr.make_dataset({INPUT_NAME});
 
+    output_name = "kmeans.output-" + to_string(i);
+
     A.map("mymapper");
-    A.reduce("myreducer", OUTPUT_NAME);
+    //sleep(10);
+    A.reduce("myreducer", output_name);
 
     if(i < ITERATIONS - 1) {
       // parse output and make centroid file updated
-      file output_file = cloud.open(OUTPUT_NAME);
+      file output_file = cloud.open(output_name);
       std::istringstream stream(output_file.get());
       std::string output_line;
 
       os.open(LOCAL_CENTROID_PATH);
+      int count = 0;
       while(getline(stream, output_line)) {
         std::string::size_type pos = output_line.find(':');
         std::string centroid_string = output_line.substr(0, pos) + "\n";
         os.write(centroid_string.c_str(), centroid_string.size());
+        count++;
       }
       os.close();
+      std::cout << i << "th count: " << count << std::endl;
 
       // remove output
-      cloud.rm(OUTPUT_NAME);
+      //cloud.rm(OUTPUT_NAME);
     }
   }
 
@@ -198,6 +205,22 @@ int main (int argc, char** argv) {
 
   // summary
 
+  std::cout << "===========-============" << std::endl;
+  std::cout << "Centroids" << std::endl;
+
+  file output_file = cloud.open(output_name);
+  std::istringstream stream(output_file.get());
+  std::string output_line;
+
+  int cnt = 0;
+  while(getline(stream, output_line)) {
+    std::string::size_type pos = output_line.find(':');
+    std::string centroid_string = output_line.substr(0, pos) + "\n";
+    std::cout << centroid_string;
+    cnt++;
+  }
+
+  std::cout << "Total # of centroids:" << cnt << std::endl;
 
   return 0;
 }
