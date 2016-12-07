@@ -5,16 +5,17 @@
 #include <sstream>
 #include <iostream>
 #include <list>
+#include <unordered_map>
 
 using namespace std;
 using namespace velox;
 
 extern "C" {
-  void mymapper(std::string, velox::MapOutputCollection&);
+  void mymapper(std::string, velox::MapOutputCollection&, std::unordered_map<std::string, void*>&);
   void myreducer(std::string, std::list<std::string>, velox::MapOutputCollection&);
 }
 
-void mymapper(std::string line, velox::MapOutputCollection& mapper_results) {
+void mymapper(std::string line, velox::MapOutputCollection& mapper_results, std::unordered_map<std::string, void*>& options) {
   std::stringstream  stream(line);
   std::string token;
 

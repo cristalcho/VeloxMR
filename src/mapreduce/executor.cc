@@ -11,6 +11,7 @@
 #include <utility>
 #include <functional>
 #include <list>
+#include <unordered_map>
 
 using namespace eclipse;
 using namespace std;
@@ -33,6 +34,11 @@ bool Executor::run_map (messages::Task* m, std::string input) {
       context.logger->error ("Not found library path[%s]", path_lib.c_str());
     }
 
+    map_configure_t _map_configure_ = loader.load_function_map_configure("map_configure");
+    std::unordered_map<std::string, void*> options;
+    if(_map_configure_ != nullptr)
+      _map_configure_(options);
+
     mapper_t _map_ = loader.load_function(m->func_name);
     stringstream ss (input);
 
@@ -46,8 +52,11 @@ bool Executor::run_map (messages::Task* m, std::string input) {
         continue;
 
       std::string line(next_line);
-      _map_ (line, results);
+      _map_ (line, results, options);
     }
+
+    for(auto it = options.begin(); it != options.end(); ++it) 
+      delete it->second;
 
     vector<uint32_t> keys_per_node;
     vector<string> headers_list;
@@ -62,19 +71,20 @@ bool Executor::run_map (messages::Task* m, std::string input) {
     results.travel(run_headers);
 
     int i = 0;
-    for (auto node : keys_per_node) {
+    for(unsigned int node = 0; node < network_size; node++) {
+      if(keys_per_node[node] == 0) continue;
+
       KeyValueShuffle kv; 
       kv.job_id_ = m->job_id;           // :TODO:
       kv.map_id_ = 0;
-      kv.key_ = headers_list[i];
+      kv.key_ = headers_list[node];
       kv.is_header = true;
-      kv.number_of_keys = node;
+      kv.number_of_keys = keys_per_node[node];
       peer->process(&kv);
       i++;
     }
 
     auto run_block = [&m, &peer = this->peer](std::string key, std::vector<std::string>* value) mutable {
-      DEBUG("deukyeon: map result size = %d", value->size());
       KeyValueShuffle kv; 
       kv.job_id_ = m->job_id;           // :TODO:
       kv.map_id_ = 0;
@@ -136,7 +146,6 @@ bool Executor::run_reduce (messages::Task* task) {
           //total_iterations++;
         }
 
-      DEBUG("deukyeon: values.size() = %d", values.size());
       if(values.size() > 0)
         _reducer_ (key, values, output);
       //}

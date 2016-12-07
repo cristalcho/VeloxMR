@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <list>
+#include <unordered_map>
 #include <limits>
 #include <math.h>
 #include <time.h>
@@ -22,7 +23,8 @@ using namespace std;
 using namespace velox;
 
 extern "C" {
-  void mymapper(std::string&, velox::MapOutputCollection&);
+  void map_configure(std::unordered_map<std::string, void*>&);
+  void mymapper(std::string&, velox::MapOutputCollection&, std::unordered_map<std::string, void*>&);
   void myreducer(std::string&, std::list<std::string>&, MapOutputCollection&);
 }
 
@@ -86,29 +88,45 @@ class Point {
     };
 };
 
-void mymapper(std::string& input, velox::MapOutputCollection& mapper_results) {
-  // load centroids
-  // TODO: using distributed cache
-  
+void map_configure(std::unordered_map<std::string, void*>& options) {
   ifstream fs;
   fs.open(LOCAL_CENTROID_PATH);
 
-  std::list<Point> centroids;
+  std::list<Point>* centroids = new std::list<Point>();
 
   std::string centroid_str;
   while(getline(fs, centroid_str)) {
     Point centroid(centroid_str);
-    centroids.push_back(std::move(centroid));
+    centroids->push_back(std::move(centroid));
   }
 
   fs.close();
+
+  options["centroids"] = centroids;
+}
+
+void mymapper(std::string& input, velox::MapOutputCollection& mapper_results, std::unordered_map<std::string, void*>& options) {
+  // load centroids
+  // TODO: using distributed cache
+  
+  //ifstream fs;
+  //fs.open(LOCAL_CENTROID_PATH);
+
+  std::list<Point>* centroids = reinterpret_cast<std::list<Point>*>(options["centroids"]);
+
+  //std::string centroid_str;
+  //while(getline(fs, centroid_str)) {
+    //Point centroid(centroid_str);
+    //centroids.push_back(std::move(centroid));
+  //}
+
+  //fs.close();
 
   Point p(input);
 
   double min = std::numeric_limits<double>::max();
   Point nearest_centroid;
-  for(Point centroid : centroids) {
-    //double dist = p.distance_square(centroid);
+  for(Point centroid : *centroids) {
     double dist = Point::distance_square(p, centroid);
     if(dist < min) {
       nearest_centroid = centroid;
