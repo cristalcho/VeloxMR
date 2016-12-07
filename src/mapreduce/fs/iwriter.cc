@@ -140,7 +140,6 @@ void IWriter::seek_writable_block() {
 }
 void IWriter::add_key_value(const string &key, const string &value) {
   deb.insert(key);
-  DEBUG("inserted %i", deb.size());
 
   mutex.lock();
   int index;
@@ -233,7 +232,6 @@ void IWriter::write_block(std::shared_ptr<std::multimap<string, string>> block,
     }
     i++;
   } 
-  DEBUG("IWRITER wrote %i keys", i);
   flush_buffer();
   file_.close();
   messages::IBlockInsert iblock_insert;

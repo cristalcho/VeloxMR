@@ -103,7 +103,6 @@ template<> void PeerMR::process(KeyValueShuffle *kv_shuffle) {
 
     current_keys++;
     if (current_keys >= keys_to_be_recv){
-      DEBUG("i got all my keys");
       current_keys = 0;
       keys_to_be_recv = 0;
       FinishShuffle fs;
@@ -152,7 +151,6 @@ template<> void PeerMR::process(messages::SubJobStatus* m) {
   DEBUG("Subjob remaining : %i current nodes:%i",  subjobs_remaining[m->job_id], current_nodes_shuffling);
   if (subjobs_remaining[m->job_id] <= 0) {
     if (current_nodes_shuffling >= nodes_shuffling[m->job_id].size() && m->type == "MAP") {
-      DEBUG("REturning to client");
       jobs_callback[m->job_id]();
       //current_nodes_shuffling = nodes_shuffling[m->job_id].size();
       //for (auto node : nodes_shuffling[m->job_id]) {
@@ -432,7 +430,6 @@ void PeerMR::write_key_value(messages::KeyValueShuffle *kv_shuffle) {
   }
   const std::string& key = kv_shuffle->key_;
   auto& values = kv_shuffle->value_;
-  DEBUG("PEERDFS passed %i keys", idebug++);
   for (auto& v : values) {
     iwriters_[job_id]->add_key_value(key, v);
   }
