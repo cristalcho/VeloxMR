@@ -65,6 +65,8 @@ template <typename Archive>
     ar & BOOST_SERIALIZATION_NVP(c.num_block);
     ar & BOOST_SERIALIZATION_NVP(c.type);
     ar & BOOST_SERIALIZATION_NVP(c.replica);
+    ar & BOOST_SERIALIZATION_NVP(c.reducer_output);
+    ar & BOOST_SERIALIZATION_NVP(c.job_id);
   }
 
 template <typename Archive>

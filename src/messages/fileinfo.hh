@@ -17,6 +17,8 @@ struct FileInfo: public Message {
   unsigned int num_block = 0;
   unsigned int type;
   unsigned int replica = 0;
+  bool reducer_output = false;
+  uint32_t job_id = 0;
 };
 
 }
