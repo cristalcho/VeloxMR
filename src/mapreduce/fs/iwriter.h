@@ -4,6 +4,7 @@
 #include <thread>
 #include <string>
 #include <map>
+#include <set>
 #include <unordered_map>
 #include <vector>
 #include <mutex>
@@ -77,6 +78,7 @@ class IWriter: public IWriter_interface {
   unordered_map<string, int> key_index_;  // index of key
   std::ofstream file_;
   std::mutex mutex;
+  std::set<string> deb;
 };
 
 }  // namespace eclipse

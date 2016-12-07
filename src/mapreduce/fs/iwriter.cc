@@ -76,7 +76,7 @@ bool IWriter::is_write_finish() {
 }
 
 IWriter::~IWriter() {
-  delete[] write_buf_;
+  free(write_buf_);
 }
 void IWriter::finalize() {
   // It should be garuanteed no more key values added
@@ -139,6 +139,9 @@ void IWriter::seek_writable_block() {
   }
 }
 void IWriter::add_key_value(const string &key, const string &value) {
+  deb.insert(key);
+  DEBUG("inserted %i", deb.size());
+
   mutex.lock();
   int index;
   index = get_index(key);
@@ -153,7 +156,7 @@ void IWriter::add_key_value(const string &key, const string &value) {
   } else {
     new_size = get_block_size(index) + value.length() + 1;
   }
-  block->emplace(key, value);
+  block->insert({key, value});
   set_block_size(index, new_size);
 
   if (new_size > iblock_size_) {
@@ -216,6 +219,9 @@ void IWriter::write_block(std::shared_ptr<std::multimap<string, string>> block,
   set_writing_file(index);
   std::pair<multimap<string, string>::iterator,
       multimap<string, string>::iterator> ret;
+      int i = 0;
+
+
   for (auto key_it = block->begin(); key_it != block->end(); key_it =
       ret.second) {
     ret = block->equal_range(key_it->first);
@@ -225,7 +231,9 @@ void IWriter::write_block(std::shared_ptr<std::multimap<string, string>> block,
     for (auto it = ret.first; it != ret.second; ++it) {
       write_record(it->second);
     }
+    i++;
   } 
+  DEBUG("IWRITER wrote %i keys", i);
   flush_buffer();
   file_.close();
   messages::IBlockInsert iblock_insert;

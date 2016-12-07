@@ -276,6 +276,8 @@ template <typename Archive>
     ar & BOOST_SERIALIZATION_NVP(c.map_id_);
     ar & BOOST_SERIALIZATION_NVP(c.key_);
     ar & BOOST_SERIALIZATION_NVP(c.value_);
+    ar & BOOST_SERIALIZATION_NVP(c.is_header);
+    ar & BOOST_SERIALIZATION_NVP(c.number_of_keys);
   }
 
 template <typename Archive>
