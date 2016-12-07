@@ -64,7 +64,7 @@ void Histogram::set_numbin (int num)
     
     if (querycount != NULL)
     {
-        delete querycount;
+        delete[] querycount;
     }
     
     querycount = new double[num];
@@ -80,7 +80,7 @@ void Histogram::set_numserver (int num)
     
     if (boundaries != NULL)
     {
-        delete boundaries;
+        delete[] boundaries;
     }
     
     boundaries = new unsigned[num];
