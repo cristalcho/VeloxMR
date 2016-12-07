@@ -150,6 +150,11 @@ int main (int argc, char** argv) {
   if(!os.is_open()) return 1;
 
   // initialize the first centroid points randomly
+  std::cout << "VARIABLES" << std::endl;
+  std::cout << "# of iterations: " << ITERATIONS << std::endl;
+  std::cout << "# of clusters(k): " << NUM_CLUSTERS << std::endl;
+
+  std::cout << "Initial Centroids: " << std::endl;
   srand(time(nullptr));
   for(int i=0; i<NUM_CLUSTERS; i++) {
     double x = ((double)(rand() % 10001) / 100);
@@ -160,6 +165,8 @@ int main (int argc, char** argv) {
     os.write(centroid_content.c_str(), centroid_content.size());
   }
   os.close();
+
+  std::cout << "========================" << std::endl;
 
   file myfile = cloud.open(INPUT_NAME);
 
@@ -174,7 +181,6 @@ int main (int argc, char** argv) {
     output_name = "kmeans.output-" + to_string(i);
 
     A.map("mymapper");
-    //sleep(10);
     A.reduce("myreducer", output_name);
 
     if(i < ITERATIONS - 1) {
@@ -192,7 +198,6 @@ int main (int argc, char** argv) {
         count++;
       }
       os.close();
-      std::cout << i << "th count: " << count << std::endl;
 
       // remove output
       //cloud.rm(OUTPUT_NAME);
@@ -204,8 +209,7 @@ int main (int argc, char** argv) {
   std::cout << "FINISH k-means clusering" << std::endl;
 
   // summary
-
-  std::cout << "===========-============" << std::endl;
+  std::cout << "========================" << std::endl;
   std::cout << "Centroids" << std::endl;
 
   file output_file = cloud.open(output_name);
