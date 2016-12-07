@@ -199,6 +199,8 @@ bool Executor::run_reduce (messages::Task* task) {
     fi.size = total_size;
     fi.hash_key = h(fi.name);
     fi.replica = 1;
+    fi.reducer_output = true;
+    fi.job_id = task->job_id;
 
     dynamic_cast<PeerMR*>(peer)->process(&fi);
 

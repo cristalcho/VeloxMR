@@ -498,7 +498,7 @@ void PeerMR::request_local_reduce (messages::Task* m) {
     }
   }
 
-  notify_task_leader(m->leader, m->job_id, m->job_id, "REDUCE");
+  //notify_task_leader(m->leader, m->job_id, m->job_id, "REDUCE");
 }
 // }}}
 // ------------- REDUCE OUTPUT ROUTINES ------------------
@@ -531,6 +531,13 @@ bool PeerMR::insert_file(messages::FileInfo* f) {
     replicate_metadata();
 
     INFO("File:%s exists in db, Updated to (%u, %u)", fu.name.c_str(), fu.size, fu.num_block);
+
+    if (f->reducer_output) {
+      INFO("RETURNING FROM REDUCER");
+      int leader = f->job_id % network_size;
+      notify_task_leader(leader, f->job_id, f->job_id, "REDUCE");
+
+    }
     
     return false;
   }
@@ -539,6 +546,13 @@ bool PeerMR::insert_file(messages::FileInfo* f) {
   replicate_metadata();
 
   logger->info("Saving to SQLite db");
+
+  if (f->reducer_output) {
+    INFO("RETURNING FROM REDUCER");
+    int leader = f->job_id % network_size;
+    notify_task_leader(leader, f->job_id, f->job_id, "REDUCE");
+  
+  }
   return true;
 }
 // }}}
