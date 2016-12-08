@@ -4,6 +4,7 @@
 #include <vector>
 #include <unordered_map>
 #include <set>
+#include <mutex>
 #include "../../nodes/peerdfs.hh"
 #include "../fs/directorymr.hh"
 #include "../fs/iwriter_interface.hh"
@@ -57,6 +58,7 @@ class PeerMR: public PeerDFS {
   uint32_t keys_to_be_recv = 0;
   uint32_t current_keys = 0;
   DirectoryMR directory;
+  std::mutex mutex;
 };
 
 }  // namespace eclipse

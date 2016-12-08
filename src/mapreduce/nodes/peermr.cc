@@ -210,6 +210,7 @@ template<> void PeerMR::process (FileInfo* m) {
 void PeerMR::on_read(messages::Message *msg, int) {
   std::string type = msg->get_type();
 
+  mutex.lock();
   if (type == "KeyValueShuffle") {
     auto kv_shuffle = dynamic_cast<KeyValueShuffle*>(msg);
     process(kv_shuffle);
@@ -245,10 +246,12 @@ void PeerMR::on_read(messages::Message *msg, int) {
   } else {
     PeerDFS::on_read(msg, 0);
   }
+  mutex.unlock();
 }
 // }}}
 // process_job {{{
 bool PeerMR::process_job (messages::Job* m, std::function<void(void)> f) {
+  mutex.lock();
   jobs_callback[m->job_id] = f;
 
   if (m->type == "MAP") {
@@ -276,6 +279,7 @@ bool PeerMR::process_job (messages::Job* m, std::function<void(void)> f) {
   } else if (m->type == "REDUCE") {
     schedule_reduce(m);
   }
+  mutex.unlock();
   return true;
 }
 // }}}
@@ -422,8 +426,8 @@ void PeerMR::write_key_value(messages::KeyValueShuffle *kv_shuffle) {
   auto it = iwriters_.find(job_id);
   if (it == iwriters_.end()) {
     const uint32_t map_id = kv_shuffle->map_id_;
-    //iwriter = std::make_shared<IWriter>(job_id, map_id);
-    iwriters_.insert({job_id, std::make_shared<IWriter>(job_id, map_id)});
+    iwriter = std::make_shared<IWriter>(job_id, map_id);
+    iwriters_.insert({job_id, iwriter});
   }
   else {
     iwriter = it->second;
@@ -500,7 +504,8 @@ void PeerMR::request_local_reduce (messages::Task* m) {
 // }}}
 // ------------- REDUCE OUTPUT ROUTINES ------------------
 // submit_block {{{
-void PeerMR::submit_block(messages::BlockInfo* m) {
+void PeerMR::submit_block(messages::BlockInfo* m) { 
+  //mutex.lock();
   auto file_name = m->file_name;
   int which_node = h(file_name) % network_size; 
 
@@ -509,6 +514,7 @@ void PeerMR::submit_block(messages::BlockInfo* m) {
   } else {
     network->send(which_node, m);
   }
+  //mutex.unlock();
 }
 // }}}
 // insert_file {{{
@@ -525,7 +531,7 @@ bool PeerMR::insert_file(messages::FileInfo* f) {
     fu.size = f->size + sel_fi.size;
     fu.num_block = f->num_block + sel_fi.num_block;
     directory.update_file_metadata(fu);
-    replicate_metadata();
+    //replicate_metadata();
 
     INFO("File:%s exists in db, Updated to (%u, %u)", fu.name.c_str(), fu.size, fu.num_block);
 
@@ -540,7 +546,7 @@ bool PeerMR::insert_file(messages::FileInfo* f) {
   }
 
   directory.insert_file_metadata(*f);
-  replicate_metadata();
+  //replicate_metadata();
 
   logger->info("Saving to SQLite db");
 
