@@ -21,6 +21,7 @@ PYexecutor::~PYexecutor() { }
 // }}}
 // run_map {{{
 bool PYexecutor::run_map (messages::Task* m, std::string input) {
+  auto network_size = GET_VEC_STR("network.nodes").size();
   Py_Initialize();
   py_declare_func(m->func_body);
 
@@ -48,6 +49,31 @@ bool PYexecutor::run_map (messages::Task* m, std::string input) {
         map_output[key] = vector<string>(value.begin(), value.end());
       }
     }
+  }
+
+  vector<uint32_t> keys_per_node;
+  vector<string> headers_list;
+  keys_per_node.resize(network_size);
+  headers_list.resize(network_size);
+
+  for (auto& kv_pair : map_output) {
+    int node = h(kv_pair.first) % network_size;
+    keys_per_node[node]++;
+    headers_list[node] = kv_pair.first;
+  }
+
+  int i = 0;
+  for(unsigned int node = 0; node < network_size; node++) {
+    if(keys_per_node[node] == 0) continue;
+
+    KeyValueShuffle kv; 
+    kv.job_id_ = m->job_id;           // :TODO:
+    kv.map_id_ = 0;
+    kv.key_ = headers_list[node];
+    kv.is_header = true;
+    kv.number_of_keys = keys_per_node[node];
+    peer->process(&kv);
+    i++;
   }
 
   for (auto& kv_pair : map_output) {
