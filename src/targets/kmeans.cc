@@ -15,7 +15,7 @@
 #define INPUT_NAME "kmeans.input"
 #define OUTPUT_NAME "kmeans.output"
 #define CENTROID_NAME "kmeans_centroids.data"
-#define LOCAL_CENTROID_PATH "/home/deukyeon/EclipseMR/data/kmeans_centroids.data"
+#define LOCAL_CENTROID_PATH "/home/dicl/VeloxMR/data/kmeans_centroids.data"
 #define ITERATIONS 5
 #define NUM_CLUSTERS 25
 
@@ -68,7 +68,7 @@ class Point {
     };
 
     void get_point_from_string(std::string str) {
-      sscanf(str.c_str(), "%lf-%lf", &x, &y);
+      sscanf(str.c_str(), "%lf,%lf", &x, &y);
     };
 
     double distance_square(Point& p) {
@@ -84,7 +84,7 @@ class Point {
     };
 
     std::string to_string() {
-      return (std::to_string(x) + "-" + std::to_string(y));
+      return (std::to_string(x) + "," + std::to_string(y));
     };
 };
 
@@ -106,21 +106,7 @@ void map_configure(std::unordered_map<std::string, void*>& options) {
 }
 
 void mymapper(std::string& input, velox::MapOutputCollection& mapper_results, std::unordered_map<std::string, void*>& options) {
-  // load centroids
-  // TODO: using distributed cache
-  
-  //ifstream fs;
-  //fs.open(LOCAL_CENTROID_PATH);
-
   std::list<Point>* centroids = reinterpret_cast<std::list<Point>*>(options["centroids"]);
-
-  //std::string centroid_str;
-  //while(getline(fs, centroid_str)) {
-    //Point centroid(centroid_str);
-    //centroids.push_back(std::move(centroid));
-  //}
-
-  //fs.close();
 
   Point p(input);
 
@@ -186,8 +172,6 @@ int main (int argc, char** argv) {
 
   std::cout << "========================" << std::endl;
 
-  file myfile = cloud.open(INPUT_NAME);
-
   vmr mr(&cloud);
 
   std::string output_name;
@@ -208,17 +192,12 @@ int main (int argc, char** argv) {
       std::string output_line;
 
       os.open(LOCAL_CENTROID_PATH);
-      int count = 0;
       while(getline(stream, output_line)) {
         std::string::size_type pos = output_line.find(':');
         std::string centroid_string = output_line.substr(0, pos) + "\n";
         os.write(centroid_string.c_str(), centroid_string.size());
-        count++;
       }
       os.close();
-
-      // remove output
-      //cloud.rm(OUTPUT_NAME);
     }
   }
 
