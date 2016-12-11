@@ -2,7 +2,7 @@
 #include "../common/dl_loader.hh"
 #include "../common/hash.hh"
 #include "../mapreduce/messages/key_value_shuffle.h"
-#include "../mapreduce/map_output_collection.hh"
+#include "../mapreduce/output_collection.hh"
 #include "../mapreduce/fs/ireader.h"
 #include "../messages/keyvalue.hh"
 
@@ -43,7 +43,7 @@ bool Executor::run_map (messages::Task* m, std::string input) {
     stringstream ss (input);
 
     char next_line[10000]; //! :TODO: change to DFS line limit
-    velox::MapOutputCollection results;
+    velox::OutputCollection results;
 
     while (!ss.eof()) {
       bzero(next_line, 10000);
@@ -131,7 +131,7 @@ bool Executor::run_reduce (messages::Task* task) {
       ireader.get_next_key(key);
 
       //int total_iterations = 0;
-      velox::MapOutputCollection output;
+      velox::OutputCollection output;
       values.clear();
 
       //if (ireader.is_next_value()) {

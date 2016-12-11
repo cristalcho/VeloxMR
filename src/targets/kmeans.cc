@@ -1,5 +1,5 @@
 #include <eclipsedfs/vmr.hh>
-#include <eclipsedfs/map_output_collection.hh>
+#include <eclipsedfs/output_collection.hh>
 #include <utility>
 #include <string>
 #include <sstream>
@@ -25,8 +25,8 @@ using namespace velox;
 extern "C" {
   void before_map(std::unordered_map<std::string, void*>&);
   void after_map(std::unordered_map<std::string, void*>&);
-  void mymapper(std::string&, velox::MapOutputCollection&, std::unordered_map<std::string, void*>&);
-  void myreducer(std::string&, std::list<std::string>&, MapOutputCollection&);
+  void mymapper(std::string&, velox::OutputCollection&, std::unordered_map<std::string, void*>&);
+  void myreducer(std::string&, std::list<std::string>&, OutputCollection&);
 }
 
 class Point {
@@ -111,7 +111,7 @@ void after_map(std::unordered_map<std::string, void*>& options) {
     delete reinterpret_cast<std::list<Point>*>(it->second);
 }
 
-void mymapper(std::string& input, velox::MapOutputCollection& mapper_results, std::unordered_map<std::string, void*>& options) {
+void mymapper(std::string& input, velox::OutputCollection& mapper_results, std::unordered_map<std::string, void*>& options) {
   std::list<Point>* centroids = reinterpret_cast<std::list<Point>*>(options["centroids"]);
 
   Point p(input);
@@ -129,7 +129,7 @@ void mymapper(std::string& input, velox::MapOutputCollection& mapper_results, st
   mapper_results.insert(nearest_centroid.to_string(), p.to_string());
 }
 
-void myreducer(std::string& key, std::list<std::string>& values, MapOutputCollection& output) {
+void myreducer(std::string& key, std::list<std::string>& values, OutputCollection& output) {
   if(values.size() == 0) return;
 
   double sumX = 0, sumY = 0;

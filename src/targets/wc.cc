@@ -1,5 +1,5 @@
 #include <eclipsedfs/vmr.hh>
-#include <eclipsedfs/map_output_collection.hh>
+#include <eclipsedfs/output_collection.hh>
 #include <utility>
 #include <string>
 #include <sstream>
@@ -11,11 +11,11 @@ using namespace std;
 using namespace velox;
 
 extern "C" {
-  void mymapper(std::string, velox::MapOutputCollection&, std::unordered_map<std::string, void*>&);
-  void myreducer(std::string, std::list<std::string>, velox::MapOutputCollection&);
+  void mymapper(std::string, velox::OutputCollection&, std::unordered_map<std::string, void*>&);
+  void myreducer(std::string, std::list<std::string>, velox::OutputCollection&);
 }
 
-void mymapper(std::string line, velox::MapOutputCollection& mapper_results, std::unordered_map<std::string, void*>& options) {
+void mymapper(std::string line, velox::OutputCollection& mapper_results, std::unordered_map<std::string, void*>& options) {
   std::stringstream  stream(line);
   std::string token;
 
@@ -23,7 +23,7 @@ void mymapper(std::string line, velox::MapOutputCollection& mapper_results, std:
     mapper_results.insert(token, to_string(1));
 }
 
-void myreducer(std::string key, std::list<std::string> values, velox::MapOutputCollection& output) {
+void myreducer(std::string key, std::list<std::string> values, velox::OutputCollection& output) {
   int sum = 0;
   for(std::string& value : values) 
     sum += stoi(value); 
@@ -43,8 +43,5 @@ int main (int argc, char** argv) {
   A.map("mymapper");
   A.reduce("myreducer", output_name);
 
-  file result_file = cloud.open(output_name);
-  cout << result_file.get() << endl;
-  
   return 0;
 }
