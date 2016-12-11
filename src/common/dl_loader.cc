@@ -19,10 +19,20 @@ bool DL_loader::init_lib () {
   return true;
 }
 // }}}
-// load_function_map_configure {{{
-map_configure_t DL_loader::load_function_map_configure (std::string fun) {
-  map_configure_t func_ = 
-    reinterpret_cast<map_configure_t>(dlsym(lib, fun.c_str())); 
+// load_function_before_map {{{
+before_map_t DL_loader::load_function_before_map (std::string fun) {
+  before_map_t func_ = 
+    reinterpret_cast<before_map_t>(dlsym(lib, fun.c_str())); 
+  char* err = dlerror();
+
+  if (err) return nullptr; //throw std::runtime_error("DL_LOADER: Symbol not found");
+  return func_;
+}
+// }}}
+// load_function_after_map {{{
+after_map_t DL_loader::load_function_after_map (std::string fun) {
+  after_map_t func_ = 
+    reinterpret_cast<after_map_t>(dlsym(lib, fun.c_str())); 
   char* err = dlerror();
 
   if (err) return nullptr; //throw std::runtime_error("DL_LOADER: Symbol not found");

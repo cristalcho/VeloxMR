@@ -15,7 +15,7 @@
 #define INPUT_NAME "kmeans.input"
 #define OUTPUT_NAME "kmeans.output"
 #define CENTROID_NAME "kmeans_centroids.data"
-#define LOCAL_CENTROID_PATH "/home/dicl/VeloxMR/data/kmeans_centroids.data"
+#define LOCAL_CENTROID_PATH "/home/deukyeon/EclipseMR/data/kmeans_centroids.data"
 #define ITERATIONS 5
 #define NUM_CLUSTERS 25
 
@@ -23,7 +23,8 @@ using namespace std;
 using namespace velox;
 
 extern "C" {
-  void map_configure(std::unordered_map<std::string, void*>&);
+  void before_map(std::unordered_map<std::string, void*>&);
+  void after_map(std::unordered_map<std::string, void*>&);
   void mymapper(std::string&, velox::MapOutputCollection&, std::unordered_map<std::string, void*>&);
   void myreducer(std::string&, std::list<std::string>&, MapOutputCollection&);
 }
@@ -88,7 +89,7 @@ class Point {
     };
 };
 
-void map_configure(std::unordered_map<std::string, void*>& options) {
+void before_map(std::unordered_map<std::string, void*>& options) {
   ifstream fs;
   fs.open(LOCAL_CENTROID_PATH);
 
@@ -103,6 +104,11 @@ void map_configure(std::unordered_map<std::string, void*>& options) {
   fs.close();
 
   options["centroids"] = centroids;
+}
+
+void after_map(std::unordered_map<std::string, void*>& options) {
+  for(auto it = options.begin(); it != options.end(); ++it) 
+    delete reinterpret_cast<std::list<Point>*>(it->second);
 }
 
 void mymapper(std::string& input, velox::MapOutputCollection& mapper_results, std::unordered_map<std::string, void*>& options) {

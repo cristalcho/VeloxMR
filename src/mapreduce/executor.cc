@@ -34,10 +34,10 @@ bool Executor::run_map (messages::Task* m, std::string input) {
       context.logger->error ("Not found library path[%s]", path_lib.c_str());
     }
 
-    map_configure_t _map_configure_ = loader.load_function_map_configure("map_configure");
+    before_map_t _before_map_ = loader.load_function_before_map("before_map");
     std::unordered_map<std::string, void*> options;
-    if(_map_configure_ != nullptr)
-      _map_configure_(options);
+    if(_before_map_ != nullptr)
+      _before_map_(options);
 
     mapper_t _map_ = loader.load_function(m->func_name);
     stringstream ss (input);
@@ -54,9 +54,6 @@ bool Executor::run_map (messages::Task* m, std::string input) {
       std::string line(next_line);
       _map_ (line, results, options);
     }
-
-    for(auto it = options.begin(); it != options.end(); ++it) 
-      delete it->second;
 
     vector<uint32_t> keys_per_node;
     vector<string> headers_list;
@@ -94,6 +91,10 @@ bool Executor::run_map (messages::Task* m, std::string input) {
     };
 
     results.travel(run_block);
+
+    after_map_t _after_map_ = loader.load_function_after_map("after_map");
+    if(_after_map_ != nullptr)
+      _after_map_(options);
 
     return true;
   }
