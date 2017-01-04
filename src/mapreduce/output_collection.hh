@@ -6,10 +6,10 @@
 #include <functional>
 
 namespace velox {
-  class MapOutputCollection {
+  class OutputCollection {
     public:
-      MapOutputCollection();
-      ~MapOutputCollection();
+      OutputCollection();
+      ~OutputCollection();
 
       /* TODO: arguments for any types */
       bool insert(std::string, std::string);

@@ -15,6 +15,9 @@ struct KeyValueShuffle: public Message {
   uint32_t map_id_;
   std::string key_;
   std::vector<std::string> value_;
+  bool is_header = false;
+  uint32_t number_of_keys = 0; 
+  
 };
 
 }  // namespace messages

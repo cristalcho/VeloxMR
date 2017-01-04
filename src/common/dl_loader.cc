@@ -19,6 +19,26 @@ bool DL_loader::init_lib () {
   return true;
 }
 // }}}
+// load_function_before_map {{{
+before_map_t DL_loader::load_function_before_map (std::string fun) {
+  before_map_t func_ = 
+    reinterpret_cast<before_map_t>(dlsym(lib, fun.c_str())); 
+  char* err = dlerror();
+
+  if (err) return nullptr; //throw std::runtime_error("DL_LOADER: Symbol not found");
+  return func_;
+}
+// }}}
+// load_function_after_map {{{
+after_map_t DL_loader::load_function_after_map (std::string fun) {
+  after_map_t func_ = 
+    reinterpret_cast<after_map_t>(dlsym(lib, fun.c_str())); 
+  char* err = dlerror();
+
+  if (err) return nullptr; //throw std::runtime_error("DL_LOADER: Symbol not found");
+  return func_;
+}
+// }}}
 // load_function {{{
 mapper_t DL_loader::load_function (std::string fun) {
   mapper_t func_ = 
@@ -30,9 +50,9 @@ mapper_t DL_loader::load_function (std::string fun) {
 }
 // }}}
 // load_function {{{
-reducetype DL_loader::load_function_reduce (std::string fun) {
-  reducetype func_ = 
-    reinterpret_cast<reducetype>(dlsym(lib, fun.c_str())); 
+reducer_t DL_loader::load_function_reduce (std::string fun) {
+  reducer_t func_ = 
+    reinterpret_cast<reducer_t>(dlsym(lib, fun.c_str())); 
   char* err = dlerror();
 
   if (err) throw std::runtime_error("Symbol not found");

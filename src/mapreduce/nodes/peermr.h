@@ -4,6 +4,7 @@
 #include <vector>
 #include <unordered_map>
 #include <set>
+#include <mutex>
 #include "../../nodes/peerdfs.hh"
 #include "../fs/directorymr.hh"
 #include "../fs/iwriter_interface.hh"
@@ -54,7 +55,10 @@ class PeerMR: public PeerDFS {
   std::unordered_map<uint32_t, std::set<std::string>> shuffled_keys;
   std::unordered_map<uint32_t, std::vector<int>> nodes_shuffling;
   uint32_t current_nodes_shuffling = 0;
+  uint32_t keys_to_be_recv = 0;
+  uint32_t current_keys = 0;
   DirectoryMR directory;
+  std::mutex mutex;
 };
 
 }  // namespace eclipse

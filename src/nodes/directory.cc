@@ -259,6 +259,7 @@ namespace eclipse {
 
   void Directory::select_all_block_metadata(vector<BlockInfo> &block_info) {
     open_db();
+    mutex.lock();
     sprintf(sql, "SELECT * from block_table;");
     rc = sqlite3_exec(db, sql, block_list_callback, (void*)&block_info, &zErrMsg);
     if (rc != SQLITE_OK) {
@@ -268,11 +269,13 @@ namespace eclipse {
       context.logger->info("block_metadata selected successfully\n");
     }
 
+    mutex.unlock();
     sqlite3_close(db);
   } 
 
   void Directory::update_file_metadata(FileUpdate &file_update) {
     open_db();
+    mutex.lock();
     sprintf(sql, "UPDATE file_table set \
         size=%" PRIu64 ", num_block=%u where name='%s';",
         file_update.size,
@@ -287,6 +290,7 @@ namespace eclipse {
       context.logger->info("file_metadata updated successfully\n");
     }
     sqlite3_close(db);
+    mutex.unlock();
   }
 
   void Directory::update_block_metadata(BlockUpdate &block_update) {
@@ -322,6 +326,7 @@ namespace eclipse {
   void Directory::delete_block_metadata(string file_name, unsigned int seq)
   {
     open_db();
+    mutex.lock();
     sprintf(sql, "DELETE from block_table where (file_name='%s') and (seq=%u);", file_name.c_str(), seq);
     rc = sqlite3_exec(db, sql, NULL, 0, &zErrMsg);
     if (rc != SQLITE_OK) {
@@ -331,6 +336,7 @@ namespace eclipse {
       context.logger->info("block_metadata deleted successfully\n");
     }
     sqlite3_close(db);
+    mutex.unlock();
   }
 
   void Directory::display_file_metadata()
@@ -349,6 +355,7 @@ namespace eclipse {
 
   void Directory::display_block_metadata() {
     open_db();
+    mutex.lock();
     sprintf(sql, "SELECT * from block_table");
     rc = sqlite3_exec(db, sql, display_callback, 0, &zErrMsg);
     if (rc != SQLITE_OK) {
@@ -358,11 +365,13 @@ namespace eclipse {
       context.logger->info("block_metadata displayed successfully\n");
     }
     sqlite3_close(db);
+    mutex.unlock();
   }
 
   bool Directory::file_exist(string name) {
     bool result = false;
     open_db();
+    mutex.lock();
     sprintf(sql, "SELECT name from file_table where name='%s';", name.c_str());
     rc = sqlite3_exec(db, sql, exist_callback, &result, &zErrMsg);
     if (rc != SQLITE_OK) {
@@ -372,11 +381,13 @@ namespace eclipse {
       context.logger->info("file_exist executed successfully\n");
     }
     sqlite3_close(db);
+    mutex.unlock();
     return result;
   }
 
   void Directory::select_last_block_metadata(string file_name, BlockInfo *block_info) {
     open_db();
+    mutex.lock();
     sprintf(sql, "SELECT * FROM block_table WHERE (file_name='%s') ORDER BY seq DESC LIMIT 1;", file_name.c_str());
     rc = sqlite3_exec(db, sql, block_callback, (void*)block_info, &zErrMsg);
     if (rc != SQLITE_OK) {
@@ -386,5 +397,6 @@ namespace eclipse {
       context.logger->info("the last block_metadata selected successfully\n");
     }
     sqlite3_close(db);
+    mutex.unlock();
   } 
 }

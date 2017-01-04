@@ -1,12 +1,12 @@
-#include "map_output_collection.hh"
+#include "output_collection.hh"
 #include <iostream>
 
 namespace velox {
-MapOutputCollection::MapOutputCollection() {
+OutputCollection::OutputCollection() {
   collection_ = nullptr;
 }
 
-MapOutputCollection::~MapOutputCollection() {
+OutputCollection::~OutputCollection() {
   if(collection_ != nullptr) {
     for(auto iter = collection_->begin(); iter != collection_->end(); ++iter) 
       delete iter->second;
@@ -15,7 +15,7 @@ MapOutputCollection::~MapOutputCollection() {
   }
 }
 
-bool MapOutputCollection::insert(std::string key, std::string value) {
+bool OutputCollection::insert(std::string key, std::string value) {
   this->check_or_alloc_collection();
 
   auto collection_item = collection_->find(key);
@@ -28,28 +28,28 @@ bool MapOutputCollection::insert(std::string key, std::string value) {
   return true;
 };
 
-void MapOutputCollection::check_or_alloc_collection() {
+void OutputCollection::check_or_alloc_collection() {
   if(collection_ == nullptr) 
     collection_ = new std::map<key_t, value_t>();
 }
 
-auto MapOutputCollection::begin() {
+auto OutputCollection::begin() {
   this->check_or_alloc_collection();
   return collection_->begin();
 }
 
-auto MapOutputCollection::end() {
+auto OutputCollection::end() {
   this->check_or_alloc_collection();
   return collection_->end();
 }
 
-void MapOutputCollection::travel(std::function<void(std::string, std::vector<std::string>*)> run_block_with_kv) {
+void OutputCollection::travel(std::function<void(std::string, std::vector<std::string>*)> run_block_with_kv) {
   for(auto key_values = this->begin(); key_values != this->end(); ++key_values) {
     run_block_with_kv(key_values->first, key_values->second);
   }
 }
 
-void MapOutputCollection::print_all() {
+void OutputCollection::print_all() {
 //  travel([](std::string k, std::string v) {
 //      std::cout << "<" << k << ", " << v << ">" << std::endl;
 //      });

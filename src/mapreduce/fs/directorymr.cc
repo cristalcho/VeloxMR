@@ -64,6 +64,7 @@ void DirectoryMR::init_db() {
 void DirectoryMR::insert_idata_metadata(IDataInsert idata_insert) {
   // Open database
   open_db();
+  mutex.lock();
   // Create sql statement
   sprintf(sql, "INSERT INTO idata_table (\
       job_id, map_id, num_reducer) \
@@ -77,10 +78,12 @@ void DirectoryMR::insert_idata_metadata(IDataInsert idata_insert) {
   }
   // Close Database
   sqlite3_close(db);
+  mutex.unlock();
 }
 void DirectoryMR::insert_igroup_metadata(IGroupInsert igroup_insert) {
   // Open database
   open_db();
+  mutex.lock();
   // Create sql statement
   sprintf(sql, "INSERT INTO igroup_table (\
       job_id, map_id, reducer_id, num_block) \
@@ -95,10 +98,12 @@ void DirectoryMR::insert_igroup_metadata(IGroupInsert igroup_insert) {
   }
   // Close Database
   sqlite3_close(db);
+  mutex.unlock();
 }
 void DirectoryMR::insert_iblock_metadata(IBlockInsert iblock_insert) {
   // Open database
   open_db();
+  mutex.lock();
   // Create sql statement
   sprintf(sql, "INSERT INTO iblock_table (\
       job_id, map_id, reducer_id, block_seq) \
@@ -113,6 +118,7 @@ void DirectoryMR::insert_iblock_metadata(IBlockInsert iblock_insert) {
   } 
   // Close Database
   sqlite3_close(db);
+  mutex.unlock();
 }
 
 int DirectoryMR::idata_callback(void *idata_info, int argc, char **argv, char **azColName) 
@@ -159,6 +165,7 @@ void DirectoryMR::select_idata_metadata(uint32_t job_id, uint32_t map_id,
     IDataInfo *idata_info) {
   // Open database
   open_db();
+  mutex.lock();
   // Create sql statement
   sprintf(sql, "SELECT * from idata_table where job_id=%" PRIu32 " and \
       map_id=%" PRIu32 ";", job_id, map_id);
@@ -172,6 +179,7 @@ void DirectoryMR::select_idata_metadata(uint32_t job_id, uint32_t map_id,
   }
   // Close Database
   sqlite3_close(db);
+  mutex.unlock();
 }
 
 void DirectoryMR::select_all_idata_metadata(IDataList &idata_list)
@@ -201,6 +209,7 @@ void DirectoryMR::select_igroup_metadata(uint32_t job_id, uint32_t map_id,
     uint32_t reducer_id, IGroupInfo *igroup_info) {
   // Open database
   open_db();
+  mutex.lock();
   // Create sql statement
   sprintf(sql, "SELECT * from igroup_table where job_id=%" PRIu32 " and \
       map_id=%" PRIu32 " and reducer_id=%" PRIu32 ";", job_id, map_id,
@@ -215,12 +224,14 @@ void DirectoryMR::select_igroup_metadata(uint32_t job_id, uint32_t map_id,
   }
   // Close Database
   sqlite3_close(db);
+  mutex.unlock();
 }
 
 void DirectoryMR::select_iblock_metadata(uint32_t job_id, uint32_t map_id,
     uint32_t reducer_id, uint32_t block_seq, IBlockInfo *iblock_info) {
   // Open database
   open_db();
+  mutex.lock();
   // Create sql statement
   sprintf(sql, "SELECT * from iblock_table where job_id=%" PRIu32 " and \
       map_id=%" PRIu32 " and reducer_id=%" PRIu32 " and block_seq=%" PRIu32 ";",
@@ -235,6 +246,7 @@ void DirectoryMR::select_iblock_metadata(uint32_t job_id, uint32_t map_id,
   }
   // Close Database
   sqlite3_close(db);
+  mutex.unlock();
 }
 
 }  // namespace eclipse
