@@ -1,21 +1,20 @@
-[![Build Status](https://travis-ci.org/DICL/VeloxMR.svg?branch=master)](https://travis-ci.org/DICL/VeloxMR)
+[![Build Status](https://travis-ci.org/DICL/VeloxMR.svg?branch=mapreduce)](https://travis-ci.org/DICL/VeloxMR)
 [![Slack room](https://img.shields.io/badge/slack-join-pink.svg)](https://dicl.slack.com/messages/general/)
 <a href="https://zenhub.com"><img src="https://raw.githubusercontent.com/ZenHubIO/support/master/zenhub-badge.png"></a>
+[![Analytics](https://ga-beacon.appspot.com/UA-87474237-1/veloxmr)](https://github.com/DICL/VeloxMR)
 BRIEFING
 ========
 
-EclipseDFS is a decentralized distributed file system based on Chord DHT. 
+VeloxMR is a MapReduce framework implemented in C++ on the top of VeloxDF
 
-Key features of current EclipseDFS include:
+Key features of current VeloxMR include:
  - There's no central directory service such as HDFS NameNode. 
  - The decentralized file metadata are managed by SQLite in each data node. 
  - It is fault tolerant. (Each block is replicated in successor and decessor by default)
- 
-Current EclipseDFS does not support update operation as in HDFS, but we are working on it.
 
 USAGE
 =====
-EclipseDFS default launcher is not included in this repository, if you want to use it you can find it [here][eclipsed].
+VeloxMR default launcher is not included in this repository, if you want to use it you can find it [here][eclipsed].
 
 The reason to not to include the launcher inside the package is to let the user to chose any launcher, options are:
  - systemd/init.d
