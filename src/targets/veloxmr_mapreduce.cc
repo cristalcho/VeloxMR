@@ -4,6 +4,7 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <algorithm>
 
 using namespace velox;
 using namespace std;

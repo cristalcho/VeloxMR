@@ -2,17 +2,19 @@
 #include "../common/context_singleton.hh"
 #include "../messages/boost_impl.hh"
 #include "../messages/factory.hh"
-#include "../messages/job.hh"
-#include "../common/ecfs.hh"
+#include "../mapreduce/messages/job.hh"
 #include "../common/hash.hh"
 #include <vector>
 #include <iomanip>
 #include <random>
 #include <cstdlib>
+#include <boost/asio.hpp>
 
 using namespace std;
 using namespace velox;
 using namespace eclipse::messages;
+using namespace boost::asio;
+using namespace boost::asio::ip;
 using vec_str = std::vector<std::string>;
 
 // Free functions {{{
@@ -27,7 +29,7 @@ uint32_t random_number() {
 
 tcp::endpoint* find_local_master(uint32_t job_id) {
 
-  int port      = GET_INT("network.ports.client");
+  int port      = GET_INT("network.ports.mapreduce");
   vec_str nodes = GET_VEC_STR("network.nodes");
 
   string host = nodes[ job_id % nodes.size() ];

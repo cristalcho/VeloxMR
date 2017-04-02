@@ -10,7 +10,7 @@
 #include <sstream>
 #include <iomanip>
 #include <boost/asio.hpp>
-#include "../../common/context.hh"
+#include "../../common/context_singleton.hh"
 #include "../../messages/message.hh"
 #include "../../messages/factory.hh"
 #include "../../messages/reply.hh"
@@ -155,7 +155,7 @@ void IWriter::add_key_value(const string &key, const string &value) {
   } else {
     new_size = get_block_size(index) + value.length() + 1;
   }
-  block->insert({key, value});
+  block->insert({key, std::move(value)});
   set_block_size(index, new_size);
 
   if (new_size > iblock_size_) {

@@ -16,7 +16,7 @@ using namespace std;
 
 namespace eclipse {
 // Constructor {{{
-PYexecutor::PYexecutor(PeerMR* p) : peer(p) { }
+PYexecutor::PYexecutor(TaskExecutor* p) : peer(p) { }
 PYexecutor::~PYexecutor() { }
 // }}}
 // run_map {{{
@@ -69,10 +69,10 @@ bool PYexecutor::run_map (messages::Task* m, std::string input) {
     KeyValueShuffle kv; 
     kv.job_id_ = m->job_id;           // :TODO:
     kv.map_id_ = 0;
-    kv.key_ = headers_list[node];
-    kv.is_header = true;
-    kv.number_of_keys = keys_per_node[node];
-    peer->process(&kv);
+    //kv.key_ = headers_list[node];
+    //kv.is_header = true;
+    //kv.number_of_keys = keys_per_node[node];
+    //peer->process(&kv);
     i++;
   }
 
@@ -80,9 +80,9 @@ bool PYexecutor::run_map (messages::Task* m, std::string input) {
     KeyValueShuffle kv; 
     kv.job_id_ = m->job_id;           // :TODO:
     kv.map_id_ = 0;
-    kv.key_ = kv_pair.first;
-    kv.value_ = kv_pair.second; 
-    peer->process(&kv);
+    //kv.key_ = kv_pair.first;
+    //kv.value_ = kv_pair.second; 
+    //peer->process(&kv);
   }
 
   Py_XDECREF(python_module);
@@ -141,7 +141,7 @@ bool PYexecutor::run_reduce (messages::Task* task) {
         bi.r_node = "";
         bi.is_committed = 1;
 
-        dynamic_cast<PeerMR*>(peer)->submit_block(&bi);
+        //dynamic_cast<PeerMR*>(peer)->submit_block(&bi);
         iterations++;
         total_size += block_content.length();
         block_content = "";
@@ -161,7 +161,7 @@ bool PYexecutor::run_reduce (messages::Task* task) {
         bi.r_node = "";
         bi.is_committed = 1;
 
-        dynamic_cast<PeerMR*>(peer)->submit_block(&bi);
+        //dynamic_cast<PeerMR*>(peer)->submit_block(&bi);
         iterations++;
         total_size += block_content.length();
         block_content = "";
@@ -180,7 +180,7 @@ bool PYexecutor::run_reduce (messages::Task* task) {
     fi.reducer_output = true;
     fi.job_id = task->job_id;
 
-    dynamic_cast<PeerMR*>(peer)->process(&fi);
+    //dynamic_cast<PeerMR*>(peer)->process(&fi);
 
   } catch (std::exception& e) {
     PANIC("Error in the executer: %s", e.what());

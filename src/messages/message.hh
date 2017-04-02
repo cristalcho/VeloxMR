@@ -15,7 +15,7 @@ namespace messages {
 struct Message {
   Message() = default;
   Message(int, int);
-  virtual ~Message () {}
+  virtual ~Message () = default;
 
   virtual std::string get_type() const = 0;
 

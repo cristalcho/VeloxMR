@@ -70,6 +70,9 @@ Logger::Logger (char* title, const string& type, string mask_) {
   this->title = title;
   openlog (title, LOG_CONS, this->type); 
   setlogmask(LOG_UPTO(mask));
+
+  //int type_ = syslog_facilities[type];
+  //openlog (title, LOG_CONS, type_); 
 }
 
 Logger::~Logger () { closelog (); }

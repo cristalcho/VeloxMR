@@ -15,7 +15,7 @@
 #define INPUT_NAME "kmeans.input"
 #define OUTPUT_NAME "kmeans.output"
 #define CENTROID_NAME "kmeans_centroids.data"
-#define LOCAL_CENTROID_PATH "/home/deukyeon/EclipseMR/data/kmeans_centroids.data"
+#define LOCAL_CENTROID_PATH "/home/vicente/velox_test/kmeans_centroids.data"
 #define ITERATIONS 5
 #define NUM_CLUSTERS 25
 
@@ -26,7 +26,7 @@ extern "C" {
   void before_map(std::unordered_map<std::string, void*>&);
   void after_map(std::unordered_map<std::string, void*>&);
   void mymapper(std::string&, velox::OutputCollection&, std::unordered_map<std::string, void*>&);
-  void myreducer(std::string&, std::list<std::string>&, OutputCollection&);
+  void myreducer(std::string&, std::vector<std::string>&, OutputCollection&);
 }
 
 class Point {
@@ -129,7 +129,7 @@ void mymapper(std::string& input, velox::OutputCollection& mapper_results, std::
   mapper_results.insert(nearest_centroid.to_string(), p.to_string());
 }
 
-void myreducer(std::string& key, std::list<std::string>& values, OutputCollection& output) {
+void myreducer(std::string& key, std::vector<std::string>& values, OutputCollection& output) {
   if(values.size() == 0) return;
 
   double sumX = 0, sumY = 0;
@@ -149,6 +149,11 @@ void myreducer(std::string& key, std::list<std::string>& values, OutputCollectio
 
   Point centroid((sumX / count), (sumY / count));
   output.insert(centroid.to_string(), value_string);
+
+  std::ofstream os;
+  os.open(LOCAL_CENTROID_PATH, ios::app);
+  os << centroid.to_string() << endl;
+  os.close();
 }
 
 int main (int argc, char** argv) {
@@ -189,25 +194,10 @@ int main (int argc, char** argv) {
     output_name = "kmeans.output-" + to_string(i);
 
     A.map("mymapper");
+    std::remove(LOCAL_CENTROID_PATH);
     A.reduce("myreducer", output_name);
-
-    if(i < ITERATIONS - 1) {
-      // parse output and make centroid file updated
-      file output_file = cloud.open(output_name);
-      std::istringstream stream(output_file.get());
-      std::string output_line;
-
-      os.open(LOCAL_CENTROID_PATH);
-      while(getline(stream, output_line)) {
-        std::string::size_type pos = output_line.find(':');
-        std::string centroid_string = output_line.substr(0, pos) + "\n";
-        os.write(centroid_string.c_str(), centroid_string.size());
-      }
-      os.close();
-    }
   }
 
-  std::remove(LOCAL_CENTROID_PATH);
 
   std::cout << "FINISH k-means clusering" << std::endl;
 
@@ -215,18 +205,16 @@ int main (int argc, char** argv) {
   std::cout << "========================" << std::endl;
   std::cout << "Centroids" << std::endl;
 
-  file output_file = cloud.open(output_name);
-  std::istringstream stream(output_file.get());
+  ifstream fs;
+  fs.open(LOCAL_CENTROID_PATH);
   std::string output_line;
-
   int cnt = 0;
-  while(getline(stream, output_line)) {
-    std::string::size_type pos = output_line.find(':');
-    std::string centroid_string = output_line.substr(0, pos) + "\n";
-    std::cout << centroid_string;
+  while(getline(fs, output_line)) {
+    cout << output_line << endl; 
     cnt++;
   }
 
+  std::remove(LOCAL_CENTROID_PATH);
   std::cout << "Total # of centroids:" << cnt << std::endl;
 
   return 0;
