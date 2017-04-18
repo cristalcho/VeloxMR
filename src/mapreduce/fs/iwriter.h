@@ -12,7 +12,7 @@
 #include <fstream>
 #include <boost/asio.hpp>
 #include "iwriter_interface.hh"
-#include "../../common/context.hh"
+#include "../../common/context_singleton.hh"
 #include "../../messages/message.hh"
 #include "../../messages/reply.hh"
 #include "../fs/directorymr.hh"
@@ -65,6 +65,7 @@ class IWriter: public IWriter_interface {
   string scratch_path_;
   bool is_write_start_;
   bool is_write_finish_;
+  bool copy_phase_done_;
   uint32_t index_counter_;
   uint32_t writing_index_;
   uint32_t write_buf_size_;

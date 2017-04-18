@@ -43,6 +43,7 @@ IWriter::IWriter() {
   scratch_path_ = context.settings.get<string>("path.idata");
   is_write_start_ = false;
   is_write_finish_ = false;
+  copy_phase_done_ = false;
   index_counter_ = 0;
   writing_index_ = -1;
   write_buf_size_ = context.settings.get<int>("mapreduce.write_buf_size");
@@ -86,6 +87,7 @@ void IWriter::finalize() {
     }
   }
   is_write_start_ = true;
+  copy_phase_done_ = true;
   writer_thread_->join();
 
   for (uint32_t i = 0; i < reduce_slot_; ++i) {
@@ -113,18 +115,27 @@ void IWriter::seek_writable_block() {
   while(!is_write_finish_) {
     // Check if there is any block that should be written to disk.
     // And if it's true, write it onto disk.
+    std::shared_ptr<std::multimap<string, string>> writing_block = nullptr;
+    int reducer_id = -1;
     mutex.lock();
     for (uint32_t i = 0; i < reduce_slot_; ++i) {
       if (kmv_blocks_[i].size() > 0 && is_write_ready_[i].back()) {
-        auto writing_block = kmv_blocks_[i].back();
+        writing_block = kmv_blocks_[i].back();
         kmv_blocks_[i].pop_back();
         is_write_ready_[i].pop_back();
-        write_block(writing_block, i);
+        reducer_id = i;
+        break;
       }
+    }
+    mutex.unlock();
+
+    if (writing_block != nullptr) {
+      write_block(writing_block, reducer_id);
     }
 
     // Check if there are no more incoming key value pairs.
-    if(is_write_start_) {
+    mutex.lock();
+    if(copy_phase_done_) {
       uint32_t finish_counter = 0;
       for (uint32_t i = 0; i < reduce_slot_; ++i) {
         if(kmv_blocks_[i].size() == 0) {
