@@ -17,8 +17,8 @@ struct KeyValueShuffle: public Message {
   std::map<std::string, std::vector<std::string>> kv_pairs;
   uint32_t number_of_keys = 0; 
   uint32_t kv_id = 0;
-  int node_id = 0;
-  int origin_id = 0;
+  uint32_t node_id = 0;
+  uint32_t origin_id = 0;
   
 };
 

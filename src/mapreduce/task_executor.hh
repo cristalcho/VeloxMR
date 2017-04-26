@@ -16,6 +16,7 @@
 
 #include <string>
 #include <vector>
+#include <mutex>
 #include <unordered_map>
 #include <set>
 
@@ -51,8 +52,11 @@ class TaskExecutor : public Node {
     std::unordered_map<uint32_t, std::shared_ptr<IWriter_interface>> iwriters_;
     std::set<uint32_t> nodes_shuffling;
 
-    std::multiset<int> tasker_remaining_nodes_shuffling;
     std::map<uint32_t, FinishMap> tasker_remaining_job;
+    std::multiset<uint32_t> tasker_remaining_nodes_shuffling;
+
+    std::mutex local_mut;
+    std::mutex local_mut2;
 
     uint32_t current_nodes_shuffling = 0;
     uint32_t network_size;

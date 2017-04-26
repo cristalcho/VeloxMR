@@ -1,7 +1,12 @@
 #include "task_executor_router.hh"
 #include "../common/context_singleton.hh"
 #include "../messages/boost_impl.hh"
+#include "messages/task.hh"
+#include "messages/job.hh"
+#include "messages/taskstatus.hh"
+#include "messages/nodes_shuffling.hh"
 #include "messages/finish_shuffle.h"
+#include "messages/key_value_shuffle.h"
 #include <functional>
 #include <map>
 

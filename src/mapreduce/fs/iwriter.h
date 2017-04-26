@@ -79,6 +79,8 @@ class IWriter: public IWriter_interface {
   unordered_map<string, int> key_index_;  // index of key
   std::ofstream file_;
   std::mutex mutex;
+  std::mutex mutex_start_thread;
+  std::mutex mutex_end_thread;
   std::set<string> deb;
 };
 

@@ -9,6 +9,7 @@
 #include <thread>
 #include <sstream>
 #include <iomanip>
+#include <exception>
 #include <boost/asio.hpp>
 #include "../../common/context_singleton.hh"
 #include "../../messages/message.hh"
@@ -43,7 +44,6 @@ IWriter::IWriter() {
   scratch_path_ = context.settings.get<string>("path.idata");
   is_write_start_ = false;
   is_write_finish_ = false;
-  copy_phase_done_ = false;
   index_counter_ = 0;
   writing_index_ = -1;
   write_buf_size_ = context.settings.get<int>("mapreduce.write_buf_size");
@@ -52,6 +52,8 @@ IWriter::IWriter() {
   write_pos_ = write_buf_;
   kmv_blocks_.resize(reduce_slot_);
   is_write_ready_.resize(reduce_slot_);
+  mutex_end_thread.lock();
+  mutex_start_thread.lock();
   for (uint32_t i = 0; i < reduce_slot_; ++i) {
     block_size_.emplace_back(0);
     write_count_.emplace_back(0);
@@ -87,7 +89,8 @@ void IWriter::finalize() {
     }
   }
   is_write_start_ = true;
-  copy_phase_done_ = true;
+  mutex_start_thread.unlock();
+  mutex_end_thread.unlock();
   writer_thread_->join();
 
   for (uint32_t i = 0; i < reduce_slot_; ++i) {
@@ -106,36 +109,32 @@ void IWriter::finalize() {
 }
 
 void IWriter::run(IWriter *obj) {
-  obj->seek_writable_block();
+  try {
+    obj->seek_writable_block();
+  } catch (std::exception& e) {
+    ERROR("exeception in iwriter worker thread %s", e.what());
+  }
 }
 
 void IWriter::seek_writable_block() {
   // while loops should be changed to lock
+  mutex_start_thread.lock();
   while(!is_write_start_);
   while(!is_write_finish_) {
     // Check if there is any block that should be written to disk.
     // And if it's true, write it onto disk.
-    std::shared_ptr<std::multimap<string, string>> writing_block = nullptr;
-    int reducer_id = -1;
     mutex.lock();
     for (uint32_t i = 0; i < reduce_slot_; ++i) {
       if (kmv_blocks_[i].size() > 0 && is_write_ready_[i].back()) {
-        writing_block = kmv_blocks_[i].back();
+        auto writing_block = kmv_blocks_[i].back();
         kmv_blocks_[i].pop_back();
         is_write_ready_[i].pop_back();
-        reducer_id = i;
-        break;
+        write_block(writing_block, i);
       }
-    }
-    mutex.unlock();
-
-    if (writing_block != nullptr) {
-      write_block(writing_block, reducer_id);
     }
 
     // Check if there are no more incoming key value pairs.
-    mutex.lock();
-    if(copy_phase_done_) {
+    if(is_write_start_) {
       uint32_t finish_counter = 0;
       for (uint32_t i = 0; i < reduce_slot_; ++i) {
         if(kmv_blocks_[i].size() == 0) {
@@ -148,6 +147,8 @@ void IWriter::seek_writable_block() {
     }
     mutex.unlock();
   }
+
+  mutex_end_thread.lock();
 }
 void IWriter::add_key_value(const string &key, const string &value) {
   deb.insert(key);
@@ -172,6 +173,7 @@ void IWriter::add_key_value(const string &key, const string &value) {
   if (new_size > iblock_size_) {
     is_write_ready_[index].front() = true;
     is_write_start_ = true;
+    mutex_start_thread.unlock();
   }
   mutex.unlock();
 }
@@ -243,6 +245,7 @@ void IWriter::write_block(std::shared_ptr<std::multimap<string, string>> block,
     }
     i++;
   } 
+  block.reset();
   flush_buffer();
   file_.close();
   messages::IBlockInsert iblock_insert;

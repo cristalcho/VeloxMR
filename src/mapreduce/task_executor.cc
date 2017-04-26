@@ -4,6 +4,11 @@
 #include "../common/histogram.hh"
 #include "messages/idatalist.hh"
 #include "messages/finish_shuffle.h"
+#include "messages/key_value_shuffle.h"
+#include "messages/nodes_shuffling.hh"
+#include "messages/taskstatus.hh"
+#include "messages/job.hh"
+#include "messages/task.hh"
 #include "executor.hh"
 #include "py_executor.hh"
 #include "fs/iwriter.h"
@@ -23,8 +28,6 @@
 using namespace std;
 using namespace velox;
 
-mutex local_mut;
-mutex local_mut2;
 
 namespace eclipse {
 // Constructors {{{
@@ -43,6 +46,7 @@ void TaskExecutor::job_accept(messages::Job* m, std::function<void(void)> fn) {
   jobs_callback[m->job_id] = fn;
   tasks_remaining[m->job_id] = 0;
 
+  INFO("JOB recieved");
   if (m->type == "MAP") {
 
     std::map<int, vector<pair<uint32_t, string>>>map_nodes;
@@ -157,19 +161,21 @@ void TaskExecutor::task_accept_status(TaskStatus* m) {
 //  key_value_store {{{
 void TaskExecutor::key_value_store(KeyValueShuffle *kv) {
   INFO("KVshuffle KV_ID=%lu, ID=%i, DST=%i", kv->kv_id, id, kv->node_id);
-  
+
   if (kv->node_id == id) {
 
     std::thread([&, this] (KeyValueShuffle kv) {
-        write_key_value(&kv);
+        try {
+          write_key_value(&kv);
+        } catch (exception& e) {
+          ERROR("Error in key_value_store routine ex:%s", e.what());
+        }
 
         NodesShuffling fs;
         fs.job_id = kv.job_id_;
         fs.id = id;
-        local_mut2.lock();
         network->send(kv.origin_id, &fs);
-        local_mut2.unlock();
-    }, *kv).detach();
+    }, std::move(*kv)).detach();
 
   } else {
     DEBUG("Forwarding KVS to another node");
@@ -195,9 +201,11 @@ void TaskExecutor::write_key_value(messages::KeyValueShuffle *kv_shuffle) {
     const std::string& key = pair.first;
     auto& values = pair.second;
 
+    local_mut2.lock();
     for (auto& v : values) {
       iwriter->add_key_value(key, v);
     }
+    local_mut2.unlock();
   }
 }
 // }}}
@@ -216,11 +224,14 @@ void TaskExecutor::write_key_value(messages::KeyValueShuffle *kv_shuffle) {
 void TaskExecutor::request_local_map (messages::Task* task) {
     if (task->lang == "C++") {
 
-      std::thread([&](Task task) {
+      Task stask = *task;
+
+      std::thread([&, this](Task task) {
           Executor exec(this);
           exec.run_map(&task);
-          INFO("MAP has finished");
-      }, *task).detach();
+      }, stask).detach();
+
+      sleep(1);
 
     } else if (task->lang == "Python") {
       PYexecutor exec(this);
@@ -244,7 +255,7 @@ void TaskExecutor::notify_task_leader(int leader, uint32_t job_id, string type) 
 }
 // }}}
 // notify_map_is_finished {{{
-void TaskExecutor::notify_map_is_finished(uint32_t job_id, 
+void TaskExecutor::notify_map_is_finished(uint32_t job_id,
     std::vector<uint32_t> nodes) {
 
   FinishMap ts;
@@ -261,10 +272,10 @@ void TaskExecutor::notify_map_is_finished(uint32_t job_id,
 // }}}
 // insert_key_value {{{
 void TaskExecutor::insert_key_value(KeyValueShuffle *kv) {
-  kv->origin_id = id;
   local_mut.lock();
   tasker_remaining_nodes_shuffling.insert(kv->node_id);
   local_mut.unlock();
+
   network->send(kv->node_id, kv);
 }
 // }}}
@@ -273,9 +284,13 @@ void TaskExecutor::try_finish_map(uint32_t job_id) {
   local_mut.lock();
   if (tasker_remaining_job.find(job_id) != tasker_remaining_job.end()) {
     if (tasker_remaining_nodes_shuffling.empty()) {
-      auto& ts = tasker_remaining_job[job_id];
+      auto ts = tasker_remaining_job[job_id];
+      tasker_remaining_job.erase(job_id);
+      local_mut.unlock();
+
       uint32_t leader = job_id % network_size;
       network->send(leader, &ts);
+      return;
     }
   }
   local_mut.unlock();
@@ -285,9 +300,9 @@ void TaskExecutor::try_finish_map(uint32_t job_id) {
 void TaskExecutor::shuffle_is_done(uint32_t job_id, uint32_t id) {
   local_mut.lock();
   auto itr = tasker_remaining_nodes_shuffling.find(id);
-    if(itr!=tasker_remaining_nodes_shuffling.end()){
-        tasker_remaining_nodes_shuffling.erase(itr);
-    }
+  if(itr!=tasker_remaining_nodes_shuffling.end()){
+    tasker_remaining_nodes_shuffling.erase(itr);
+  }
   local_mut.unlock();
 
   try_finish_map(job_id);
@@ -299,7 +314,7 @@ void TaskExecutor::schedule_reduce(messages::Job* m) {
   auto reduce_nodes = nodes_shuffling;
   tasks_remaining[m->job_id] = reduce_nodes.size();
 
-  logger->info("JOB LEADER %i Processing REDUCE %i jobs", id, reduce_nodes.size());
+  INFO("JOB LEADER %i Processing REDUCE %i jobs", id, reduce_nodes.size());
 
   if (dfs.exists(m->file_output))
     dfs.remove(m->file_output);
@@ -317,9 +332,6 @@ void TaskExecutor::schedule_reduce(messages::Job* m) {
     task.func_body = m->func_body;
     task.lang = m->lang;
 
-    //if (which_node == id)
-    //  process(&task);
-    //else
     network->send(which_node, &task);
   }
 }
@@ -348,16 +360,9 @@ void TaskExecutor::request_local_reduce (messages::Task* m) {
 
     } else if (m->lang == "Python") {
       PYexecutor exec(this);
-      Reply reply;
-
-      if (exec.run_reduce(m))
-        reply.message = "MAPDONE";
-      else
-        reply.message = "MAPFAILED";
+      exec.run_reduce(m);
     }
   }
-
-  //notify_task_leader(m->leader, m->job_id, m->job_id, "REDUCE");
 }
 // }}}
 }  // namespace eclipse

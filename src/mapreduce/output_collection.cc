@@ -1,57 +1,39 @@
 #include "output_collection.hh"
 #include <iostream>
+#include <memory>
+
+using std::make_shared;
 
 namespace velox {
-OutputCollection::OutputCollection() {
-  collection_ = nullptr;
-}
 
-OutputCollection::~OutputCollection() {
-  if(collection_ != nullptr) {
-    for(auto iter = collection_->begin(); iter != collection_->end(); ++iter) 
-      delete iter->second;
-
-    delete collection_;
-  }
-}
+OutputCollection::OutputCollection() { }
+OutputCollection::~OutputCollection() { }
 
 bool OutputCollection::insert(std::string key, std::string value) {
-  this->check_or_alloc_collection();
 
-  auto collection_item = collection_->find(key);
+  auto collection_item = collection_.find(key);
 
-  if(collection_item != collection_->end())
-    (reinterpret_cast<value_t>(collection_item->second))->push_back(value);
-  else
-    collection_->insert(std::pair<key_t, value_t>(key, new std::vector<std::string>(1, value)));
+  if (collection_item == collection_.end()) {
+    collection_item = collection_.insert({key, {}}).first;
+    collection_item->second.reserve(2048);
+  }
+
+  collection_item->second.push_back(value);
 
   return true;
 };
 
-void OutputCollection::check_or_alloc_collection() {
-  if(collection_ == nullptr) 
-    collection_ = new std::map<key_t, value_t>();
-}
+void OutputCollection::check_or_alloc_collection() { }
 
-auto OutputCollection::begin() {
-  this->check_or_alloc_collection();
-  return collection_->begin();
-}
+std::map<std::string, value_t>::iterator OutputCollection::begin() { return collection_.begin(); }
+std::map<std::string, value_t>::iterator OutputCollection::end() { return collection_.end(); }
 
-auto OutputCollection::end() {
-  this->check_or_alloc_collection();
-  return collection_->end();
-}
-
-void OutputCollection::travel(std::function<void(std::string, std::vector<std::string>*)> run_block_with_kv) {
-  for(auto key_values = this->begin(); key_values != this->end(); ++key_values) {
+void OutputCollection::travel(
+    std::function<void(std::string, value_t)> run_block_with_kv) {
+  for(auto key_values = begin(); key_values != end(); ++key_values) {
     run_block_with_kv(key_values->first, key_values->second);
   }
 }
 
-void OutputCollection::print_all() {
-//  travel([](std::string k, std::string v) {
-//      std::cout << "<" << k << ", " << v << ">" << std::endl;
-//      });
-}
+void OutputCollection::print_all() { }
 }

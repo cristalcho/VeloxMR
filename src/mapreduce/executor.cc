@@ -4,7 +4,7 @@
 #include "../common/hash.hh"
 #include "../mapreduce/output_collection.hh"
 #include "../mapreduce/fs/ireader.h"
-#include "../messages/keyvalue.hh"
+#include "messages/key_value_shuffle.h"
 #include "../client/dfs.hh"
 
 #include <exception>
@@ -12,10 +12,12 @@
 #include <sstream>
 #include <utility>
 #include <functional>
+#include <queue>
 #include <list>
 #include <unordered_map>
 #include <mutex>
 #include <boost/exception/exception.hpp>
+
 #define MAP_MAX_LINE 10000
 
 using namespace eclipse;
@@ -28,10 +30,14 @@ Executor::~Executor() { }
 // }}}
 // run_map {{{
 bool Executor::run_map (messages::Task* m) {
+  std::unordered_map<std::string, void*> options;
+  vector<uint32_t> keys_blocks;
+  queue<std::thread> threads;
+  mutex mut;
 
   auto path_lib = GET_STR("path.applications");
   auto network_size = GET_VEC_STR("network.nodes").size();
-  auto mappers = GET_INT("mapreduce.mappers");
+  size_t mappers = GET_INT("mapreduce.mappers");
   path_lib += ("/" + m->library);
   DL_loader loader (path_lib);
 
@@ -42,118 +48,134 @@ bool Executor::run_map (messages::Task* m) {
   }
 
   before_map_t _before_map_ = loader.load_function_before_map("before_map");
+  after_map_t _after_map_ = loader.load_function_after_map("after_map");
+  mapper_t _map_ = loader.load_function(m->func_name);
 
-  vector<uint32_t> keys_blocks;
+  if(_before_map_ != nullptr)
+    _before_map_(options);
 
-  vector<std::thread> threads;
-  mutex mut;
-  INFO("LAunching mapper with %i threads", mappers);
-  for (int reducer_id = 0; reducer_id < m->blocks.size(); reducer_id++) {
+  INFO("LAunching mapper with %i threads", m->blocks.size());
+  try {
+  for (size_t map_id = 0; map_id < m->blocks.size(); map_id++) {
 
     // Make sure we only execute 'mappers' threads at that time
     if (threads.size() >= mappers) {
       threads.front().join();
-      threads.erase(threads.begin(), threads.begin()+1);
+      threads.pop();
     }
 
-    threads.emplace_back(std::thread([&] (int id) {
-          std::mt19937 rng;
-          rng.seed(std::random_device()());
-          std::uniform_int_distribution<std::mt19937::result_type> dist(0, INT_MAX);
-
-          std::unordered_map<std::string, void*> options;
-          if(_before_map_ != nullptr)
-            _before_map_(options);
-
-          mapper_t _map_ = loader.load_function(m->func_name);
-
-          const string block_name = m->blocks[id].second;
-          INFO("Executing map on block: %s", block_name.c_str());
-          Local_io local_io;
-          string input = local_io.read(block_name);
-          stringstream ss (input);
-
-          char next_line[MAP_MAX_LINE];
-          velox::OutputCollection results;
-
-          while (!ss.eof()) {
-            bzero(next_line, MAP_MAX_LINE);
-            ss.getline (next_line, MAP_MAX_LINE);
-            if (strnlen(next_line, MAP_MAX_LINE) == 0) 
-              continue;
-
-            std::string line(next_line);
-            _map_ (line, results, options);
-          }
-
-          map<uint32_t, KeyValueShuffle> kv_blocks;
+    threads.emplace([&, this] (size_t id) {
           try {
 
-          auto run_block = [&mut, &m, &kv_blocks, &keys_blocks, network_size, &dist, &rng](std::string key, std::vector<std::string>* value) mutable {
-            int node = h(key) % network_size;
-            auto it = kv_blocks.find(node);
-            if (it == kv_blocks.end()) {
-              it = kv_blocks.insert({node, {}}).first;
+          {
+          auto* kv_blocks = new map<uint32_t, KeyValueShuffle>();
 
-              it->second.node_id = node;
-              it->second.job_id_ = m->job_id;
-              it->second.map_id_ = 0;
+          {
+            const string block_name = m->blocks[id].second;
+            Local_io local_io;
+            string input = local_io.read(block_name);
+            istringstream ss (std::move(input));
 
-              uint32_t random_id = dist(rng);
-              mut.lock();
-              keys_blocks.push_back(node);
-              mut.unlock();
-              it->second.kv_id = random_id;
+            velox::OutputCollection results;
+            char* next_line = new char[MAP_MAX_LINE];
+
+            while (!ss.eof()) {
+              bzero(next_line, MAP_MAX_LINE);
+              ss.getline (next_line, MAP_MAX_LINE);
+              if (strnlen(next_line, MAP_MAX_LINE) == 0) 
+                continue;
+
+              std::string line(next_line);
+              _map_ (line, results, options);
             }
+            delete[] next_line;
 
-            it->second.kv_pairs.insert({key, std::move(*value)});
-          };
-          results.travel(run_block);
+            for (auto& pair : results) {
+              auto& key = pair.first;
+              auto& value = pair.second;
+              uint32_t node = h(key) % network_size;
+              auto it = kv_blocks->find(node);
+              if (it == kv_blocks->end()) {
+                it = kv_blocks->insert({node, {}}).first;
+
+                it->second.node_id = node;
+                it->second.job_id_ = m->job_id;
+                it->second.map_id_ = 0;
+                it->second.origin_id = context.id;
+              }
+
+              it->second.kv_pairs.insert({key, std::move(value)});
+            }
+          }
+
+          mut.lock();
+          for (auto it: *kv_blocks)
+              keys_blocks.push_back(it.first);
+          mut.unlock();
 
           vector<int> shuffled_array;
 
-          for (int i = 0; i < network_size; i++)
-            shuffled_array.push_back(i);
+          {
+            for (int i = 0; i < network_size; i++)
+              shuffled_array.push_back(i);
 
-          auto engine = std::default_random_engine{};
-          std::shuffle(shuffled_array.begin(), shuffled_array.end(), engine);
-                
-
-          for (auto& index: shuffled_array) {
             mut.lock();
-            auto it = kv_blocks.find(index);
-            if (it != kv_blocks.end()) {
-              peer->insert_key_value(&(it->second));
-            }
+            unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count();
+            auto engine = std::default_random_engine{seed1};
+            std::shuffle(shuffled_array.begin(), shuffled_array.end(), engine);
             mut.unlock();
           }
 
-
-          after_map_t _after_map_ = loader.load_function_after_map("after_map");
-          if(_after_map_ != nullptr)
-            _after_map_(options);
-          INFO("MAP thread finishing");
-
-          } catch (exception& e) {
-            INFO("Mapper exception %s", e.what());
-          } catch (boost::exception& e) {
-            INFO("Mapper exception %s", diagnostic_information(e).c_str());
+          for (auto& index : shuffled_array) {
+            auto it = kv_blocks->find(index);
+            if (it != kv_blocks->end()) {
+              KeyValueShuffle* kv = &(it->second);
+              peer->insert_key_value(kv);
+            }
           }
 
+          //auto it = kv_blocks->begin();
+          //while (it != kv_blocks->end()) {
+          //  peer->insert_key_value(it->second.get());
+          //  ++it;
+          //}
 
-    }, reducer_id));
+//          kv_blocks->clear();
+          delete kv_blocks;
+          }
+          INFO("Finishing map threads");
+
+        } catch (exception& e) {
+          ERROR("Mapper exception %s", e.what());
+        } catch (boost::exception& e) {
+          ERROR("Mapper exception %s", diagnostic_information(e).c_str());
+        }
+
+    }, map_id);
   }
 
-  try {
-    for (auto& thread : threads)
-      thread.join();
+    while (!threads.empty()) {
+      threads.front().join();
+      threads.pop();
+    }
+
+
+    if(_after_map_ != nullptr) {
+      INFO("CALLING AFTER MAP");
+      _after_map_(options);
+    }
+
+    loader.close();
 
     peer->notify_map_is_finished(m->job_id, keys_blocks);
+    keys_blocks.clear();
+
   } catch (exception& e) {
-    INFO("Mapper parent exception %s", e.what());
-          } catch (boost::exception& e) {
-            INFO("Mapper parent exception %s", diagnostic_information(e).c_str());
-          }
+    ERROR("Mapper parent exception %s", e.what());
+  } catch (boost::exception& e) {
+    ERROR("Mapper parent exception %s", diagnostic_information(e).c_str());
+  }
+
   return true;
 }
 // }}}
@@ -186,7 +208,7 @@ bool Executor::run_reduce (messages::Task* task) {
   mutex mut;
   DEBUG("LAunching reducer with %i threads", reducer_slot);
   for (int reducer_id = 0; reducer_id < reducer_slot; reducer_id++) {
-    threads.push_back(std::thread([&] (int id) {
+    threads.push_back(std::thread([&, this] (int id) {
           DEBUG("%i %i", task->job_id, id);                                                                                                                                                                       
 
       IReader ireader;
@@ -232,9 +254,9 @@ bool Executor::run_reduce (messages::Task* task) {
 
         std::string current_block_content = "";
 
-        auto make_block_content = [&] (std::string key, std::vector<std::string>* values) mutable {
+        auto make_block_content = [&] (std::string key, std::vector<std::string> values) mutable {
 
-          for(std::string& value : *values)  {
+          for(std::string& value : values)  {
             current_block_content += key + ": " + value + "\n";
             num_keys++;
           }

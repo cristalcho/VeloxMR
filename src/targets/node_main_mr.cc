@@ -1,4 +1,3 @@
-#define  MALLOC_CHECK_ 3 
 #include <common/context_singleton.hh>
 #include <network/server_handler.hh>
 #include <network/client_handler.hh>
@@ -23,50 +22,51 @@ int main (int argc, char ** argv) {
   pid_t pid = fork();
   if (pid != 0) {
     try {
-    context.io.notify_fork(boost::asio::io_service::fork_parent);
-    context.run();
+      context.io.notify_fork(boost::asio::io_service::fork_parent);
 
-     struct rlimit limit;
+      //struct rlimit limit;
 
-     limit.rlim_cur = 4000;
-     limit.rlim_max = 4096;
-     if (setrlimit(RLIMIT_NOFILE, &limit) != 0) {
-       ERROR("setrlimit() failed with errno=%d\n", errno);
-       return 1;
-     }
-     struct rlimit core_limits;
-     core_limits.rlim_cur = core_limits.rlim_max = RLIM_INFINITY;
-     setrlimit(RLIMIT_CORE, &core_limits);
+      //limit.rlim_cur = 4000;
+      //limit.rlim_max = 4096;
+      //if (setrlimit(RLIMIT_NOFILE, &limit) != 0) {
+      //  ERROR("setrlimit() failed with errno=%d\n", errno);
+      //  return 1;
+      //}
+      //struct rlimit core_limits;
+      //core_limits.rlim_cur = core_limits.rlim_max = RLIM_INFINITY;
+      //setrlimit(RLIMIT_CORE, &core_limits);
 
 
-    sleep(2);
+      sleep(2);
 
-    uint32_t ex_port = GET_INT("network.ports.mapreduce");
-    auto internal_net = make_unique<network::ClientHandler> (ex_port);
-    auto external_net = make_unique<network::ServerHandler> (ex_port);
-  
-    TaskExecutor executor(internal_net.get());
+      uint32_t ex_port = GET_INT("network.ports.mapreduce");
+      auto internal_net = make_unique<network::ClientHandler> (ex_port);
+      auto external_net = make_unique<network::ServerHandler> (ex_port);
 
-    auto router = make_unique<TaskExecutorRouter>(&executor, new SimpleRouter());
+      TaskExecutor executor(internal_net.get());
 
-    external_net->attach(router.get());
+      auto router = make_unique<TaskExecutorRouter>(&executor, new SimpleRouter());
 
-    external_net->establish();
+      external_net->attach(router.get());
+      internal_net->attach(router.get());
 
-    context.join();
+      external_net->establish();
+
+      context.run();
+      context.join();
+
     } catch (std::exception& e) {
       ERROR("GENERAL exception at %s", e.what());
+
+    } catch (boost::exception& e) {
+      ERROR("GENERAL exception %s", diagnostic_information(e).c_str());
     }
-          catch (boost::exception& e) {
-            INFO("GENERAL exception %s", diagnostic_information(e).c_str());
-          }
 
 
     wait(NULL);
 
   } else {
     context.io.notify_fork(boost::asio::io_service::fork_child);
-    context.run();
 
     uint32_t ex_port = GET_INT("network.ports.client");
 
@@ -84,6 +84,7 @@ int main (int argc, char ** argv) {
 
     external_net->establish();
 
+    context.run();
     context.join();
   }
 
