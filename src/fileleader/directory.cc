@@ -108,10 +108,14 @@ bool Directory::query_exec_simple(char* query, int (*fn)(void*,int,char**,char**
   char *zErrMsg = nullptr;
 
   sqlite3* db = open(path);
-  int rc = sqlite3_exec(db, query, fn, argv, &zErrMsg);
-  if (rc != SQLITE_OK) {
+  int rc;
+  while (SQLITE_OK != (rc = sqlite3_exec(db, query, fn, argv, &zErrMsg))) {
     ERROR("SQL error: %s", zErrMsg);
     sqlite3_free(zErrMsg);
+    if (rc == SQLITE_LOCKED)
+      sleep(1);
+    else 
+      break;
   }
   sqlite3_close(db);
 

@@ -27,6 +27,7 @@ task_cxx::task_cxx(std::string library, std::string func_name) :
 }
 
 task_cxx::~task_cxx() {
+  loader->close();
 
 }
 // }}}

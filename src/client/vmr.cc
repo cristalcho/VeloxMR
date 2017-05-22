@@ -93,7 +93,7 @@ void dataset::reduce(std::string func, std::string output) {
 }
 // }}}
 // pymap {{{
-void dataset::pymap(std::string func) {
+void dataset::pymap(std::string func, std::string pmap = "", std::string amap = "") {
   tcp::socket socket (context.io);
   socket.connect(*find_local_master(job_id));
 
@@ -103,6 +103,8 @@ void dataset::pymap(std::string func) {
   job.files = files;
   job.job_id = job_id;
   job.func_body = func;
+  job.pre_map = pmap;
+  job.after_map = amap;
 
   send_message(&socket, &job);
   auto reply = read_reply<Reply> (&socket);

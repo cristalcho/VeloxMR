@@ -193,14 +193,18 @@ bool Executor::run_reduce (messages::Task* task) {
 
   uint32_t total_size = 0;
   uint32_t num_keys = 0;
-  vector<std::thread> threads;
+  queue<std::thread> threads;
   DirectoryMR directory;
   uint32_t reducer_slot = directory.select_number_of_reducers(task->job_id);
   mutex mut;
   DEBUG("LAunching reducer with %i threads", reducer_slot);
   for (int reducer_id = 0; reducer_id < reducer_slot; reducer_id++) {
-    threads.push_back(std::thread([&, this] (int id) {
-          DEBUG("%i %i", task->job_id, id);                                                                                                                                                                       
+
+    if (threads.size() >= 1) {
+      threads.front().join();
+      threads.pop();
+    }
+    threads.emplace(std::thread([&, this] (int id) {
 
       IReader ireader;
       ireader.set_job_id(task->job_id);
@@ -281,8 +285,10 @@ bool Executor::run_reduce (messages::Task* task) {
     }, reducer_id));
   }
 
-  for (auto& thread : threads)
-    thread.join();
+  while (!threads.empty()) {
+    threads.front().join();
+    threads.pop();
+  }
 
   velox::DFS dfs;
   INFO("REDUCER APPENDING FILE_METADATA KP:%u", num_keys);

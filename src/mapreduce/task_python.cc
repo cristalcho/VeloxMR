@@ -63,14 +63,16 @@ void task_python::setup(bool is_map) {
 // }}}
 // pre_map {{{
 void task_python::pre_map(TaskOptions& options) {
-  if (pre_map_f == "")
+  if (pre_map_f == "") {
+    INFO("Skipping pre-map function");
     return;
+  }
 
   PyObject  *key = NULL, *value = NULL, *pFunc = NULL;
   Py_ssize_t pos = 0;
   PyObject* pOptions = PyDict_New();
 
-  pFunc  = PyObject_GetAttrString(python_module, "pre_map" ) ;
+  pFunc  = PyObject_GetAttrString(python_module, "pre_map") ;
   PyObject_CallFunctionObjArgs(pFunc, pOptions);
 
   if (pOptions == NULL) {
@@ -123,7 +125,6 @@ void task_python::after_map(TaskOptions& options) {
 // we iterate the dictionary to return all the 
 // key pair functions
 //
-// @todo multiples key values
 void task_python::map(std::string& line, TaskOutput& out, TaskOptions& options) {
   PyObject  *key = NULL, *value = NULL, *pFunc = NULL;
   Py_ssize_t pos = 0;
@@ -137,9 +138,17 @@ void task_python::map(std::string& line, TaskOutput& out, TaskOptions& options) 
   }
 
   pFunc = PyObject_GetAttrString(python_module, "map" ) ;
-  PyObject_CallFunction(pFunc, (char*)"soo", const_cast<char*>(line.c_str()), 
-      pOutput, pOptions);
+  if (pFunc == NULL) {
+    ERROR("Could not load python map function");
+  }
 
+  char format[] = "sOO";
+  if (NULL == PyObject_CallFunction(pFunc, format, const_cast<char*>(line.c_str()), 
+      pOutput, pOptions)) {
+    ERROR("Cannot execute python map function");
+
+    PyErr_Print();
+  }
 
   if (pOutput == NULL) {
     ERROR("Python map did not return anything :( ");
@@ -166,17 +175,31 @@ void task_python::reduce(std::string& key, vec_str& values, TaskOutput& out) {
   PyObject  *pKey = NULL, *pValue = NULL, *pFunc = NULL;
   Py_ssize_t pos = 0;
 
+  //PyGILState_STATE gstate; 
+  //gstate = PyGILState_Ensure(); 
   PyObject* pOutput  = PyDict_New();
-  PyObject* pInput = PyList_New(values.size());
+  PyObject* pInput = PyList_New(0);
 
   for (auto& value : values) {
-    PyObject* pValue = PyString_FromString(value.c_str());
-    PyList_Append(pInput, pValue);
+    PyObject* pString = PyString_FromString(value.c_str());
+    PyList_Append(pInput, pString);
+    Py_DECREF(pString);
   }
 
   pFunc = PyObject_GetAttrString(python_module, "reduce");
-  PyObject_CallFunction(pFunc, (char*)"soo", const_cast<char*>(key.c_str()), 
-      pInput, pOutput);
+  if (pFunc == NULL) {
+    ERROR("Could not load python reduce function");
+  }
+
+  char format[] = "sOO";
+  if (NULL == PyObject_CallFunction(pFunc, format, const_cast<char*>(key.c_str()), 
+      pInput, pOutput)) {
+
+    ERROR("Cannot execute python reduce function");
+    PyErr_Print();
+  }
+  Py_XDECREF(pInput);
+  Py_XDECREF(pFunc);
 
 
   if (pOutput == NULL) {
@@ -186,15 +209,11 @@ void task_python::reduce(std::string& key, vec_str& values, TaskOutput& out) {
   // Save dictionary values as a PyObject pointer
   while (PyDict_Next(pOutput, &pos, &pKey, &pValue)) {
     string k = PyString_AsString(pKey);
-
-    for (Py_ssize_t i = 0; i < PyList_Size(pValue); i++) {
-      PyObject* item = PyList_GetItem(pValue, i);
-      string v = PyString_AsString(item);
-      out.insert(k, v);
-    }
+    string v = PyString_AsString(pValue);
+    out.insert(k, v);
   }
 
   Py_DECREF(pOutput);
-  Py_DECREF(pInput);
+  //PyGILState_Release(gstate); 
 }
 // }}}
