@@ -6,6 +6,8 @@
 #include "../mapreduce/fs/ireader.h"
 #include "messages/key_value_shuffle.h"
 #include "../client/dfs.hh"
+#include "task_cxx.hh"
+#include "task_python.hh"
 
 #include <exception>
 #include <string>
@@ -35,26 +37,22 @@ bool Executor::run_map (messages::Task* m) {
   queue<std::thread> threads;
   mutex mut;
 
-  auto path_lib = GET_STR("path.applications");
   auto network_size = GET_VEC_STR("network.nodes").size();
   size_t mappers = GET_INT("mapreduce.mappers");
-  path_lib += ("/" + m->library);
-  DL_loader loader (path_lib);
 
-  try {
-    loader.init_lib();
-  } catch (std::exception& e) {
-    context.logger->error ("Not found library path[%s]", path_lib.c_str());
+  task_handler* task_execution = nullptr;
+
+  if (m->lang == "C++") {
+    task_execution = new task_cxx(m->library, m->func_name);
+  } else {
+    task_execution = new task_python(m->func_body, m->pre_map, m->after_map);
   }
+  task_execution->setup(true);
 
-  before_map_t _before_map_ = loader.load_function_before_map("before_map");
-  after_map_t _after_map_ = loader.load_function_after_map("after_map");
-  mapper_t _map_ = loader.load_function(m->func_name);
+  INFO("Launching mapper with %i threads", m->blocks.size());
 
-  if(_before_map_ != nullptr)
-    _before_map_(options);
+  task_execution->pre_map(options);
 
-  INFO("LAunching mapper with %i threads", m->blocks.size());
   try {
   for (size_t map_id = 0; map_id < m->blocks.size(); map_id++) {
 
@@ -86,7 +84,7 @@ bool Executor::run_map (messages::Task* m) {
                 continue;
 
               std::string line(next_line);
-              _map_ (line, results, options);
+              task_execution->map(line, results, options);
             }
             delete[] next_line;
 
@@ -159,13 +157,8 @@ bool Executor::run_map (messages::Task* m) {
       threads.pop();
     }
 
-
-    if(_after_map_ != nullptr) {
-      INFO("CALLING AFTER MAP");
-      _after_map_(options);
-    }
-
-    loader.close();
+    task_execution->after_map(options);
+    delete task_execution;
 
     peer->notify_map_is_finished(m->job_id, keys_blocks);
     keys_blocks.clear();
@@ -181,24 +174,22 @@ bool Executor::run_map (messages::Task* m) {
 // }}}
 // run_reduce {{{
 bool Executor::run_reduce (messages::Task* task) {
-  auto path_lib = context.settings.get<string>("path.applications");
   auto block_size = GET_INT("filesystem.block");
   //auto reducer_slot = GET_INT("mapreduce.reduce_slot");
-  path_lib += ("/" + task->library);
-  DL_loader loader (path_lib);
 
   auto network_size = GET_VEC_STR("network.nodes").size();
   Histogram boundaries(network_size, 100);
   boundaries.initialize();
   velox::model::metadata metadata;
 
-  try {
-    loader.init_lib();
-  } catch (std::exception& e) {
-    context.logger->error ("Not found library path[%s]", path_lib.c_str());
-  }
+  task_handler* task_execution = nullptr;
 
-  reducer_t _reducer_ = loader.load_function_reduce(task->func_name);
+  if (task->lang == "C++") {
+    task_execution = new task_cxx(task->library, task->func_name);
+  } else {
+    task_execution = new task_python(task->func_body, task->pre_map, task->after_map);
+  }
+  task_execution->setup(false);
 
   uint32_t total_size = 0;
   uint32_t num_keys = 0;
@@ -243,7 +234,7 @@ bool Executor::run_reduce (messages::Task* task) {
 
         if(values.size() > 0) {
           try {
-            _reducer_ (key, values, output);
+            task_execution->reduce(key, values, output);
 
           } catch (std::exception& e) {
             ERROR("Error in the executer: %s", e.what());

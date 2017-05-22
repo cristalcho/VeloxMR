@@ -10,8 +10,8 @@ using namespace velox;
 using namespace std;
 
 int main(int argc, char** argv) {
-  if (argc < 4) {
-    cout << "ERROR: usage __velox_mapreduce inputfile mapfunc reducefunc outputfile" << endl;
+  if (argc < 6) {
+    cout << "ERROR: usage __velox_mapreduce inputfile mapfunc reducefunc outputfile [premap] [aftermap]" << endl;
     return EXIT_FAILURE;
   }
 
@@ -28,7 +28,24 @@ int main(int argc, char** argv) {
 
   dataset A = mr.make_dataset({argv[1]});
 
+  string pmap_func = argv[5];
+
+  if (pmap_func != "NULL") {
+    std::replace(pmap_func.begin(), pmap_func.end(), '|', ' ');
+    std::replace(pmap_func.begin(), pmap_func.end(), '~', '\n');
+    // pre-map
+  }
+
   A.pymap(map_func);
+
+  string amap_func = argv[6];
+
+  if (amap_func != "NULL") {
+    std::replace(amap_func.begin(), amap_func.end(), '|', ' ');
+    std::replace(amap_func.begin(), amap_func.end(), '~', '\n');
+    // after-remap
+  }
+
   A.pyreduce(red_func, argv[4]);
 
   return EXIT_SUCCESS;

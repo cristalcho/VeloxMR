@@ -10,7 +10,6 @@
 #include "messages/job.hh"
 #include "messages/task.hh"
 #include "executor.hh"
-#include "py_executor.hh"
 #include "fs/iwriter.h"
 #include <iostream>
 #include <sstream>
@@ -222,24 +221,12 @@ void TaskExecutor::write_key_value(messages::KeyValueShuffle *kv_shuffle) {
 // }}}
 // request_local_map {{{
 void TaskExecutor::request_local_map (messages::Task* task) {
-    if (task->lang == "C++") {
+  Task stask = *task;
 
-      Task stask = *task;
-
-      std::thread([&, this](Task task) {
-          Executor exec(this);
-          exec.run_map(&task);
+  std::thread([&, this](Task task) {
+        Executor exec(this);
+        exec.run_map(&task);
       }, stask).detach();
-
-      sleep(1);
-
-    } else if (task->lang == "Python") {
-      PYexecutor exec(this);
-      for (auto& block : task->blocks) {
-        string block_str = local_io.read(block.second);
-        exec.run_map(task, block_str);
-      }
-    }
 }
 // }}}
 // notify_task_leader {{{
@@ -349,19 +336,12 @@ void TaskExecutor::request_local_reduce (messages::Task* m) {
   directory.select_idata_metadata(job_id, map_id, &di);
 
   if (di.num_reducer > 0) { //! Perform reduce operation
-    if (m->lang == "C++") {
-
-      std::async(std::launch::async, [&]() {
-          logger->info("Performing reduce operation");
-          Executor exec(this);
-          Task copy_task = *m;
-          exec.run_reduce(&copy_task);
-      });
-
-    } else if (m->lang == "Python") {
-      PYexecutor exec(this);
-      exec.run_reduce(m);
-    }
+    std::async(std::launch::async, [&]() {
+        logger->info("Performing reduce operation");
+        Executor exec(this);
+        Task copy_task = *m;
+        exec.run_reduce(&copy_task);
+        });
   }
 }
 // }}}

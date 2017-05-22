@@ -102,7 +102,9 @@ eclipse_node_SOURCES = src/targets/node_main_mr.cc \
                        src/mapreduce/fs/iwriter.cc \
                        src/mapreduce/fs/ireader.cc \
                        src/mapreduce/executor.cc \
-                       src/mapreduce/py_executor.cc
+                       src/mapreduce/task_handler.cc \
+                       src/mapreduce/task_cxx.cc \
+                       src/mapreduce/task_python.cc
 
 eclipse_node_LDADD  = libvmr.la $(LDADD) -lpython2.7
 

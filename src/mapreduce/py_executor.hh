@@ -16,7 +16,8 @@
 #include <utility>
 #include <map>
 #include <vector>
-#include <python2.7/Python.h>
+
+extern "C" typedef struct _object PyObject;
 
 namespace eclipse {
 
