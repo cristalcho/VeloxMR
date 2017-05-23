@@ -106,17 +106,25 @@ Directory::Directory() {
 // query_exec_simple {{{
 bool Directory::query_exec_simple(char* query, int (*fn)(void*,int,char**,char**) = NULL, void* argv = NULL) {
   char *zErrMsg = nullptr;
+  sqlite3* db = nullptr;
 
-  sqlite3* db = open(path);
-  int rc;
-  while (SQLITE_OK != (rc = sqlite3_exec(db, query, fn, argv, &zErrMsg))) {
-    ERROR("SQL error: %s", zErrMsg);
-    sqlite3_free(zErrMsg);
-    if (rc == SQLITE_LOCKED)
-      sleep(1);
-    else 
-      break;
-  }
+  int rc = SQLITE_OK;
+  do {
+    db = open(path);
+    rc = sqlite3_exec(db, query, fn, argv, &zErrMsg);
+    if (rc != SQLITE_OK) {
+      ERROR("SQL error: %s error_code=%d", zErrMsg, rc);
+      sqlite3_free(zErrMsg);
+      zErrMsg = nullptr;
+      if (rc == SQLITE_LOCKED or rc == SQLITE_BUSY) {
+        INFO("SQLITE locked, retrying...");
+        sleep(1); // Try again
+      }
+      else 
+        break;
+    }
+  } while (SQLITE_OK != rc);
+
   sqlite3_close(db);
 
   return rc;

@@ -155,7 +155,7 @@ void DirectoryMR::select_igroup_metadata(uint32_t job_id, uint32_t map_id,
     uint32_t reducer_id, IGroupInfo *igroup_info) {
   char sql[DEFAULT_QUERY_SIZE];
 
-  sprintf(sql, "SELECT * from igroup_table where job_id=%" PRIu32 " and \
+  snprintf(sql, DEFAULT_QUERY_SIZE, "SELECT * from igroup_table where job_id=%" PRIu32 " and \
       map_id=%" PRIu32 " and reducer_id=%" PRIu32 ";", job_id, map_id,
       reducer_id);
 
