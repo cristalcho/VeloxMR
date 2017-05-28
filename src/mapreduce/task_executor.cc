@@ -81,6 +81,8 @@ void TaskExecutor::job_accept(messages::Job* m, std::function<void(void)> fn) {
       task.func_body = m->func_body;
       task.lang = m->lang;
       task.blocks = task_stub.second;
+      task.before_map = m->before_map;
+      task.after_map = m->after_map;
       network->send(task_stub.first, &task);
     }
   } else if (m->type == "REDUCE") {

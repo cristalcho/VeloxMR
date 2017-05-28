@@ -48,7 +48,6 @@ int main(int argc, char** argv) {
 
   A.pymap(map_func, pmap_src, amap_src);
 
-
   A.pyreduce(red_func, argv[4]);
 
   return EXIT_SUCCESS;

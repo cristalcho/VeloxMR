@@ -44,8 +44,8 @@ void task_cxx::setup(bool is_map) {
   }
 }
 // }}}
-// pre_map {{{
-void task_cxx::pre_map(TaskOptions& options) {
+// before_map {{{
+void task_cxx::before_map(TaskOptions& options) {
   if(before_map_f != nullptr)
     before_map_f(options);
 }

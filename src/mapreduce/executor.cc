@@ -45,13 +45,13 @@ bool Executor::run_map (messages::Task* m) {
   if (m->lang == "C++") {
     task_execution = new task_cxx(m->library, m->func_name);
   } else {
-    task_execution = new task_python(m->func_body, m->pre_map, m->after_map);
+    task_execution = new task_python(m->func_body, m->before_map, m->after_map);
   }
   task_execution->setup(true);
 
   INFO("Launching mapper with %i threads", m->blocks.size());
 
-  task_execution->pre_map(options);
+  task_execution->before_map(options);
 
   try {
   for (size_t map_id = 0; map_id < m->blocks.size(); map_id++) {
@@ -187,7 +187,7 @@ bool Executor::run_reduce (messages::Task* task) {
   if (task->lang == "C++") {
     task_execution = new task_cxx(task->library, task->func_name);
   } else {
-    task_execution = new task_python(task->func_body, task->pre_map, task->after_map);
+    task_execution = new task_python(task->func_body, task->before_map, task->after_map);
   }
   task_execution->setup(false);
 

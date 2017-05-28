@@ -11,10 +11,10 @@ using namespace std;
 
 // Constructor {{{
 task_python::task_python(std::string function_body, 
-    std::string pre_map = "", 
+    std::string before_map = "", 
     std::string after_map = "") :
   function_body_f(function_body),
-  pre_map_f(pre_map),
+  before_map_f(before_map),
   after_map_f(after_map)
 { }
 
@@ -37,8 +37,8 @@ void task_python::setup(bool is_map) {
 
   pModule = PyImport_ExecCodeModule(module_name, pCompiledFn);
 
-  if (pre_map_f != "") {
-    pCompiledFn = Py_CompileString(pre_map_f.c_str(), "", Py_file_input);
+  if (before_map_f != "") {
+    pCompiledFn = Py_CompileString(before_map_f.c_str(), "", Py_file_input);
 
     if (pCompiledFn == NULL)
       ERROR("[PY interpreter] I am not able to parse your function");
@@ -61,9 +61,9 @@ void task_python::setup(bool is_map) {
   python_module = pModule;
 }
 // }}}
-// pre_map {{{
-void task_python::pre_map(TaskOptions& options) {
-  if (pre_map_f == "") {
+// before_map {{{
+void task_python::before_map(TaskOptions& options) {
+  if (before_map_f == "") {
     INFO("Skipping pre-map function");
     return;
   }
@@ -72,8 +72,8 @@ void task_python::pre_map(TaskOptions& options) {
   Py_ssize_t pos = 0;
   PyObject* pOptions = PyDict_New();
 
-  pFunc  = PyObject_GetAttrString(python_module, "pre_map") ;
-  PyObject_CallFunctionObjArgs(pFunc, pOptions);
+  pFunc  = PyObject_GetAttrString(python_module, "before_map") ;
+  PyObject_CallFunctionObjArgs(pFunc, pOptions, NULL);
 
   if (pOptions == NULL) {
     ERROR("Python map did not return anything :( ");
@@ -109,7 +109,7 @@ void task_python::after_map(TaskOptions& options) {
   }
 
   pFunc = PyObject_GetAttrString(python_module, "after_map" ) ;
-  PyObject_CallFunctionObjArgs(pFunc, pOptions);
+  PyObject_CallFunctionObjArgs(pFunc, pOptions, NULL);
 
   if (pOptions == NULL) {
     ERROR("Python map did not return anything :( ");

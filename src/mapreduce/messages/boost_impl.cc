@@ -30,7 +30,7 @@ template <typename Archive>
     ar & BOOST_SERIALIZATION_NVP(c.leader);
     ar & BOOST_SERIALIZATION_NVP(c.func_body);
     ar & BOOST_SERIALIZATION_NVP(c.lang);
-    ar & BOOST_SERIALIZATION_NVP(c.pre_map);
+    ar & BOOST_SERIALIZATION_NVP(c.before_map);
     ar & BOOST_SERIALIZATION_NVP(c.after_map);
   }
 
@@ -148,7 +148,7 @@ template <typename Archive>
     ar & BOOST_SERIALIZATION_NVP(c.file_output);
     ar & BOOST_SERIALIZATION_NVP(c.func_body);
     ar & BOOST_SERIALIZATION_NVP(c.lang);
-    ar & BOOST_SERIALIZATION_NVP(c.pre_map);
+    ar & BOOST_SERIALIZATION_NVP(c.before_map);
     ar & BOOST_SERIALIZATION_NVP(c.after_map);
   }
 

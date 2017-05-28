@@ -11,7 +11,7 @@ class task_cxx : public task_handler {
     ~task_cxx();
 
     void setup(bool is_map) override;
-    void pre_map(TaskOptions&) override;
+    void before_map(TaskOptions&) override;
     void after_map(TaskOptions&) override;
     void map(std::string&, TaskOutput&, TaskOptions&) override;
     void reduce(std::string&, vec_str&, TaskOutput&) override;

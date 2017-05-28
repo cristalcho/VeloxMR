@@ -103,7 +103,7 @@ void dataset::pymap(std::string func, std::string pmap = "", std::string amap = 
   job.files = files;
   job.job_id = job_id;
   job.func_body = func;
-  job.pre_map = pmap;
+  job.before_map = pmap;
   job.after_map = amap;
 
   send_message(&socket, &job);

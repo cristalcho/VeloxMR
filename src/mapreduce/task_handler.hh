@@ -17,7 +17,7 @@ class task_handler {
     virtual ~task_handler() = default;
 
     virtual void setup(bool is_map) = 0;
-    virtual void pre_map(TaskOptions&) = 0;
+    virtual void before_map(TaskOptions&) = 0;
     virtual void after_map(TaskOptions&) = 0;
     virtual void map(std::string&, TaskOutput&, TaskOptions&) = 0;
     virtual void reduce(std::string&, vec_str&, TaskOutput&) = 0;
