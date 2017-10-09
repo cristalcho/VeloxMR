@@ -8,7 +8,7 @@ using namespace std;
 DL_loader::DL_loader(string lib):
  lib_name(lib){ }
 DL_loader::~DL_loader() {
-  if(!lib)
+  if(lib)
     close();
 }
 // }}}
