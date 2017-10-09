@@ -2,6 +2,7 @@
 #include "../common/context_singleton.hh"
 
 #include <sstream>
+#include <iostream>
 #include <boost/archive/xml_iarchive.hpp>
 #include <boost/archive/xml_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
@@ -13,6 +14,21 @@ using namespace std;
 
 namespace eclipse {
 namespace messages {
+
+Message* load_message (std::string& str) {
+  Message* m; 
+  if (GET_STR("network.serialization") == "xml") {
+    std::istringstream ist (str);
+    xml_iarchive is (ist);
+    is >> BOOST_SERIALIZATION_NVP(m);
+
+  } else {
+    std::istringstream ist (str);
+    binary_iarchive is (ist);
+    is >> BOOST_SERIALIZATION_NVP(m);
+  }
+  return m;
+}
 
 Message* load_message (boost::asio::streambuf& buf) {
   Message* m; 
@@ -52,8 +68,11 @@ std::string* save_message (Message* m) {
 
 void send_message(boost::asio::ip::tcp::socket* socket, 
     eclipse::messages::Message* msg) {
+  boost::asio::ip::tcp::no_delay option(true);
+  socket->set_option(option);
   string* to_send = save_message(msg);
   socket->send(boost::asio::buffer(*to_send));
+  delete to_send;
 }
 
 

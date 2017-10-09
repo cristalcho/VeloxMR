@@ -9,8 +9,9 @@
 #include <thread>
 #include <sstream>
 #include <iomanip>
+#include <exception>
 #include <boost/asio.hpp>
-#include "../../common/context.hh"
+#include "../../common/context_singleton.hh"
 #include "../../messages/message.hh"
 #include "../../messages/factory.hh"
 #include "../../messages/reply.hh"
@@ -51,6 +52,8 @@ IWriter::IWriter() {
   write_pos_ = write_buf_;
   kmv_blocks_.resize(reduce_slot_);
   is_write_ready_.resize(reduce_slot_);
+  mutex_end_thread.lock();
+  mutex_start_thread.lock();
   for (uint32_t i = 0; i < reduce_slot_; ++i) {
     block_size_.emplace_back(0);
     write_count_.emplace_back(0);
@@ -86,6 +89,8 @@ void IWriter::finalize() {
     }
   }
   is_write_start_ = true;
+  mutex_start_thread.unlock();
+  mutex_end_thread.unlock();
   writer_thread_->join();
 
   for (uint32_t i = 0; i < reduce_slot_; ++i) {
@@ -104,11 +109,16 @@ void IWriter::finalize() {
 }
 
 void IWriter::run(IWriter *obj) {
-  obj->seek_writable_block();
+  try {
+    obj->seek_writable_block();
+  } catch (std::exception& e) {
+    ERROR("exeception in iwriter worker thread %s", e.what());
+  }
 }
 
 void IWriter::seek_writable_block() {
   // while loops should be changed to lock
+  mutex_start_thread.lock();
   while(!is_write_start_);
   while(!is_write_finish_) {
     // Check if there is any block that should be written to disk.
@@ -137,6 +147,8 @@ void IWriter::seek_writable_block() {
     }
     mutex.unlock();
   }
+
+  mutex_end_thread.lock();
 }
 void IWriter::add_key_value(const string &key, const string &value) {
   deb.insert(key);
@@ -155,12 +167,13 @@ void IWriter::add_key_value(const string &key, const string &value) {
   } else {
     new_size = get_block_size(index) + value.length() + 1;
   }
-  block->insert({key, value});
+  block->insert({key, std::move(value)});
   set_block_size(index, new_size);
 
   if (new_size > iblock_size_) {
     is_write_ready_[index].front() = true;
     is_write_start_ = true;
+    mutex_start_thread.unlock();
   }
   mutex.unlock();
 }
@@ -232,6 +245,7 @@ void IWriter::write_block(std::shared_ptr<std::multimap<string, string>> block,
     }
     i++;
   } 
+  block.reset();
   flush_buffer();
   file_.close();
   messages::IBlockInsert iblock_insert;

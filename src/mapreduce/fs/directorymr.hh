@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include "../../nodes/directory.hh"
+#include "../../fileleader/directory.hh"
 #include "../messages/idatainfo.hh"
 #include "../messages/igroupinfo.hh"
 #include "../messages/iblockinfo.hh"
@@ -12,29 +12,23 @@
 namespace eclipse {
 
 class DirectoryMR: public Directory {
- public:
-  void init_db();
-  void insert_idata_metadata(IDataInsert idata_insert);
-  void insert_igroup_metadata(IGroupInsert igroup_insert);
-  void insert_iblock_metadata(IBlockInsert iblock_insert);
-  void select_idata_metadata(uint32_t job_id, uint32_t map_id,
-      IDataInfo *idata_info);
-  void select_all_idata_metadata(IDataList &idata_list);
-  void select_igroup_metadata(uint32_t job_id, uint32_t map_id,
-      uint32_t reducer_id, IGroupInfo *igroup_info);
-  void select_iblock_metadata(uint32_t job_id, uint32_t map_id,
-      uint32_t reducer_id, uint32_t block_seq, IBlockInfo *iblock_info);
+  public:
+    void create_tables();
+    void insert_idata_metadata(IDataInsert idata_insert);
+    void insert_igroup_metadata(IGroupInsert igroup_insert);
+    void insert_iblock_metadata(IBlockInsert iblock_insert);
+    void select_idata_metadata(uint32_t job_id, uint32_t map_id,
+        IDataInfo *idata_info);
+    void select_all_idata_metadata(IDataList &idata_list);
+    void select_igroup_metadata(uint32_t job_id, uint32_t map_id,
+        uint32_t reducer_id, IGroupInfo *igroup_info);
+    void select_iblock_metadata(uint32_t job_id, uint32_t map_id,
+        uint32_t reducer_id, uint32_t block_seq, IBlockInfo *iblock_info);
 
+    uint32_t select_number_of_reducers(uint32_t job_id);
 
- protected:
-  static int idata_callback(void *idata_info, int argc, char **argv,
-      char **azColName);
-  static int idata_list_callback(void *list, int argc, char **argv,
-      char **azColName);
-  static int igroup_callback(void *igroup_info, int argc, char **argv,
-      char **azColName);
-  static int iblock_callback(void *iblock_info, int argc, char **argv,
-      char **azColName);
+  private:
+    using Directory::query_exec_simple;
 };
 
 }

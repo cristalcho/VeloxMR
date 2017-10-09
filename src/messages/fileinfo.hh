@@ -1,6 +1,8 @@
 #pragma once
 
 #include "message.hh"
+#include "../common/blockmetadata.hh"
+#include <vector>
 
 namespace eclipse {
 namespace messages {
@@ -19,6 +21,9 @@ struct FileInfo: public Message {
   unsigned int replica = 0;
   bool reducer_output = false;
   uint32_t job_id = 0;
+  int uploading = 1;
+
+  std::vector<BlockMetadata> blocks_metadata;
 };
 
 }

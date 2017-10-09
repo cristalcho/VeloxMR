@@ -1,8 +1,9 @@
 [![Build Status](https://travis-ci.org/DICL/VeloxMR.svg?branch=mapreduce)](https://travis-ci.org/DICL/VeloxMR)
 [![Slack room](https://img.shields.io/badge/slack-join-pink.svg)](https://dicl.slack.com/messages/general/)
-<a href="https://zenhub.com"><img src="https://raw.githubusercontent.com/ZenHubIO/support/master/zenhub-badge.png"></a>
+[![ZenHub](https://raw.githubusercontent.com/ZenHubIO/support/master/zenhub-badge.png)](https://zenhub.com)
 [![Analytics](https://ga-beacon.appspot.com/UA-87474237-1/veloxmr)](https://github.com/DICL/VeloxMR)
-BRIEFING
+---
+VeloxMR {#mainpage}
 ========
 
 VeloxMR is a MapReduce framework implemented in C++ on the top of VeloxDF
@@ -16,17 +17,19 @@ USAGE
 =====
 VeloxMR default launcher is not included in this repository, if you want to use it you can find it [here][eclipsed].
 
-The reason to not to include the launcher inside the package is to let the user to chose any launcher, options are:
+The reason not to include the launcher inside the package is to let the user to choose any launcher or service managers such as:
  - systemd/init.d
  - puppet/chef/salt
  
-Once the system is running, you can interact with EclipseDFS with the following commands:
+Once the system is up and running, you can interact with VeloxDFS with the following commands:
 ```
- $ dfs ls|put|get|rm|format|show
+ $ dfs put|get|cat|ls|rm|format|pget|update|append
 ```
 
 COMPILING & INSTALLING
-=====================
+======================
+
+_Detailed information can be found in the wiki of this repository_
 
 Compiling requirements
 ----------------------
@@ -41,11 +44,11 @@ For single user installation for developers
 
     $ mkdir -p local_eclipse/{tmp,sandbox}                 # Create a sandbox directories
     $ cd local_eclipse                                     # enter in the directory
-    $ git clone git@github.com:DICL/EclipseDFS.git         # Clone the project from github
-    $ cd EclipseDFS
+    $ git clone git@github.com:DICL/VeloxDFS.git           # Clone the project from github
+    $ cd VeloxDFS
     $ sh autogen.sh                                        # Generate configure script 
     $ cd ../tmp                                            # Go to building folder
-    $ sh ../EclipseDFS/configure --prefix=`pwd`/../sandbox # Check requirements and generate the Makefile
+    $ sh ../VeloxDFS/configure --prefix=`pwd`/../sandbox # Check requirements and generate the Makefile
 
     # If you get a boost error go the FAQ section of the README
 
@@ -57,11 +60,28 @@ Now edit in your **~/.bashrc** or **~/.profile**:
     export PATH="/home/*..PATH/To/eclipse/..*/sandbox/bin":$PATH
     export LIBRARY_PATH="/home/*..PATH/To/eclipse/..*/sandbox/lib"
     export C_INCLUDE_PATH="/home/*..PATH/To/eclipse/..*/sandbox/include"
-    export MANPATH=`manpath`:/home*..PATH/To/eclipse/..*/sandbox/share/man
 
-For the configuration refer to the manpage:
 
-    $ man eclipsefs
+Default settings for VELOXDFS 
+-----------------------------
+
+    "log" : {
+      "type" : "LOG_LOCAL6"
+      "name" : "ECLIPSE"
+      "mask" : "DEBUG"
+    },
+
+    "cache" : {
+      "numbin"      : 100,
+      "size"        : 200000,
+      "concurrency" : 1
+    },
+
+    "filesystem" : {
+      "block"    : 137438953,
+      "buffer"   : 512,
+      "replica"  : 1
+    }
 
 FAQ
 ---
@@ -70,27 +90,18 @@ FAQ
 - _Answer_ : It probably means that you do not have boost library installed in
   the default location, in such case you should specify the boost library location.
   ```
-  sh ../EclipseDFS/configure --prefix ~/sandbox --with-boost=/usr/local --with-boost-libdir=/usr/local/lib
+  sh ../VeloxDFS/configure --prefix ~/sandbox --with-boost=/usr/local --with-boost-libdir=/usr/local/lib
   ```
   In this example we assume that the boost headers are in `/usr/local/include` while the library files
   are inside `/usr/local/lib`.
 
-AUTHOR
-======
+AUTHORS
+=======
 
- - __AUTHOR:__ [Vicente Adolfo Bolea Sanchez] [vicente]
- - __AUTHOR:__ [MooHyeon Nam] [mh]
- - __AUTHOR:__ [WonBae Kim] [wb]
- - __AUTHOR:__ [KiBeom Jin] [kb]
- - __AUTHOR:__ [Prof. Nam Beomseok] [nb]
- - __INSTITUTION:__ [DICL laboratory] [dicl] at [UNIST]
-
-<!-- Links -->
-[vicente]:  https://github.com/vicentebolea
-[ym]:       https://github.com/youngmoon01
-[dicl]:     http://dicl.unist.ac.kr
-[mh]:       https://github.com/nammh 
-[wb]:       https://github.com/zwigul
-[kb]:       https://github.com/kbjin
-[eclipsed]: https://github.com/DICL/eclipsed
-[nb]:       http://dicl.unist.ac.kr
+ - __AUTHOR:__ [Vicente Adolfo Bolea Sanchez](http://vicentebolea.me)
+ - __AUTHOR:__ [MooHyeon Nam](https://github.com/nammh)
+ - __AUTHOR:__ [WonBae Kim](https://github.com/zwigul)
+ - __AUTHOR:__ [KiBeom Jin](https://github.com/kbjin)
+ - __AUTHOR:__ [Deukyeon Hwang](https://github.com/deukyeon)
+ - __AUTHOR:__ [Prof. Nam Beomseok](http://dicl.unist.ac.kr)
+ - __INSTITUTION:__ [DICL laboratory](http://dicl.unist.ac.kr) at _UNIST_ 

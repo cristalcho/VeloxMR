@@ -8,120 +8,19 @@
 #include "../messages/idatainsert.hh"
 #include "../messages/igroupinsert.hh"
 #include "../messages/iblockinsert.hh"
-#include "../../common/context.hh"
+#include "../common/context_singleton.hh"
 
+#include <cinttypes>
+#include <sqlite3.h>
+#include <string>
+
+#define DEFAULT_QUERY_SIZE 512
+
+using namespace std;
 namespace eclipse {
 
-void DirectoryMR::init_db() {
-  open_db();
-  // Create SQL statement of IData
-  sprintf(sql, "CREATE TABLE idata_table( \
-      job_id         INT       NOT NULL, \
-      map_id         INT       NOT NULL, \
-      num_reducer    INT       NOT NULL, \
-      PRIMARY KEY (job_id, map_id));"); 
-  // Execute SQL statement
-  rc = sqlite3_exec(db, sql, NULL, 0, &zErrMsg);
-  if(rc != SQLITE_OK) {
-    ERROR("SQL error: %s", zErrMsg);
-    sqlite3_free(zErrMsg);
-  } else {
-    DEBUG("idata_table created successfully");
-  }
-  // Create SQL statement of IGroup
-  sprintf(sql, "CREATE TABLE igroup_table( \
-      job_id         INT       NOT NULL, \
-      map_id         INT       NOT NULL, \
-      reducer_id     INT       NOT NULL, \
-      num_block      INT       NOT NULL, \
-      PRIMARY KEY (job_id, map_id, reducer_id));"); 
-  // Execute SQL statement
-  rc = sqlite3_exec(db, sql, NULL, 0, &zErrMsg);
-  if(rc != SQLITE_OK) {
-    ERROR("SQL error: %s\n", zErrMsg);
-    sqlite3_free(zErrMsg);
-  } else {
-    DEBUG("igroup_table created successfully");
-  }
-  // Create SQL statement of IBlock
-  sprintf(sql, "CREATE TABLE iblock_table( \
-      job_id         INT       NOT NULL, \
-      map_id         INT       NOT NULL, \
-      reducer_id     INT       NOT NULL, \
-      block_seq      INT       NOT NULL, \
-      PRIMARY KEY (job_id, map_id, reducer_id, block_seq));"); 
-  // Execute SQL statement
-  rc = sqlite3_exec(db, sql, NULL, 0, &zErrMsg);
-  if(rc != SQLITE_OK) {
-    ERROR("SQL error: %s", zErrMsg);
-    sqlite3_free(zErrMsg);
-  } else {
-    DEBUG("iblock_table created successfully");
-  }
-  sqlite3_close(db);
-}
-
-void DirectoryMR::insert_idata_metadata(IDataInsert idata_insert) {
-  // Open database
-  open_db();
-  mutex.lock();
-  // Create sql statement
-  sprintf(sql, "INSERT INTO idata_table (\
-      job_id, map_id, num_reducer) \
-      VALUES (%" PRIu32 ", %" PRIu32 ", %" PRIu32 ");",
-      idata_insert.job_id, idata_insert.map_id, idata_insert.num_reducer);
-  // Execute SQL statement
-  rc = sqlite3_exec(db, sql, NULL, 0, &zErrMsg);
-  if(rc != SQLITE_OK) {
-    ERROR("SQL error: %s\n", zErrMsg);
-    sqlite3_free(zErrMsg);
-  }
-  // Close Database
-  sqlite3_close(db);
-  mutex.unlock();
-}
-void DirectoryMR::insert_igroup_metadata(IGroupInsert igroup_insert) {
-  // Open database
-  open_db();
-  mutex.lock();
-  // Create sql statement
-  sprintf(sql, "INSERT INTO igroup_table (\
-      job_id, map_id, reducer_id, num_block) \
-      VALUES (%" PRIu32 ", %" PRIu32 ", %" PRIu32 ", %" PRIu32 ");",
-      igroup_insert.job_id, igroup_insert.map_id, igroup_insert.reducer_id,
-      igroup_insert.num_block);
-  // Execute SQL statement
-  rc = sqlite3_exec(db, sql, NULL, 0, &zErrMsg);
-  if(rc != SQLITE_OK) {
-    ERROR("SQL error: %s\n", zErrMsg);
-    sqlite3_free(zErrMsg);
-  }
-  // Close Database
-  sqlite3_close(db);
-  mutex.unlock();
-}
-void DirectoryMR::insert_iblock_metadata(IBlockInsert iblock_insert) {
-  // Open database
-  open_db();
-  mutex.lock();
-  // Create sql statement
-  sprintf(sql, "INSERT INTO iblock_table (\
-      job_id, map_id, reducer_id, block_seq) \
-      VALUES (%" PRIu32 ", %" PRIu32 ", %" PRIu32 ", %" PRIu32 ");",
-      iblock_insert.job_id, iblock_insert.map_id, iblock_insert.reducer_id,
-      iblock_insert.block_seq);
-  // Execute SQL statement
-  rc = sqlite3_exec(db, sql, NULL, 0, &zErrMsg);
-  if(rc != SQLITE_OK) {
-    ERROR("SQL error: %s\n", zErrMsg);
-    sqlite3_free(zErrMsg);
-  } 
-  // Close Database
-  sqlite3_close(db);
-  mutex.unlock();
-}
-
-int DirectoryMR::idata_callback(void *idata_info, int argc, char **argv, char **azColName) 
+static int idata_callback(void *idata_info, int argc, 
+    char **argv, char **azColName) 
 {
   auto idata = reinterpret_cast<IDataInfo*>(idata_info);
   idata->job_id = atoi(argv[0]);
@@ -130,7 +29,8 @@ int DirectoryMR::idata_callback(void *idata_info, int argc, char **argv, char **
   return 0;
 }
 
-int DirectoryMR::idata_list_callback(void *list, int argc, char **argv, char **azColName) 
+static int idata_list_callback(void *list, int argc, 
+    char **argv, char **azColName) 
 {
     auto idata_list = reinterpret_cast<IDataList*> (list);
     for (int i = 0; i < argc; i++) {
@@ -143,7 +43,7 @@ int DirectoryMR::idata_list_callback(void *list, int argc, char **argv, char **a
     return 0;
 }
 
-int DirectoryMR::igroup_callback(void *igroup_info, int argc, char **argv,
+static int igroup_callback(void *igroup_info, int argc, char **argv,
     char **azColName) {
   auto igroup = reinterpret_cast<IGroupInfo*>(igroup_info);
   igroup->job_id = atoi(argv[0]);
@@ -152,7 +52,7 @@ int DirectoryMR::igroup_callback(void *igroup_info, int argc, char **argv,
   igroup->num_block = atoi(argv[3]);
   return 0;
 }
-int DirectoryMR::iblock_callback(void *iblock_info, int argc, char **argv,
+static int iblock_callback(void *iblock_info, int argc, char **argv, 
     char **azColName) {
   auto iblock = reinterpret_cast<IBlockInfo*>(iblock_info);
   iblock->job_id = atoi(argv[0]);
@@ -161,92 +61,133 @@ int DirectoryMR::iblock_callback(void *iblock_info, int argc, char **argv,
   iblock->block_seq = atoi(argv[3]);
   return 0;
 }
-void DirectoryMR::select_idata_metadata(uint32_t job_id, uint32_t map_id,
-    IDataInfo *idata_info) {
-  // Open database
-  open_db();
-  mutex.lock();
-  // Create sql statement
-  sprintf(sql, "SELECT * from idata_table where job_id=%" PRIu32 " and \
-      map_id=%" PRIu32 ";", job_id, map_id);
+
+void DirectoryMR::create_tables() {
+  char sql[DEFAULT_QUERY_SIZE];
+  // Create SQL statement of IData
+  sprintf(sql, "CREATE TABLE IF NOT EXISTS idata_table( \
+      job_id         INT       NOT NULL, \
+      map_id         INT       NOT NULL, \
+      num_reducer    INT       NOT NULL, \
+      PRIMARY KEY (job_id, map_id));"); 
+
   // Execute SQL statement
-  rc = sqlite3_exec(db, sql, idata_callback, (void*)idata_info, &zErrMsg);
-  if(rc != SQLITE_OK) {
-    ERROR("SQL error: %s\n", zErrMsg);
-    sqlite3_free(zErrMsg);
-  } else {
-    DEBUG("idata_metadata selected successfully\n");
-  }
-  // Close Database
-  sqlite3_close(db);
-  mutex.unlock();
+  if(Directory::query_exec_simple(sql, NULL, NULL))
+    DEBUG("idata_table created successfully");
+
+  // Create SQL statement of IGroup
+  sprintf(sql, "CREATE TABLE IF NOT EXISTS igroup_table( \
+      job_id         INT       NOT NULL, \
+      map_id         INT       NOT NULL, \
+      reducer_id     INT       NOT NULL, \
+      num_block      INT       NOT NULL, \
+      PRIMARY KEY (job_id, map_id, reducer_id));"); 
+
+  // Execute SQL statement
+  if(Directory::query_exec_simple(sql, NULL, NULL))
+    DEBUG("igroup_table created successfully");
+
+  // Create SQL statement of IBlock
+  sprintf(sql, "CREATE TABLE IF NOT EXISTS iblock_table( \
+      job_id         INT       NOT NULL, \
+      map_id         INT       NOT NULL, \
+      reducer_id     INT       NOT NULL, \
+      block_seq      INT       NOT NULL, \
+      PRIMARY KEY (job_id, map_id, reducer_id, block_seq));"); 
+
+  if(Directory::query_exec_simple(sql, NULL, NULL))
+    DEBUG("iblock_table created successfully");
 }
 
-void DirectoryMR::select_all_idata_metadata(IDataList &idata_list)
-{
-     // open database
-     open_db();
-     mutex.lock();
-     // create sql statement
+void DirectoryMR::insert_idata_metadata(IDataInsert idata_insert) {
+  char sql[DEFAULT_QUERY_SIZE];
+  // Create sql statement
+  sprintf(sql, "INSERT INTO idata_table (\
+      job_id, map_id, num_reducer) \
+      VALUES (%" PRIu32 ", %" PRIu32 ", %" PRIu32 ");",
+      idata_insert.job_id, idata_insert.map_id, idata_insert.num_reducer);
+
+  Directory::query_exec_simple(sql, NULL, NULL);
+}
+void DirectoryMR::insert_igroup_metadata(IGroupInsert igroup_insert) {
+  char sql[DEFAULT_QUERY_SIZE];
+
+  sprintf(sql, "INSERT INTO igroup_table (\
+      job_id, map_id, reducer_id, num_block) \
+      VALUES (%" PRIu32 ", %" PRIu32 ", %" PRIu32 ", %" PRIu32 ");",
+      igroup_insert.job_id, igroup_insert.map_id, igroup_insert.reducer_id,
+      igroup_insert.num_block);
+
+  Directory::query_exec_simple(sql, NULL, NULL);
+}
+void DirectoryMR::insert_iblock_metadata(IBlockInsert iblock_insert) {
+  char sql[DEFAULT_QUERY_SIZE];
+
+  sprintf(sql, "INSERT INTO iblock_table (\
+      job_id, map_id, reducer_id, block_seq) \
+      VALUES (%" PRIu32 ", %" PRIu32 ", %" PRIu32 ", %" PRIu32 ");",
+      iblock_insert.job_id, iblock_insert.map_id, iblock_insert.reducer_id,
+      iblock_insert.block_seq);
+
+  Directory::query_exec_simple(sql, NULL, NULL);
+}
+void DirectoryMR::select_idata_metadata(uint32_t job_id, uint32_t map_id,
+    IDataInfo *idata_info) {
+  char sql[DEFAULT_QUERY_SIZE];
+
+  sprintf(sql, "SELECT * from idata_table where job_id=%" PRIu32 " and \
+      map_id=%" PRIu32 ";", job_id, map_id);
+
+  if (Directory::query_exec_simple(sql,idata_callback, (void*)idata_info))
+    DEBUG("idata_metadata selected successfully\n");
+}
+
+void DirectoryMR::select_all_idata_metadata(IDataList &idata_list) {
+  char sql[DEFAULT_QUERY_SIZE];
+
      sprintf(sql, "SELECT * from idata_table;"); 
-     // execute sql statement
-     rc = sqlite3_exec(db, sql, idata_list_callback, (void*)&idata_list, &zErrMsg);
-     if (rc != SQLITE_OK)
-     {
-       context.logger -> error("SQL error: %s\n", zErrMsg);
-       sqlite3_free(zErrMsg);
-     } 
-     else
-     {
-       DEBUG("idata_metadata selected successfully\n");
-     }
-     // close database
-     sqlite3_close(db);
-     mutex.unlock();
+
+     if (Directory::query_exec_simple(sql,idata_list_callback, (void*)&idata_list))
+       DEBUG("idata_metadata selected successfully");
 }
 
 void DirectoryMR::select_igroup_metadata(uint32_t job_id, uint32_t map_id,
     uint32_t reducer_id, IGroupInfo *igroup_info) {
-  // Open database
-  open_db();
-  mutex.lock();
-  // Create sql statement
-  sprintf(sql, "SELECT * from igroup_table where job_id=%" PRIu32 " and \
+  char sql[DEFAULT_QUERY_SIZE];
+
+  snprintf(sql, DEFAULT_QUERY_SIZE, "SELECT * from igroup_table where job_id=%" PRIu32 " and \
       map_id=%" PRIu32 " and reducer_id=%" PRIu32 ";", job_id, map_id,
       reducer_id);
-  // Execute SQL statement
-  rc = sqlite3_exec(db, sql, igroup_callback, (void*)igroup_info, &zErrMsg);
-  if(rc != SQLITE_OK) {
-    ERROR("SQL error: %s\n", zErrMsg);
-    sqlite3_free(zErrMsg);
-  } else {
-    DEBUG("igroup_metadata selected successfully\n");
-  }
-  // Close Database
-  sqlite3_close(db);
-  mutex.unlock();
+
+  if (Directory::query_exec_simple(sql, igroup_callback, (void*)igroup_info))
+    DEBUG("igroup_metadata selected successfully");
 }
 
 void DirectoryMR::select_iblock_metadata(uint32_t job_id, uint32_t map_id,
     uint32_t reducer_id, uint32_t block_seq, IBlockInfo *iblock_info) {
-  // Open database
-  open_db();
-  mutex.lock();
-  // Create sql statement
+  char sql[DEFAULT_QUERY_SIZE];
+
   sprintf(sql, "SELECT * from iblock_table where job_id=%" PRIu32 " and \
       map_id=%" PRIu32 " and reducer_id=%" PRIu32 " and block_seq=%" PRIu32 ";",
       job_id, map_id, reducer_id, block_seq);
-  // Execute SQL statement
-  rc = sqlite3_exec(db, sql, iblock_callback, (void*)iblock_info, &zErrMsg);
-  if(rc != SQLITE_OK) {
-    ERROR("SQL error: %s\n", zErrMsg);
-    sqlite3_free(zErrMsg);
-  } else {
-    DEBUG("iblock_metadata selected successfully\n");
-  }
-  // Close Database
-  sqlite3_close(db);
-  mutex.unlock();
+
+  if (Directory::query_exec_simple(sql, iblock_callback, (void*)iblock_info))
+    DEBUG("iblock_metadata selected successfully");
 }
+
+uint32_t DirectoryMR::select_number_of_reducers(uint32_t job_id) {
+  char sql[DEFAULT_QUERY_SIZE];
+
+  sprintf(sql, "SELECT * FROM iblock_table WHERE (job_id='%" PRIu32 "') \
+      ORDER BY reducer_id DESC LIMIT 1;", job_id);
+
+  uint32_t ret = 0;
+  Directory::query_exec_simple(sql, [] (void* output, int, char **argv, char**) {
+    *reinterpret_cast<uint32_t*>(output) = atoi(argv[2]);
+    return 0;
+  }, (void*)&ret);
+  return ret + 1;
+}
+
 
 }  // namespace eclipse

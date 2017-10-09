@@ -35,13 +35,13 @@ class IReader: public IReader_interface {
   bool get_next_value(string &value) override;
   bool is_next_key() override;
   bool is_next_value() override;
+  uint32_t get_num_block();
 
  private:
 //  tcp::socket* connect(uint32_t net_id);
 //  void send_message(tcp::socket *socket, messages::Message *msg);
 //  messages::IGroupInfo* read_igroup_info(tcp::socket *socket);
 //  messages::IBlockInfo* read_iblock_info(tcp::socket *socket);
-  uint32_t get_num_block();
   void SetNext();
   void SetNextAsCurrent();
   bool ShiftToNextKey();

@@ -10,10 +10,10 @@ struct IGroupInfo: public Message {
 
   std::string get_type() const override;
 
-  uint32_t job_id;
-  uint32_t map_id;
-  uint32_t reducer_id;
-  uint32_t num_block;
+  uint32_t job_id = 0;
+  uint32_t map_id = 0;
+  uint32_t reducer_id = 0;
+  uint32_t num_block = 0;
 };
 
 }

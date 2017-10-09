@@ -6,13 +6,14 @@
 #include <unordered_map>
 #include <list>
 #include <functional>
+#include <vector>
 
 #include "../mapreduce/output_collection.hh"
 
 using before_map_t = void (*)(std::unordered_map<std::string, void*>&);
 using after_map_t = void (*)(std::unordered_map<std::string, void*>&);
 using mapper_t = void (*)(std::string&, velox::OutputCollection&, std::unordered_map<std::string, void*>&);
-using reducer_t = void (*)(std::string&, std::list<std::string>&, velox::OutputCollection&);
+using reducer_t = void (*)(std::string&, std::vector<std::string>&, velox::OutputCollection&);
 
 class DL_loader {
   public:

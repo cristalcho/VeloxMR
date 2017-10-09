@@ -23,7 +23,7 @@ class Logger {
 
     // Singleton things
     static Logger* singleton;
-    Logger(char*, const std::string&, std::string);
+    Logger(char*, const std::string&, std::string mask_);
     ~Logger();
    
     std::string title;

@@ -8,7 +8,7 @@
 #include <sstream>
 #include <iomanip>
 #include <boost/asio.hpp>
-#include "../../common/context.hh"
+#include "../../common/context_singleton.hh"
 #include "../../messages/factory.hh"
 #include "../../messages/message.hh"
 #include "../messages/igroupinforequest.hh"
@@ -185,15 +185,19 @@ bool IReader::ShiftToNextKey() {
 bool IReader::LoadKey(const int &index) {
   // Make sure you are not in the middle of the values.
   if (blocks_[index]->eof()) {
-std::cout << "!!!! eof() works well!" << std::endl;
+    std::cout << "!!!! eof() works well!" << std::endl;
     return false;
   }
+
   getline(*blocks_[index], loaded_keys_[index]);
   string num_value;
   getline(*blocks_[index], num_value);
-if (num_value == "") return false;
+
+  if (num_value == "") return false;
+
   num_remain_[index] = stoi(num_value);
   key_order_.emplace(loaded_keys_[index], index);
+
   return true;
 }
 bool IReader::LoadValue(const int &index) {

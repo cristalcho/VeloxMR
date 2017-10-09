@@ -2,17 +2,19 @@
 #include "../common/context_singleton.hh"
 #include "../messages/boost_impl.hh"
 #include "../messages/factory.hh"
-#include "../messages/job.hh"
-#include "../common/ecfs.hh"
+#include "../mapreduce/messages/job.hh"
 #include "../common/hash.hh"
 #include <vector>
 #include <iomanip>
 #include <random>
 #include <cstdlib>
+#include <boost/asio.hpp>
 
 using namespace std;
 using namespace velox;
 using namespace eclipse::messages;
+using namespace boost::asio;
+using namespace boost::asio::ip;
 using vec_str = std::vector<std::string>;
 
 // Free functions {{{
@@ -27,7 +29,7 @@ uint32_t random_number() {
 
 tcp::endpoint* find_local_master(uint32_t job_id) {
 
-  int port      = GET_INT("network.ports.client");
+  int port      = GET_INT("network.ports.mapreduce");
   vec_str nodes = GET_VEC_STR("network.nodes");
 
   string host = nodes[ job_id % nodes.size() ];
@@ -91,7 +93,7 @@ void dataset::reduce(std::string func, std::string output) {
 }
 // }}}
 // pymap {{{
-void dataset::pymap(std::string func) {
+void dataset::pymap(std::string func, std::string pmap = "", std::string amap = "") {
   tcp::socket socket (context.io);
   socket.connect(*find_local_master(job_id));
 
@@ -101,6 +103,8 @@ void dataset::pymap(std::string func) {
   job.files = files;
   job.job_id = job_id;
   job.func_body = func;
+  job.before_map = pmap;
+  job.after_map = amap;
 
   send_message(&socket, &job);
   auto reply = read_reply<Reply> (&socket);

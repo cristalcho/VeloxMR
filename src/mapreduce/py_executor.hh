@@ -10,26 +10,27 @@
 // @todo Merge with c++ executor using a more elegant design pattern.
 //
 #pragma once
-#include "nodes/peermr.h"
-#include "../messages/task.hh"
+#include "task_executor.hh"
+#include "messages/task.hh"
 
 #include <utility>
 #include <map>
 #include <vector>
-#include <python2.7/Python.h>
+
+extern "C" typedef struct _object PyObject;
 
 namespace eclipse {
 
 class PYexecutor {
   public:
-    PYexecutor(PeerMR*);
+    PYexecutor(TaskExecutor*);
     ~PYexecutor();
 
     bool run_map(messages::Task*, std::string);
     bool run_reduce(messages::Task*);
 
   protected:
-    PeerMR* peer;
+    TaskExecutor* peer;
 
     std::map<std::string, std::vector<std::string>> py_map(std::string);
     std::string py_reduce(std::string, std::string);

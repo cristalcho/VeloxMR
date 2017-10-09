@@ -12,7 +12,7 @@ class dataset {
     void map(std::string);
     void reduce(std::string, std::string);
 
-    void pymap(std::string);
+    void pymap(std::string, std::string, std::string);
     void pyreduce(std::string, std::string);
 
   protected:

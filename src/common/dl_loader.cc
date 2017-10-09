@@ -8,6 +8,8 @@ using namespace std;
 DL_loader::DL_loader(string lib):
  lib_name(lib){ }
 DL_loader::~DL_loader() {
+  if(lib)
+    close();
 }
 // }}}
 // init_executor {{{
