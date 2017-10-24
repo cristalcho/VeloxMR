@@ -31,9 +31,7 @@ AsyncChannel::AsyncChannel(NetObserver* node_) :
   is_writing.store(false);
 }
 AsyncChannel::~AsyncChannel() {
-//  INFO("Socket is destroyed to/from %s", host.c_str()); 
   socket.close();
-
 }
 // }}}
 // get_socket {{{
@@ -53,12 +51,12 @@ void AsyncChannel::do_write(std::shared_ptr<std::string>& str_p) {
 //}}}
 // do_write {{{
 void AsyncChannel::do_write(Message* m) {
-
   string* str = save_message(m);
 
   queue_mutex.lock();
   messages_queue.push(shared_ptr<string>(str));
   queue_mutex.unlock();
+
   if (!is_writing.exchange(true)) {
     do_write_impl ();
   }
@@ -174,8 +172,8 @@ void AsyncChannel::read_coroutine (yield_context yield) {
   try {
     while (true) {
       auto self(shared_from_this());
+
       //! Read header of incoming message, we know its size.
-      //auto& header_buffer = ;
       size_t recv = async_read(socket, buffer(header, header_size), yield[ec]);
       if (ec == boost::asio::error::eof)
         break;

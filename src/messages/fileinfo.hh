@@ -17,6 +17,7 @@ struct FileInfo: public Message {
   uint32_t hash_key = 0;
   uint64_t size = 0;
   unsigned int num_block = 0;
+  unsigned int n_lblock = 0;
   unsigned int type;
   unsigned int replica = 0;
   bool reducer_output = false;

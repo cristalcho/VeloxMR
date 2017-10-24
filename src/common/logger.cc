@@ -70,9 +70,6 @@ Logger::Logger (char* title, const string& type, string mask_) {
   this->title = title;
   openlog (title, LOG_CONS, this->type); 
   setlogmask(LOG_UPTO(mask));
-
-  //int type_ = syslog_facilities[type];
-  //openlog (title, LOG_CONS, type_); 
 }
 
 Logger::~Logger () { closelog (); }
@@ -80,21 +77,17 @@ Logger::~Logger () { closelog (); }
 void Logger::debug (const char* fmt, ...) { 
   va_list ap;
 
-  //openlog (title.c_str(), LOG_CONS, type); 
   va_start(ap, fmt);
   log(LOG_DEBUG, fmt, ap);
   va_end(ap);
-  //closelog ();
 }
 
 void Logger::info (const char* fmt, ...) {
   va_list ap;
 
-  //openlog (title.c_str(), LOG_CONS, type); 
   va_start(ap, fmt);
   log(LOG_INFO, fmt, ap);
   va_end(ap);
-  //closelog ();
 }
 
 void Logger::notice (const char* fmt, ...) { 
@@ -116,14 +109,13 @@ void Logger::warn (const char* fmt, ...) {
 void Logger::error (const char* fmt, ...) { 
   va_list ap;
   char msg [256];
-  //openlog (title.c_str(), LOG_CONS, type); 
+
   strncpy(msg,"ERROR ", 256);
   strncat(msg, fmt, 256);
   strncat(msg," ERRSTR:%m", 256);
   va_start(ap, fmt);
   log(LOG_ERR, msg, ap);
   va_end(ap);
-  //closelog ();
 }
 
 void Logger::panic (const char* fmt, ...) { 

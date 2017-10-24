@@ -26,7 +26,6 @@ Context* Context::connect () {
   if (singleton == nullptr) {
     singleton = new Context();
     singleton->init();
-    //singleton->run();
   }
 
   return singleton;

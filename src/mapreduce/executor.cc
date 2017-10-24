@@ -114,7 +114,7 @@ bool Executor::run_map (messages::Task* m) {
           vector<int> shuffled_array;
 
           {
-            for (int i = 0; i < network_size; i++)
+            for (uint32_t i = 0; i < network_size; i++)
               shuffled_array.push_back(i);
 
             mut.lock();
@@ -198,7 +198,7 @@ bool Executor::run_reduce (messages::Task* task) {
   uint32_t reducer_slot = directory.select_number_of_reducers(task->job_id);
   mutex mut;
   DEBUG("LAunching reducer with %i threads", reducer_slot);
-  for (int reducer_id = 0; reducer_id < reducer_slot; reducer_id++) {
+  for (uint32_t reducer_id = 0; reducer_id < reducer_slot; reducer_id++) {
 
     if (threads.size() >= 1) {
       threads.front().join();

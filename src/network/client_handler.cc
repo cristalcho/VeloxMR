@@ -74,6 +74,7 @@ void ClientHandler::connect(uint32_t i, shared_ptr<Server> server) {
 // }}}
 // try_reuse_client {{{
 bool ClientHandler::try_reuse_client(uint32_t i, shared_ptr<std::string> str) {
+
   // If connection is still on.
   rw_lock.lock_shared();
   auto it = current_servers.find(i); 
@@ -100,24 +101,6 @@ bool ClientHandler::send(uint32_t i, messages::Message* m) {
   if (i >= nodes.size()) return false;
 
   shared_ptr<std::string> message_serialized (save_message(m));
-
-  //if (i == id and local_router != nullptr) {
-  //  INFO("Message len=%lu", message_serialized->length());
-  //  // Dispatch to local 
-  //  context.io.post([message_serialized, this] () {
-  //        try {
-  //          INFO("Message len=%lu", message_serialized->length());
-  //          scoped_ptr<messages::Message> msg {messages::load_message(*message_serialized)};
-  //          local_router->on_read(msg.get(), nullptr);
-
-  //        } catch (exception& e) {
-  //          INFO("Mapper exception %s", e.what());
-  //        } catch (boost::exception& e) {
-  //          INFO("Mapper exception %s", diagnostic_information(e).c_str());
-  //        }
-  //      });
-   // return true;
-  //}
 
   if (!try_reuse_client(i, message_serialized)) {
     auto server = make_shared<Server>(local_router);

@@ -27,19 +27,19 @@ bool ServerHandler::establish () {
       INFO("Listening at port %u", p);
       tcp::acceptor acceptor (iosvc, tcp::endpoint(tcp::v4(), p) );
       acceptor.listen(1);
-        boost::system::error_code ec;
-        for (;;) {
+      boost::system::error_code ec;
+
+      for (;;) {
         try {
           auto server = make_shared<Server>(node);
           acceptor.async_accept(server->get_socket(), yield[ec]);
 
           DEBUG("Client accepted");
           if (!ec)  {
-            boost::asio::ip::tcp::no_delay option(true);
-            server->get_socket().set_option(option); 
             server->do_read();
-            } else
+          } else {
             ERROR("ERROR in acceptor reason: %s", ec.message().c_str());
+          }
 
           } catch (exception& e) {
             INFO("Server exception %s", e.what());

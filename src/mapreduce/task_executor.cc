@@ -163,7 +163,7 @@ void TaskExecutor::task_accept_status(TaskStatus* m) {
 void TaskExecutor::key_value_store(KeyValueShuffle *kv) {
   INFO("KVshuffle KV_ID=%lu, ID=%i, DST=%i", kv->kv_id, id, kv->node_id);
 
-  if (kv->node_id == id) {
+  if (kv->node_id == (uint32_t)id) {
 
     std::thread([&, this] (KeyValueShuffle kv) {
         try {
