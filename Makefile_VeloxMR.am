@@ -47,7 +47,7 @@ eclipse_node_SOURCES += src/mapreduce/task_executor.cc \
                         src/common/dl_loader.cc
 
 # Hack to remove previous main function file
-main_file = src/targets/node_main_mr.cc
+eclipse_node_main = src/targets/node_main_mr.cc
 
 eclipse_node_LDADD   += libvmr.la $(LDADD) -lpython2.7
 
