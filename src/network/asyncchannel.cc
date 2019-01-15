@@ -98,6 +98,7 @@ void AsyncChannel::on_write(const boost::system::error_code& ec,
     WARN("Message could not reach err=%s (transferred %lu B) host %s", 
         ec.message().c_str(), s, host.c_str());
 
+    WARN("RECONNECTIONG???");
     if (ec == boost::asio::error::connection_reset) {
       WARN("Reconnecting to %s %u", host.c_str(), port);
 

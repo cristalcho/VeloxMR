@@ -1,0 +1,44 @@
+{
+ "name"    : "Raven cluster eclipseMR file",
+ "max_job" : 1024,
+
+ "log" : {
+   "type" : "LOG_LOCAL6",
+   "name" : "ECLIPSE",
+   "mask" : "info"
+ },
+
+ "path" : {
+   "scratch"    : "/scratch/vicente/storage",
+   "idata"      : "/scratch/vicente/idata",
+   "metadata"   : "/scratch/vicente/"
+ },
+
+ "cache" : {
+   "numbin" : 100,
+   "size" :   200000,
+   "concurrency" : 1
+ },
+
+ "network" : {
+   "ports" : {
+     "internal" : 8008,
+     "client"   : 8009
+   },
+
+   "iface"          : "em1",
+   "nodes"          : [
+     "10.20.13.123",
+     "10.20.13.124",
+     "10.20.13.125"
+   ],
+   "serialization" : "xml"
+ },
+
+ "filesystem" : {
+   "block"  : 134217728,
+   "buffer" : 512,
+   "replica" : 3
+ }
+
+}

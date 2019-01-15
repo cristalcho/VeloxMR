@@ -27,6 +27,9 @@
 using namespace std;
 using namespace velox;
 
+//soojeong
+#define NUM_CLUSTERS 9
+//
 
 namespace eclipse {
 // Constructors {{{
@@ -34,8 +37,31 @@ TaskExecutor::TaskExecutor(network::ClientHandler* net) : Node() {
   network = net;
   directory.create_tables();
   network_size = GET_VEC_STR("network.nodes").size();
+//
+  mp = new vector<std::string>[10]; //randomly setting
+//  
+  uma = new unordered_multimap<std::string, void*>*[NUM_CLUSTERS];
+  for(int i=0; i<NUM_CLUSTERS; i++){ 
+    uma[i] = new unordered_multimap<std::string, void*>[10];
+    mp[i].reserve(100000000);
+  }
+}
+TaskExecutor::~TaskExecutor() {
+    INFO("IN ~~TASKEXECUTOR");
 }
 // }}}
+//notice_the_end{{{
+void TaskExecutor::notice_the_end() {
+    
+    for(int i=0; i<NUM_CLUSTERS; i++){
+//        INFO("uma[%d]: %d", i, uma[i]->size());
+        delete [] uma[i];
+    }
+    delete [] mp;
+    delete [] uma;
+//    INFO("IN ~~NOTICE_THE_END()");
+}
+//}}}
 // ------------- MAPREDUCE ROUTINES ------------------
 // LEADER functions
 // job_accept {{{
@@ -47,7 +73,6 @@ void TaskExecutor::job_accept(messages::Job* m, std::function<void(void)> fn) {
 
   INFO("JOB recieved");
   if (m->type == "MAP") {
-
     std::map<int, vector<pair<uint32_t, string>>>map_nodes;
 
     // Organize a map of blocks per each block_node
@@ -93,6 +118,7 @@ void TaskExecutor::job_accept(messages::Job* m, std::function<void(void)> fn) {
 //  map_finish_notify {{{
 void TaskExecutor::map_finish_notify(FinishMap* info) {
   INFO("FinishMap arrived, remaining=%lu", tasks_remaining[info->job_id] - 1);
+  INFO("The number of nodes for shuffling: %d", info->nodes.size());
   for (auto& node : info->nodes)
     nodes_shuffling.insert(node);
 
@@ -161,9 +187,9 @@ void TaskExecutor::task_accept_status(TaskStatus* m) {
 // }}}
 //  key_value_store {{{
 void TaskExecutor::key_value_store(KeyValueShuffle *kv) {
-  INFO("KVshuffle KV_ID=%lu, ID=%i, DST=%i", kv->kv_id, id, kv->node_id);
+  INFO("KVshuffle KV_ID=%lu, ID=%i, DST=%i, origin_id=%i", kv->kv_id, id, kv->node_id, kv->origin_id);
 
-  if (kv->node_id == id) {
+  if (kv->node_id == (uint32_t)id) {
 
     std::thread([&, this] (KeyValueShuffle kv) {
         try {
@@ -226,7 +252,9 @@ void TaskExecutor::request_local_map (messages::Task* task) {
   Task stask = *task;
 
   std::thread([&, this](Task task) {
-        Executor exec(this);
+//
+        Executor exec(this, uma, mp);
+//
         exec.run_map(&task);
       }, stask).detach();
 }
@@ -274,11 +302,11 @@ void TaskExecutor::try_finish_map(uint32_t job_id) {
   if (tasker_remaining_job.find(job_id) != tasker_remaining_job.end()) {
     if (tasker_remaining_nodes_shuffling.empty()) {
       auto ts = tasker_remaining_job[job_id];
+      uint32_t leader = job_id % network_size;
+      network->send(leader, &ts);
       tasker_remaining_job.erase(job_id);
       local_mut.unlock();
 
-      uint32_t leader = job_id % network_size;
-      network->send(leader, &ts);
       return;
     }
   }
@@ -305,10 +333,10 @@ void TaskExecutor::schedule_reduce(messages::Job* m) {
 
   INFO("JOB LEADER %i Processing REDUCE %i jobs", id, reduce_nodes.size());
 
-  if (dfs.exists(m->file_output))
-    dfs.remove(m->file_output);
+//  if (dfs.exists(m->file_output))
+//    dfs.remove(m->file_output);
 
-  dfs.touch(m->file_output);
+//  dfs.touch(m->file_output);
 
   for (auto which_node : reduce_nodes) {
     Task task;
@@ -317,7 +345,7 @@ void TaskExecutor::schedule_reduce(messages::Job* m) {
     task.func_name = m->reduce_name;
     task.library = m->library;
     task.leader = id;
-    task.file_output = m->file_output;
+ //   task.file_output = m->file_output;
     task.func_body = m->func_body;
     task.lang = m->lang;
 
@@ -340,7 +368,9 @@ void TaskExecutor::request_local_reduce (messages::Task* m) {
   if (di.num_reducer > 0) { //! Perform reduce operation
     std::async(std::launch::async, [&]() {
         logger->info("Performing reduce operation");
-        Executor exec(this);
+//
+        Executor exec(this, uma, mp);
+//
         Task copy_task = *m;
         exec.run_reduce(&copy_task);
         });

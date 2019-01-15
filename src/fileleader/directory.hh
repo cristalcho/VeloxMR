@@ -4,7 +4,7 @@
 #include <vector>
 #include "../messages/blockinfo.hh"
 #include "../messages/fileinfo.hh"
-#include "blockmetadata.hh"
+//#include "blockmetadata.hh"
 
 namespace eclipse {
 using namespace messages;

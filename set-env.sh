@@ -1,6 +1,6 @@
 # Path for VeloxDFS
-VELOXHOME=~/VeloxDFS
-cd $VELOXHOME
+VELOX_HOME=`pwd`
+cd $VELOX_HOME
 
 # Your Install Path
 INSTALL_PATH=`pwd`/build

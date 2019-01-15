@@ -27,7 +27,10 @@ before_map_t DL_loader::load_function_before_map (std::string fun) {
     reinterpret_cast<before_map_t>(dlsym(lib, fun.c_str())); 
   char* err = dlerror();
 
-  if (err) return nullptr; //throw std::runtime_error("DL_LOADER: Symbol not found");
+  if (err) {
+    //return nullptr; 
+    throw std::runtime_error("DL_LOADER: Symbol not found");
+  }
   return func_;
 }
 // }}}
@@ -51,6 +54,26 @@ mapper_t DL_loader::load_function (std::string fun) {
   return func_;
 }
 // }}}
+/// load_function_2 {{{
+mapper2_t DL_loader::load_function_2 (std::string fun) {
+  mapper2_t func_ = 
+    reinterpret_cast<mapper2_t>(dlsym(lib, fun.c_str())); 
+  char* err = dlerror();
+
+  if (err) throw std::runtime_error("DL_LOADER: Symbol not found");
+  return func_;
+}
+// }}}
+/// load_function_3 ----------------------{{{
+mapper3_t DL_loader::load_function_3 (std::string fun) {
+  mapper3_t func_ = 
+    reinterpret_cast<mapper3_t>(dlsym(lib, fun.c_str())); 
+  char* err = dlerror();
+
+  if (err) throw std::runtime_error("DL_LOADER: Symbol not found");
+  return func_;
+}
+//------------------- }}}
 // load_function {{{
 reducer_t DL_loader::load_function_reduce (std::string fun) {
   reducer_t func_ = 

@@ -8,7 +8,9 @@ class Executor {
   //typedef std::pair<string, string> (*maptype)(std::string);
   //typedef std::string (*reducetype)(std::string, std::string);
   public:
-    Executor (TaskExecutor*);
+    Executor (TaskExecutor*, std::unordered_multimap<std::string, void*>**, std::vector<std::string>*);
+//    Executor (TaskExecutor*, std::unordered_multimap<std::string, void*>**);
+//    Executor (TaskExecutor*);
     ~Executor ();
 
     bool run_map (messages::Task*);
@@ -16,6 +18,10 @@ class Executor {
 
   protected:
     TaskExecutor* peer;
+    std::unordered_multimap<std::string, void*>** umaparray;
+//
+    std::vector<std::string>* memoryPoints;
+//
 };
 
 } /* eclipse  */ 

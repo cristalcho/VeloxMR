@@ -23,7 +23,6 @@ int main (int argc, char ** argv) {
   if (pid != 0) {
     try {
       context.io.notify_fork(boost::asio::io_service::fork_parent);
-
       //struct rlimit limit;
 
       //limit.rlim_cur = 4000;
@@ -67,7 +66,7 @@ int main (int argc, char ** argv) {
 
   } else {
     context.io.notify_fork(boost::asio::io_service::fork_child);
-
+   
     uint32_t ex_port = GET_INT("network.ports.client");
 
     auto internal_net = make_unique<network::ClientHandler> (ex_port);

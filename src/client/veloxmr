@@ -1,0 +1,6 @@
+#!/usr/bin/python
+from veloxmr_lib import *
+from subprocess import call
+from IPython import embed
+
+embed()

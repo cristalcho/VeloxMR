@@ -7,7 +7,10 @@
 #include "messages/key_value_shuffle.h"
 #include "../client/dfs.hh"
 #include "task_cxx.hh"
-#include "task_python.hh"
+//#include "task_python.hh"
+//soojeong
+#include <libmemcached/memcached.h>
+//
 
 #include <exception>
 #include <string>
@@ -19,19 +22,32 @@
 #include <unordered_map>
 #include <mutex>
 #include <boost/exception/exception.hpp>
+#include <algorithm>
+#include <time.h>
 
+#define ITERATIONS 5
+#define NUM_SERVERS 9 //7
+#define NUM_CLUSTERS 9
 #define MAP_MAX_LINE 10000
-
 using namespace eclipse;
 using namespace std;
 
 namespace eclipse {
+
 // Constructor {{{
-Executor::Executor(TaskExecutor* p) : peer(p) { }
-Executor::~Executor() { }
+Executor::Executor(TaskExecutor* p, std::unordered_multimap<std::string, void*>** uma, std::vector<std::string>* mp) : peer(p), umaparray(uma), memoryPoints(mp){}
+Executor::~Executor() {}
 // }}}
+
+static string group_keys[NUM_SERVERS] = {"dicl", "peach", "no", "dfs", "map", "hadoop", "pear", "memc", "apple"};
+inline memcached_st *_get_memcached() { 
+    const char *server = "--SERVER=dumbo051 --SERVER=dumbo052 --SERVER=dumbo053 --SERVER=dumbo054 --SERVER=dumbo055 --SERVER=dumbo056 --SERVER=dumbo057 --SERVER=dumbo058 --SERVER=dumbo059";
+    return memcached(server, strlen(server));
+}
+
 // run_map {{{
 bool Executor::run_map (messages::Task* m) {
+
   std::unordered_map<std::string, void*> options;
   vector<uint32_t> keys_blocks;
   queue<std::thread> threads;
@@ -42,26 +58,67 @@ bool Executor::run_map (messages::Task* m) {
 
   task_handler* task_execution = nullptr;
 
+  //where do mapper running?
+  const int len = 256;
+  char* hostname = new char[len];
+  gethostname(hostname, len);
+  int mapHost = hostname[7]-'0';
+  mapHost -= 1;
+
   if (m->lang == "C++") {
     task_execution = new task_cxx(m->library, m->func_name);
   } else {
-    task_execution = new task_python(m->func_body, m->before_map, m->after_map);
+//    task_execution = new task_python(m->func_body, m->before_map, m->after_map);
   }
   task_execution->setup(true);
 
   INFO("Launching mapper with %i threads", m->blocks.size());
-
-  task_execution->before_map(options);
-
+  
   try {
-  for (size_t map_id = 0; map_id < m->blocks.size(); map_id++) {
+//    task_execution->before_map(options);
+  } catch(std::exception& e) {
+    INFO("exception in before_map: %s", e.what());
+  }
 
+  DEBUG("before_map is finished");
+
+//soojeong
+    size_t value_length;
+    uint32_t flags;
+    memcached_return_t rt;
+    memcached_st *memc = _get_memcached();
+    if(memc==NULL){ INFO("FAILURE WITH CONNECTING MEMCC");  }
+
+    //get initial centroids  
+    std::unordered_map<std::string, int> centroids;
+    char* prev;
+    uint32_t node;
+    for(int i =0; i < NUM_CLUSTERS ; i++){
+      string mem_key = "prev_" + to_string(i);
+      int j = i % NUM_SERVERS;
+      prev = memcached_get_by_key(memc, group_keys[j].c_str(), group_keys[j].size(), mem_key.c_str(), mem_key.size(),
+                                  &value_length, &flags, &rt); 
+//      INFO("i : %d, j: %d, prev: %s", i, j, prev);
+      if(!prev) {  INFO("GET+INITIALIZED___MEMCACHED_ERROR_%d", rt); }
+      centroids.insert({prev, i}); 
+    }
+    const char *isFirst = "isFirst";
+//
+
+
+  bool first[m->blocks.size()] = { false };
+  
+  try {
+
+  for (size_t map_id = 0; map_id < m->blocks.size(); map_id++) {
+    
+    //  INFO("block_size: %d", m->blocks.size());
     // Make sure we only execute 'mappers' threads at that time
     if (threads.size() >= mappers) {
       threads.front().join();
       threads.pop();
     }
-
+    
     threads.emplace([&, this] (size_t id) {
           try {
 
@@ -69,80 +126,105 @@ bool Executor::run_map (messages::Task* m) {
           auto* kv_blocks = new map<uint32_t, KeyValueShuffle>();
 
           {
-            const string block_name = m->blocks[id].second;
-            Local_io local_io;
-            string input = local_io.read(block_name);
-            istringstream ss (std::move(input));
-
+            mut.lock();
+            rt = memcached_exist_by_key(memc, group_keys[mapHost].c_str(), group_keys[mapHost].size(), isFirst, strlen(isFirst)); 
+            mut.unlock();
+                 
             velox::OutputCollection results;
-            char* next_line = new char[MAP_MAX_LINE];
+            //1st iteration
+            if(rt != MEMCACHED_SUCCESS){ 
 
-            while (!ss.eof()) {
-              bzero(next_line, MAP_MAX_LINE);
-              ss.getline (next_line, MAP_MAX_LINE);
-              if (strnlen(next_line, MAP_MAX_LINE) == 0) 
-                continue;
-
-              std::string line(next_line);
-              task_execution->map(line, results, options);
-            }
-            delete[] next_line;
-
-            for (auto& pair : results) {
-              auto& key = pair.first;
-              auto& value = pair.second;
-              uint32_t node = h(key) % network_size;
-              auto it = kv_blocks->find(node);
-              if (it == kv_blocks->end()) {
-                it = kv_blocks->insert({node, {}}).first;
-
-                it->second.node_id = node;
-                it->second.job_id_ = m->job_id;
-                it->second.map_id_ = 0;
-                it->second.origin_id = context.id;
+              const string block_name = m->blocks[id].second; 
+              Local_io local_io;
+              string input = local_io.read(block_name);
+              istringstream ss (std::move(input));
+              
+              char* next_line = new char[MAP_MAX_LINE];
+              while (!ss.eof()) {
+                bzero(next_line, MAP_MAX_LINE);
+                ss.getline (next_line, MAP_MAX_LINE);
+                if (strnlen(next_line, MAP_MAX_LINE) == 0) 
+                  continue;
+                std::string line(next_line);
+                memoryPoints[id].emplace_back(line);
               }
+             delete[] next_line;
 
-              it->second.kv_pairs.insert({key, std::move(value)});
+              first[id] = true;  
             }
-          }
+              struct timeval readDataS, readDataE; 
+              gettimeofday(&readDataS, NULL);
 
+              task_execution->map(memoryPoints[id], results, centroids);
+
+              gettimeofday(&readDataE, NULL);
+              INFO("[MAPPER]: %ld", readDataE.tv_sec - readDataS.tv_sec);
+             
+            struct timeval mutexS, mutexE;
+            gettimeofday(&mutexS, NULL);
+              int pointNum = 0;
+              double xSum = 0.0;
+              double ySum = 0.0;
+              double _x = 0.0, _y =0.0;
+              char tmp[516];
+              string avgNum;
+              avgNum.reserve(516);
+
+              for (auto& pair : results) {
+                auto& key = pair.first;
+                auto& value = pair.second;
+                auto centNum = centroids.find(key)->second;
+                uint32_t node = centNum % NUM_SERVERS;
+
+                for(vector<string>::iterator iter = value.begin(); iter != value.end(); iter++){
+                    string val(*iter);
+                    sscanf(val.c_str(), "%lf,%lf", &_x, &_y);
+                    xSum += _x;
+                    ySum += _y;
+                    pointNum++;
+                }
+                //------------------------------
+                size_t total = snprintf(tmp, 516, "%lf,%lf,%d", (xSum/pointNum), (ySum/pointNum), pointNum); 
+                avgNum.append(tmp,total);
+                value.clear();
+                value.push_back(to_string(centNum));
+                value.push_back(avgNum);
+                avgNum = "";
+                pointNum = 0;
+                xSum = 0.0; ySum=0.0;
+              
+            gettimeofday(&mutexE, NULL);
+            INFO("[COMPUTE_TIME]: %ld", mutexE.tv_sec - mutexS.tv_sec);
+
+                //collect other mappers datas
+                auto it = kv_blocks->find(node);
+                if (it == kv_blocks->end()) {
+                  it = kv_blocks->insert({node, {}}).first;
+ 
+                  it->second.node_id = node;
+                  it->second.job_id_ = m->job_id;
+                  it->second.map_id_ = 0;
+                  it->second.origin_id = context.id;
+                }
+                it->second.kv_pairs.insert({key, std::move(value)});
+              }  
+          }
           mut.lock();
           for (auto it: *kv_blocks)
               keys_blocks.push_back(it.first);
           mut.unlock();
-
-          vector<int> shuffled_array;
-
-          {
-            for (int i = 0; i < network_size; i++)
-              shuffled_array.push_back(i);
-
-            mut.lock();
-            unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count();
-            auto engine = std::default_random_engine{seed1};
-            std::shuffle(shuffled_array.begin(), shuffled_array.end(), engine);
-            mut.unlock();
-          }
-
-          for (auto& index : shuffled_array) {
-            auto it = kv_blocks->find(index);
+          
+          for (int i=0; i < network_size; i++) {
+            auto it = kv_blocks->find(i);
             if (it != kv_blocks->end()) {
               KeyValueShuffle* kv = &(it->second);
               peer->insert_key_value(kv);
             }
           }
-
-          //auto it = kv_blocks->begin();
-          //while (it != kv_blocks->end()) {
-          //  peer->insert_key_value(it->second.get());
-          //  ++it;
-          //}
-
-//          kv_blocks->clear();
           delete kv_blocks;
           }
           INFO("Finishing map threads");
-
+          
         } catch (exception& e) {
           ERROR("Mapper exception %s", e.what());
         } catch (boost::exception& e) {
@@ -151,13 +233,27 @@ bool Executor::run_map (messages::Task* m) {
 
     }, map_id);
   }
-
     while (!threads.empty()) {
       threads.front().join();
       threads.pop();
     }
 
-    task_execution->after_map(options);
+    int c_f = 0;
+    if(rt != MEMCACHED_SUCCESS){
+        //  mut.lock();
+        for(int i = 0; i < m->blocks.size(); i++){
+            if(first[i] == 1){ c_f+=1;  } //INFO("first[%d] == %d", i, first[i]); }
+        if(c_f == m->blocks.size()){
+            rt = memcached_set_by_key(memc, group_keys[mapHost].c_str(), group_keys[mapHost].size(), isFirst, strlen(isFirst), 
+                    isFirst, strlen(isFirst), (time_t)0, (uint32_t)0);
+            //            INFO("YEAH ALL FIRST ELEMENT IS FIRST LETS GO TO THE SECOND ITERATION");
+            if(rt != MEMCACHED_SUCCESS) {  INFO("MAKE__FIRST___MEMCACHED_ERROR_%d", rt); }    
+        }
+      }
+    //            mut.unlock();
+    }
+
+ //   task_execution->after_map(options);
     delete task_execution;
 
     peer->notify_map_is_finished(m->job_id, keys_blocks);
@@ -173,10 +269,11 @@ bool Executor::run_map (messages::Task* m) {
 }
 // }}}
 // run_reduce {{{
+int iter = 0;
+std::unordered_multimap<std::string, void*> reduceNum[1];
 bool Executor::run_reduce (messages::Task* task) {
-  auto block_size = GET_INT("filesystem.block");
   //auto reducer_slot = GET_INT("mapreduce.reduce_slot");
-
+ 
   auto network_size = GET_VEC_STR("network.nodes").size();
   Histogram boundaries(network_size, 100);
   boundaries.initialize();
@@ -187,23 +284,37 @@ bool Executor::run_reduce (messages::Task* task) {
   if (task->lang == "C++") {
     task_execution = new task_cxx(task->library, task->func_name);
   } else {
-    task_execution = new task_python(task->func_body, task->before_map, task->after_map);
+//    task_execution = new task_python(task->func_bode, task->before_map, task->after_map);
   }
   task_execution->setup(false);
 
-  uint32_t total_size = 0;
-  uint32_t num_keys = 0;
   queue<std::thread> threads;
   DirectoryMR directory;
   uint32_t reducer_slot = directory.select_number_of_reducers(task->job_id);
   mutex mut;
   DEBUG("LAunching reducer with %i threads", reducer_slot);
   for (int reducer_id = 0; reducer_id < reducer_slot; reducer_id++) {
-
     if (threads.size() >= 1) {
       threads.front().join();
       threads.pop();
     }
+
+//soojeong
+    struct timeval s, e;
+    char* hostname = new char[8];
+    gethostname(hostname, 8);
+    int rHost = hostname[7]-'0';
+    rHost -= 1;
+//    if(rHost == 9) rHost -= 1;
+
+    //size_t value_length;
+   // uint32_t flags;
+   /// memcached_return_t rt;
+    mut.lock();
+    //memcached_st *memc2 = _get_memcached();
+    mut.unlock();
+//
+
     threads.emplace(std::thread([&, this] (int id) {
 
       IReader ireader;
@@ -217,69 +328,84 @@ bool Executor::run_reduce (messages::Task* task) {
       std::string block_content;
 
       std::vector<std::string> values;
+      int count = 0;
+      int centNum = 0;
+      string::size_type sz;
+      int p = 0;
+
       while (ireader.is_next_key()) {
         string key;
         ireader.get_next_key(key);
 
         mut.lock();
-        DEBUG("PROCCESSING KEY %s", key.c_str());
+        DEBUG("PROCCESSING KEY %s, %d", key.c_str(), key.size());
         mut.unlock();
 
-        velox::OutputCollection output;
-        values.clear();
+        if(key.size() > 2){
+          values.clear();
 
-        //TODO: make a function to get values at a time
-        while (ireader.is_next_value()) {
-          string value;
-          ireader.get_next_value(value);
-          values.push_back(value);
+          //TODO: make a function to get values at a time
+          gettimeofday(&s, NULL);
+          bool isCent = true;
+          while (ireader.is_next_value()) {
+            string value;
+            ireader.get_next_value(value);
+      //      INFO("%s", value.c_str());
+            if(isCent){
+              centNum = stoi(value); 
+              count = centNum / NUM_SERVERS;
+              reduceNum[count].clear();
+              isCent = false;
+            } 
+            else{ 
+              if(value.size() < 2){ continue; }
+              values.push_back(value);
+              reduceNum[count].insert({value, NULL});
+              p++;
+            } 
+          }
+        gettimeofday(&e, NULL);
+    //    INFO("BEFORE_REDUCER: %ld", e.tv_sec - s.tv_sec);
+        }//2nd iteration~
+        else{
+          values.clear();
+
+          //TODO: make a function to get values at a time
+          //soojeong
+          gettimeofday(&s, NULL);
+          while (ireader.is_next_value()) {
+            string value;
+            ireader.get_next_value(value);
+            values.push_back(value);
+          }
+        gettimeofday(&e, NULL);
+   //     INFO("BEFORE_REDUCER2 %ld", e.tv_sec - s.tv_sec);
         }
+  //      INFO("host: %d i>>number of point: %d", rHost+1, p);
+
         DEBUG("RUNNING REDUCER %s", key.c_str());
 
         if(values.size() > 0) {
           try {
-            task_execution->reduce(key, values, output);
+            task_execution->reduce(key, values);
+
+            //what is it?            
+ /*           if(key.size() >2){
+              string skey = "cent_" + to_string(centNum);
+              uint64_t addr = (uint64_t)&reduceNum[count];
+              string addr_str = to_string(addr);
+            mut.lock();
+              rt = memcached_set_by_key(memc2, group_keys[rHost].c_str(), group_keys[rHost].size(), skey.c_str(), skey.size(), 
+                                       addr_str.c_str(), addr_str.size(), (time_t)0, (uint32_t)0);
+            mut.unlock();
+            } */
 
           } catch (std::exception& e) {
             ERROR("Error in the executer: %s", e.what());
-            exit(EXIT_FAILURE);
+//            exit(EXIT_FAILURE);
           }
-        } else 
-          INFO("REDUCER skipping a KEY");
-
-        std::string current_block_content = "";
-
-        auto make_block_content = [&] (std::string key, std::vector<std::string> values) mutable {
-
-          for(std::string& value : values)  {
-            current_block_content += key + ": " + value + "\n";
-            num_keys++;
-          }
-        };
-
-        output.travel(make_block_content);
-
-        block_content += current_block_content;
-        mut.lock();
-        total_size += current_block_content.length();
-        mut.unlock();
-
-
-        if (block_content.length() > (uint32_t)block_size || !ireader.is_next_key()) {
-          string name = task->file_output + "-" + key;
-
-          mut.lock();
-          metadata.blocks.push_back(name);
-          metadata.hash_keys.push_back(boundaries.random_within_boundaries(peer->get_id()));
-          metadata.block_size.push_back(block_content.length());
-          mut.unlock();
-
-          INFO("REDUCER SAVING TO DISK %s : %lu B", name.c_str(), block_content.size());
-          Local_io local_io;
-          local_io.write(name, block_content);
-
-          block_content.clear();
-        }
+        }// else 
+//          INFO("REDUCER skipping a KEY");
 
       }
     }, reducer_id));
@@ -289,14 +415,16 @@ bool Executor::run_reduce (messages::Task* task) {
     threads.front().join();
     threads.pop();
   }
-
-  velox::DFS dfs;
-  INFO("REDUCER APPENDING FILE_METADATA KP:%u", num_keys);
-  dfs.file_metadata_append(task->file_output, total_size, metadata);
-
+  iter++;
   peer->notify_task_leader(task->leader, task->job_id, "REDUCE");
 
-
+//  if(iter == ITERATIONS){
+//    peer->notice_the_end();
+//    for(int i=0; i<2; i++){ 
+//        INFO("reduce#: %d", reduceNum[0].size());
+//        reduceNum[0].clear();
+//    } 
+//  }
   return true;
 }
 // }}}

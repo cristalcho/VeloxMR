@@ -79,6 +79,7 @@ bool IWriter::is_write_finish() {
 }
 
 IWriter::~IWriter() {
+  //writer_thread_->join();
   free(write_buf_);
 }
 void IWriter::finalize() {

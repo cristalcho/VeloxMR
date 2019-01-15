@@ -13,13 +13,22 @@ class task_cxx : public task_handler {
     void setup(bool is_map) override;
     void before_map(TaskOptions&) override;
     void after_map(TaskOptions&) override;
-    void map(std::string&, TaskOutput&, TaskOptions&) override;
-    void reduce(std::string&, vec_str&, TaskOutput&) override;
+    void map(std::string&, TaskOutput&, TaskOptions&);
+    void map(std::string&, int, TaskOutput&, TaskOutput&, TaskOptions&);
+// 
+    void map(vec_str&, TaskOutput&, centOptions&);
+//
+    void reduce(std::string&, vec_str&) override;
+//    void reduce(std::string&, vec_str&, TaskOutput&) override;
 
   private:
     before_map_t before_map_f;
     after_map_t after_map_f;
     mapper_t mapper;
+    mapper2_t mapper2nd;
+//
+    mapper3_t mapper3rd;
+//  
     reducer_t reducer;
 
     std::string library_path;

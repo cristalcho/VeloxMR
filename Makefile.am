@@ -1,7 +1,7 @@
 include tests/Makefile.am
 
-AM_CPPFLAGS      = $(CPPFLAGS) -I@srcdir@/src/common -I@srcdir@/src -include ./config.h $(BOOST_CPPFLAGS)
-AM_CXXFLAGS      = $(CXXFLAGS) -Wall
+AM_CPPFLAGS      = $(CPPFLAGS) -I@srcdir@/src/common -I@srcdir@/src -include ./config.h $(BOOST_CPPFLAGS) -g
+AM_CXXFLAGS      = $(CXXFLAGS) -Wall -g
 
 bin_PROGRAMS     = eclipse_node veloxdfs __velox_mapreduce
 bin_SCRIPTS      = src/client/veloxmr src/client/veloxmr_lib.py
@@ -63,11 +63,14 @@ libvdfs_la_SOURCES  = $(messages_files) \
                       src/common/context.cc src/common/dl_loader.cc \
                       src/common/context_singleton.cc
 
-libvdfs_la_LDFLAGS  = $(BOOST_LDFLAGS) -version-info 0:0:0
-libvdfs_la_LIBADD   = -lboost_system -lboost_serialization -lboost_coroutine -lboost_thread -lboost_context -ldl
+MEMCACHED_LDFLAGS  = -L/home/cristalcho/libmemcached-1.0.18/build/lib
+MEMCACHED_LDADD   = -lmemcached -lpthread
 
-libvmr_la_LDFLAGS  = $(BOOST_LDFLAGS) -version-info 0:0:0
-libvmr_la_LIBADD   = -lboost_system -lboost_serialization -lboost_coroutine -lboost_thread -lboost_context -ldl
+libvdfs_la_LDFLAGS  = $(BOOST_LDFLAGS) -version-info 0:0:0 $(MEMCACHED_LDFLAGS)
+libvdfs_la_LIBADD   = -lboost_system -lboost_serialization -lboost_coroutine -lboost_thread -lboost_context -ldl $(MEMCACHED_LDADD)
+
+libvmr_la_LDFLAGS  = $(BOOST_LDFLAGS) -version-info 0:0:0 $(MEMCACHED_LDFLAGS)
+libvmr_la_LIBADD   = -lboost_system -lboost_serialization -lboost_coroutine -lboost_thread -lboost_context -ldl $(MEMCACHED_LDADD)
 libvmr_la_SOURCES  = $(mr_messages_files) \
                       src/client/vmr.cc \
                       src/mapreduce/output_collection.cc
@@ -104,7 +107,7 @@ eclipse_node_SOURCES = src/targets/node_main_mr.cc \
                        src/mapreduce/executor.cc \
                        src/mapreduce/task_handler.cc \
                        src/mapreduce/task_cxx.cc \
-                       src/mapreduce/task_python.cc
+                       #src/mapreduce/task_python.cc
 
 eclipse_node_LDADD  = libvmr.la $(LDADD) -lpython2.7
 

@@ -49,8 +49,11 @@ void ClientHandler::connect(uint32_t i, shared_ptr<Server> server) {
             s->get_socket().async_connect(ep, yield[ec]);
           } 
 
-          if (ec) 
+          if (ec) {
+            ERROR("Connection error: %d (Category: %s)", ec.value(), ec.category().name());
+            ERROR("host: %s:%u", node.c_str(), port);
             BOOST_THROW_EXCEPTION(std::runtime_error("Connecting"));
+          }
 
           tcp::no_delay option(true);
           s->get_socket().set_option(option); 
