@@ -1,9 +1,9 @@
 sudo: false
-dist: precise
+dist: trusty
 language: cpp
 
 cache: 
-  - apt
+  - apt: true
   - ccache
   
 git:
@@ -25,6 +25,8 @@ addons:
       - g++-4.9
       - libunittest++-dev
       - python2.7-dev
+      - gdb 
+      - libzookeeper-mt-dev
 
 before_script:
   - export CXX=g++-4.9
@@ -33,7 +35,8 @@ before_script:
 script: 
   - sh autogen.sh
   - cd build
-  - sh ../configure --prefix=`pwd`
-  - make -j4
-  - make install
+  - export LIBRARY_PATH=`pwd`/lib
+  - export LD_LIBRARY_PATH=`pwd`/lib
+  - LIBRARY_PATH=`pwd`/lib sh ../configure --prefix=`pwd`
+  - make -j4 install
   - make -j4 check

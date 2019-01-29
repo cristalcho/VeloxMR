@@ -12,9 +12,9 @@
 #include <fstream>
 #include <boost/asio.hpp>
 #include "iwriter_interface.hh"
-#include "../../common/context_singleton.hh"
-#include "../../messages/message.hh"
-#include "../../messages/reply.hh"
+#include "common/context_singleton.hh"
+#include "messages/message.hh"
+#include "messages/reply.hh"
 #include "../fs/directorymr.hh"
 
 using std::list;

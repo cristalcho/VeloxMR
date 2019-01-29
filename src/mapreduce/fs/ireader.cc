@@ -8,9 +8,9 @@
 #include <sstream>
 #include <iomanip>
 #include <boost/asio.hpp>
-#include "../../common/context_singleton.hh"
-#include "../../messages/factory.hh"
-#include "../../messages/message.hh"
+#include "common/context_singleton.hh"
+#include "messages/factory.hh"
+#include "messages/message.hh"
 #include "../messages/igroupinforequest.hh"
 
 using std::vector;

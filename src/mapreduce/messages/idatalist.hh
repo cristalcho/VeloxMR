@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../../messages/message.hh"
+#include "messages/message.hh"
 #include <string>
 #include <vector>
 #include <iostream>
-#include "../mapreduce/messages/idatainfo.hh"
+#include "idatainfo.hh"
 
 namespace eclipse {
 namespace messages {

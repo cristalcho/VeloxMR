@@ -1,6 +1,6 @@
 // vim: foldmethod=marker
 #include "py_executor.hh"
-#include "../common/hash.hh"
+#include "common/hash.hh"
 #include "../mapreduce/messages/key_value_shuffle.h"
 #include "../mapreduce/fs/ireader.h"
 #include "../messages/keyvalue.hh"

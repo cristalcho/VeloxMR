@@ -1,5 +1,5 @@
 #pragma once
-#include "../../messages/message.hh"
+#include "messages/message.hh"
 #include <vector>
 
 namespace eclipse {

@@ -1,5 +1,5 @@
 #include "task_python.hh"
-#include "../common/context_singleton.hh"
+#include "common/context_singleton.hh"
 
 #include <python2.7/Python.h>
 #include <exception>

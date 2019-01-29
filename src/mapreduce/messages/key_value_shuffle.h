@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "../../messages/message.hh"
+#include "messages/message.hh"
 namespace eclipse {
 namespace messages {
 

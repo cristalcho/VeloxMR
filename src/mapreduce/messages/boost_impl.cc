@@ -76,30 +76,12 @@ template <typename Archive>
   }
 
 template <typename Archive>
-  void serialize(Archive& ar, eclipse::messages::IDataInfoRequest& c,
-      unsigned int) {
-    ar & BASE_OBJECT(Message, c);
-    ar & BOOST_SERIALIZATION_NVP(c.job_id);
-    ar & BOOST_SERIALIZATION_NVP(c.map_id);
-  }
-
-template <typename Archive>
   void serialize(Archive& ar, eclipse::messages::IGroupInfoRequest& c,
       unsigned int) {
     ar & BASE_OBJECT(Message, c);
     ar & BOOST_SERIALIZATION_NVP(c.job_id);
     ar & BOOST_SERIALIZATION_NVP(c.map_id);
     ar & BOOST_SERIALIZATION_NVP(c.reducer_id);
-  }
-
-template <typename Archive>
-  void serialize(Archive& ar, eclipse::messages::IBlockInfoRequest& c,
-      unsigned int) {
-    ar & BASE_OBJECT(Message, c);
-    ar & BOOST_SERIALIZATION_NVP(c.job_id);
-    ar & BOOST_SERIALIZATION_NVP(c.map_id);
-    ar & BOOST_SERIALIZATION_NVP(c.reducer_id);
-    ar & BOOST_SERIALIZATION_NVP(c.block_seq);
   }
 
 template <typename Archive>
@@ -153,22 +135,6 @@ template <typename Archive>
   }
 
 template <typename Archive>
-  void serialize(Archive& ar, eclipse::messages::JobStatus& c,
-      unsigned int) {
-    ar & BASE_OBJECT(Message, c);
-    ar & BOOST_SERIALIZATION_NVP(c.is_success);
-    ar & BOOST_SERIALIZATION_NVP(c.job_id);
-  }
-
-template <typename Archive>
-  void serialize(Archive& ar, eclipse::messages::IDataKeys& c,
-      unsigned int) {
-    ar & BASE_OBJECT(Message, c);
-    ar & BOOST_SERIALIZATION_NVP(c.keys);
-    ar & BOOST_SERIALIZATION_NVP(c.job_id);
-  }
-
-template <typename Archive>
   void serialize(Archive& ar, eclipse::messages::FinishMap& c,
       unsigned int) {
     ar & BASE_OBJECT(Message, c);
@@ -200,16 +166,6 @@ template void serialize (boost::archive::xml_iarchive&,  Job&, unsigned);
 template void serialize (boost::archive::binary_iarchive&,  Job&, unsigned);
 template void serialize (boost::archive::binary_oarchive&,  Job&, unsigned);
 
-template void serialize (boost::archive::xml_oarchive&, JobStatus&, unsigned);
-template void serialize (boost::archive::xml_iarchive&,  JobStatus&, unsigned);
-template void serialize (boost::archive::binary_iarchive&,  JobStatus&, unsigned);
-template void serialize (boost::archive::binary_oarchive&,  JobStatus&, unsigned);
-
-template void serialize (boost::archive::xml_oarchive&, IDataKeys&, unsigned);
-template void serialize (boost::archive::xml_iarchive&,  IDataKeys&, unsigned);
-template void serialize (boost::archive::binary_iarchive&,  IDataKeys&, unsigned);
-template void serialize (boost::archive::binary_oarchive&,  IDataKeys&, unsigned);
-
 template void serialize (boost::archive::xml_oarchive&, KeyValueShuffle&, unsigned);
 template void serialize (boost::archive::xml_iarchive&,  KeyValueShuffle&, unsigned);
 template void serialize (boost::archive::binary_iarchive&,  KeyValueShuffle&, unsigned);
@@ -235,20 +191,10 @@ template void serialize (boost::archive::xml_iarchive&,  IGroupInsert&, unsigned
 template void serialize (boost::archive::binary_iarchive&,  IGroupInsert&, unsigned);
 template void serialize (boost::archive::binary_oarchive&,  IGroupInsert&, unsigned);
 
-template void serialize (boost::archive::xml_oarchive&, IDataInfoRequest&, unsigned);
-template void serialize (boost::archive::xml_iarchive&,  IDataInfoRequest&, unsigned);
-template void serialize (boost::archive::binary_iarchive&,  IDataInfoRequest&, unsigned);
-template void serialize (boost::archive::binary_oarchive&,  IDataInfoRequest&, unsigned);
-
 template void serialize (boost::archive::xml_oarchive&, IGroupInfoRequest&, unsigned);
 template void serialize (boost::archive::xml_iarchive&,  IGroupInfoRequest&, unsigned);
 template void serialize (boost::archive::binary_iarchive&,  IGroupInfoRequest&, unsigned);
 template void serialize (boost::archive::binary_oarchive&,  IGroupInfoRequest&, unsigned);
-
-template void serialize (boost::archive::xml_oarchive&, IBlockInfoRequest&, unsigned);
-template void serialize (boost::archive::xml_iarchive&,  IBlockInfoRequest&, unsigned);
-template void serialize (boost::archive::binary_iarchive&,  IBlockInfoRequest&, unsigned);
-template void serialize (boost::archive::binary_oarchive&,  IBlockInfoRequest&, unsigned);
 
 template void serialize (boost::archive::xml_oarchive&, IDataList&, unsigned);
 template void serialize (boost::archive::xml_iarchive&,  IDataList&, unsigned);
@@ -277,17 +223,13 @@ template void serialize (boost::archive::binary_oarchive&,  NodesShuffling&, uns
 // 4) Also here
 BOOST_CLASS_EXPORT_IMPLEMENT(eclipse::messages::Task);
 BOOST_CLASS_EXPORT_IMPLEMENT(eclipse::messages::Job);
-BOOST_CLASS_EXPORT_IMPLEMENT(eclipse::messages::JobStatus);
-BOOST_CLASS_EXPORT_IMPLEMENT(eclipse::messages::IDataKeys);
 BOOST_CLASS_EXPORT_IMPLEMENT(eclipse::messages::KeyValueShuffle);
 BOOST_CLASS_EXPORT_IMPLEMENT(eclipse::messages::FinishShuffle);
 BOOST_CLASS_EXPORT_IMPLEMENT(eclipse::messages::TaskStatus);
 BOOST_CLASS_EXPORT_IMPLEMENT(eclipse::messages::IDataInsert);
 BOOST_CLASS_EXPORT_IMPLEMENT(eclipse::messages::IGroupInsert);
 BOOST_CLASS_EXPORT_IMPLEMENT(eclipse::messages::IBlockInsert);
-BOOST_CLASS_EXPORT_IMPLEMENT(eclipse::messages::IDataInfoRequest);
 BOOST_CLASS_EXPORT_IMPLEMENT(eclipse::messages::IGroupInfoRequest);
-BOOST_CLASS_EXPORT_IMPLEMENT(eclipse::messages::IBlockInfoRequest);
 BOOST_CLASS_EXPORT_IMPLEMENT(eclipse::messages::IDataList);
 BOOST_CLASS_EXPORT_IMPLEMENT(eclipse::messages::IDataInfo);
 BOOST_CLASS_EXPORT_IMPLEMENT(eclipse::messages::FinishMap);

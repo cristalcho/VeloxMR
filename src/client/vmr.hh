@@ -1,5 +1,5 @@
 #pragma once
-#include "vdfs.hh"
+#include "client/vdfs.hh"
 #include <memory>
 
 namespace velox {

@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-#include "../../messages/message.hh"
+#include "messages/message.hh"
 
 namespace eclipse {
 namespace messages {

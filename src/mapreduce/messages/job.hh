@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../messages/message.hh"
+#include "messages/message.hh"
 #include <vector>
 #include <utility>
 

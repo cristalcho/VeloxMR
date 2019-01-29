@@ -11,10 +11,10 @@
 #include <iomanip>
 #include <exception>
 #include <boost/asio.hpp>
-#include "../../common/context_singleton.hh"
-#include "../../messages/message.hh"
-#include "../../messages/factory.hh"
-#include "../../messages/reply.hh"
+#include "common/context_singleton.hh"
+#include "messages/message.hh"
+#include "messages/factory.hh"
+#include "messages/reply.hh"
 #include "../messages/idatainsert.hh"
 #include "../messages/igroupinsert.hh"
 #include "../messages/iblockinsert.hh"

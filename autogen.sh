@@ -7,3 +7,5 @@ aclocal -I m4 --install           # Generate aclocal
 autoconf                          # Generate configure script 
 autoheader                        # Generate config.h
 automake --add-missing --copy     # Generate Makefile.in and other scripts 
+
+(cd VeloxDFS/ && sh autogen.sh)

@@ -1,7 +1,7 @@
 #include "executor.hh"
-#include "../common/dl_loader.hh"
-#include "../common/histogram.hh"
-#include "../common/hash.hh"
+#include "dl_loader.hh"
+#include "common/histogram.hh"
+#include "common/hash.hh"
 #include "../mapreduce/output_collection.hh"
 #include "../mapreduce/fs/ireader.h"
 #include "messages/key_value_shuffle.h"
@@ -19,6 +19,7 @@
 #include <unordered_map>
 #include <mutex>
 #include <boost/exception/exception.hpp>
+#include <random>
 
 #define MAP_MAX_LINE 10000
 

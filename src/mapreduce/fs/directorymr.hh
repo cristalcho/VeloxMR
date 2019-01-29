@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include "../../fileleader/directory.hh"
+#include "fileleader/directory.hh"
 #include "../messages/idatainfo.hh"
 #include "../messages/igroupinfo.hh"
 #include "../messages/iblockinfo.hh"

@@ -1,9 +1,9 @@
 #include "vmr.hh"
-#include "../common/context_singleton.hh"
+#include "common/context_singleton.hh"
 #include "../messages/boost_impl.hh"
 #include "../messages/factory.hh"
 #include "../mapreduce/messages/job.hh"
-#include "../common/hash.hh"
+#include "common/hash.hh"
 #include <vector>
 #include <iomanip>
 #include <random>

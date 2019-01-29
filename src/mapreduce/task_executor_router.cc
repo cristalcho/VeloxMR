@@ -1,5 +1,5 @@
 #include "task_executor_router.hh"
-#include "../common/context_singleton.hh"
+#include "common/context_singleton.hh"
 #include "../messages/boost_impl.hh"
 #include "messages/task.hh"
 #include "messages/job.hh"

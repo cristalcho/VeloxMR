@@ -1,5 +1,5 @@
 #include "task_cxx.hh"
-#include "../common/context_singleton.hh"
+#include "common/context_singleton.hh"
 
 #include <exception>
 #include <memory>

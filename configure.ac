@@ -1,12 +1,14 @@
-AC_INIT([EclipseDFS], 
-    m4_esyscmd_s([git describe --tags | grep -o "[[:digit:]]\.[[:digit:]]\.[[:digit:]]"]), 
-    [vicente.bolea@gmail.com], 
+AC_INIT([VeloxMR],
+    m4_esyscmd_s([git describe --tags | grep -o "[[:digit:]]\.[[:digit:]]\.[[:digit:]]"]),
+    [vicente.bolea@gmail.com],
     [], [dicl.unist.ac.kr])
+
 AC_CONFIG_AUX_DIR([./.autotools_aux])
 AM_INIT_AUTOMAKE([foreign subdir-objects])
 AM_SILENT_RULES([yes])
 LT_INIT([dlopen])
 
+AC_CONFIG_SUBDIRS([VeloxDFS])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile ])
 AC_CONFIG_FILES([src/client/veloxmr],  [chmod +x src/client/veloxmr])
@@ -60,6 +62,9 @@ AC_SUBST(libdirfull)
 
 AH_TEMPLATE([ECLIPSE_CONF_PATH],[Configuration files (ETC) for Eclipse])
 AC_DEFINE_UNQUOTED([ECLIPSE_CONF_PATH], ["$sysconfdirfull"])
+
+AH_TEMPLATE([PY_SCHEDULER_SCRIPT],[PY scheduler path])
+AC_DEFINE_UNQUOTED([PY_SCHEDULER_SCRIPT], ["${bindirfull}/scheduler.py"])
 #}}}
 #OUTPUT{{{
 AC_OUTPUT

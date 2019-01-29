@@ -2,13 +2,11 @@
 #include "../messages/idatainfo.hh"
 #include "../messages/igroupinfo.hh"
 #include "../messages/iblockinfo.hh"
-#include "../messages/idatainforequest.hh"
 #include "../messages/igroupinforequest.hh"
-#include "../messages/iblockinforequest.hh"
 #include "../messages/idatainsert.hh"
 #include "../messages/igroupinsert.hh"
 #include "../messages/iblockinsert.hh"
-#include "../common/context_singleton.hh"
+#include "common/context_singleton.hh"
 
 #include <cinttypes>
 #include <sqlite3.h>

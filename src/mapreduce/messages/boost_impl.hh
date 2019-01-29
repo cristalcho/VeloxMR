@@ -6,22 +6,18 @@
 #pragma once
 
 // 1) Add your class here
-#include "../../messages/boost_impl.hh"
+#include "messages/boost_impl.hh"
 
 #include "idatalist.hh"
 #include "idatainfo.hh"
 #include "idatainsert.hh"
 #include "igroupinsert.hh"
 #include "iblockinsert.hh"
-#include "idatainforequest.hh"
 #include "igroupinforequest.hh"
-#include "iblockinforequest.hh"
 #include "key_value_shuffle.h"
 #include "finish_shuffle.h"
 #include "taskstatus.hh"
 #include "job.hh"
-#include "jobstatus.hh"
-#include "idatakeys.hh"
 #include "finishmap.hh"
 #include "nodes_shuffling.hh"
 #include "task.hh"
@@ -44,16 +40,12 @@ namespace serialization{
 template <typename Archive> void serialize (Archive&, eclipse::messages::Task&, unsigned);
 template <typename Archive> void serialize (Archive&, eclipse::messages::TaskStatus&, unsigned);
 template <typename Archive> void serialize (Archive&, eclipse::messages::Job&, unsigned);
-template <typename Archive> void serialize (Archive&, eclipse::messages::JobStatus&, unsigned);
-template <typename Archive> void serialize (Archive&, eclipse::messages::IDataKeys&, unsigned);
 template <typename Archive> void serialize (Archive&, eclipse::messages::KeyValueShuffle&, unsigned);
 template <typename Archive> void serialize (Archive&, eclipse::messages::FinishShuffle&, unsigned);
 template <typename Archive> void serialize (Archive&, eclipse::messages::IDataInsert&, unsigned);
 template <typename Archive> void serialize (Archive&, eclipse::messages::IGroupInsert&, unsigned);
 template <typename Archive> void serialize (Archive&, eclipse::messages::IBlockInsert&, unsigned);
-template <typename Archive> void serialize (Archive&, eclipse::messages::IDataInfoRequest&, unsigned);
 template <typename Archive> void serialize (Archive&, eclipse::messages::IGroupInfoRequest&, unsigned);
-template <typename Archive> void serialize (Archive&, eclipse::messages::IBlockInfoRequest&, unsigned);
 template <typename Archive> void serialize (Archive&, eclipse::messages::IDataList&, unsigned);
 template <typename Archive> void serialize (Archive&, eclipse::messages::IDataInfo&, unsigned);
 template <typename Archive> void serialize (Archive&, eclipse::messages::NodesShuffling&, unsigned);
@@ -66,17 +58,13 @@ template <typename Archive> void serialize (Archive&, eclipse::messages::NodesSh
 // 3) Also here
 BOOST_CLASS_EXPORT_KEY(eclipse::messages::Task);
 BOOST_CLASS_EXPORT_KEY(eclipse::messages::Job);
-BOOST_CLASS_EXPORT_KEY(eclipse::messages::JobStatus);
-BOOST_CLASS_EXPORT_KEY(eclipse::messages::IDataKeys);
 BOOST_CLASS_EXPORT_KEY(eclipse::messages::KeyValueShuffle);
 BOOST_CLASS_EXPORT_KEY(eclipse::messages::FinishShuffle);
 BOOST_CLASS_EXPORT_KEY(eclipse::messages::TaskStatus);
 BOOST_CLASS_EXPORT_KEY(eclipse::messages::IDataInsert);
 BOOST_CLASS_EXPORT_KEY(eclipse::messages::IGroupInsert);
 BOOST_CLASS_EXPORT_KEY(eclipse::messages::IBlockInsert);
-BOOST_CLASS_EXPORT_KEY(eclipse::messages::IDataInfoRequest);
 BOOST_CLASS_EXPORT_KEY(eclipse::messages::IGroupInfoRequest);
-BOOST_CLASS_EXPORT_KEY(eclipse::messages::IBlockInfoRequest);
 BOOST_CLASS_EXPORT_KEY(eclipse::messages::IDataList);
 BOOST_CLASS_EXPORT_KEY(eclipse::messages::IDataInfo);
 BOOST_CLASS_EXPORT_KEY(eclipse::messages::FinishMap);
@@ -88,14 +76,10 @@ BOOST_CLASS_TRACKING(ECNS::TaskStatus, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::IDataInsert, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::IGroupInsert, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::IBlockInsert, TRACK_NEVER);
-BOOST_CLASS_TRACKING(ECNS::IDataInfoRequest, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::IGroupInfoRequest, TRACK_NEVER);
-BOOST_CLASS_TRACKING(ECNS::IBlockInfoRequest, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::KeyValueShuffle, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::FinishShuffle, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::Job, TRACK_NEVER);
-BOOST_CLASS_TRACKING(ECNS::JobStatus, TRACK_NEVER);
-BOOST_CLASS_TRACKING(ECNS::IDataKeys, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::IDataList, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::IDataInfo, TRACK_NEVER);
 BOOST_CLASS_TRACKING(ECNS::FinishMap, TRACK_NEVER);
