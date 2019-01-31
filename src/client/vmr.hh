@@ -1,5 +1,12 @@
 #pragma once
+
+#ifdef STANDALONE_VERSION
 #include "client/vdfs.hh"
+#else
+#include <eclipsedfs/vdfs.hh>
+#endif
+
+
 #include <memory>
 
 namespace velox {

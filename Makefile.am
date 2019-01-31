@@ -1,8 +1,9 @@
 SUBDIRS = VeloxDFS .
 
-AM_CPPFLAGS      = $(CPPFLAGS) -I@srcdir@/src/common -I@srcdir@/src -I@srcdir@/VeloxDFS/src -I@srcdir@/VeloxDFS/src/common -include ./config.h $(BOOST_CPPFLAGS)
+AM_CPPFLAGS      = $(CPPFLAGS) -I@srcdir@/src/common -I@srcdir@/src -I@srcdir@/VeloxDFS/src -I@srcdir@/VeloxDFS/src/common -include ./config.h $(BOOST_CPPFLAGS) -DSTANDALONE_VERSION
 AM_CXXFLAGS      = $(CXXFLAGS) -Wall
 
+dist_bin_SCRIPTS = src/targets/velox-compile src/targets/velox-submit
 bin_PROGRAMS     = eclipse_node __velox_mapreduce
 bin_SCRIPTS      = src/client/veloxmr src/client/veloxmr_lib.py
 LDADD            = -lrt -ldl -lm -lvdfs
@@ -74,4 +75,4 @@ __velox_mapreduce_SOURCES = src/targets/veloxmr_mapreduce.cc
 __velox_mapreduce_LDADD   = libvmr.la $(LDADD) 
 
 pkginclude_HEADERS = src/client/vmr.hh \
-                      src/mapreduce/output_collection.hh
+                     src/mapreduce/output_collection.hh
