@@ -11,6 +11,7 @@
 #include "messages/task.hh"
 #include "executor.hh"
 #include "fs/iwriter.h"
+#include "client/dfs.hh"
 #include <iostream>
 #include <sstream>
 #include <exception>
@@ -52,7 +53,7 @@ void TaskExecutor::job_accept(messages::Job* m, std::function<void(void)> fn) {
 
     // Organize a map of blocks per each block_node
     for (auto& file : m->files) {
-      model::metadata md = dfs.get_metadata(file);
+      model::metadata md = velox::get_metadata(file);
 
       for (size_t i = 0; i < md.blocks.size(); i++) {
 
@@ -163,7 +164,7 @@ void TaskExecutor::task_accept_status(TaskStatus* m) {
 void TaskExecutor::key_value_store(KeyValueShuffle *kv) {
   INFO("KVshuffle KV_ID=%lu, ID=%i, DST=%i", kv->kv_id, id, kv->node_id);
 
-  if (kv->node_id == id) {
+  if ((int)kv->node_id == id) {
 
     std::thread([&, this] (KeyValueShuffle kv) {
         try {
@@ -305,10 +306,10 @@ void TaskExecutor::schedule_reduce(messages::Job* m) {
 
   INFO("JOB LEADER %i Processing REDUCE %i jobs", id, reduce_nodes.size());
 
-  if (dfs.exists(m->file_output))
-    dfs.remove(m->file_output);
+  if (velox::exists(m->file_output))
+    velox::remove(m->file_output);
 
-  dfs.touch(m->file_output);
+  velox::touch(m->file_output);
 
   for (auto which_node : reduce_nodes) {
     Task task;

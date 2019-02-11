@@ -5,7 +5,6 @@
 
 #include "fs/directorymr.hh"
 #include "fs/iwriter_interface.hh"
-#include "client/dfs.hh"
 #include "messages/job.hh"
 #include "messages/job.hh"
 #include "messages/task.hh"
@@ -61,7 +60,6 @@ class TaskExecutor : public Node {
     uint32_t current_nodes_shuffling = 0;
     uint32_t network_size;
     DirectoryMR directory;
-    velox::DFS dfs;
     Local_io local_io;
 };
 

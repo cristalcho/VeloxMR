@@ -5,7 +5,7 @@
 #include "../mapreduce/output_collection.hh"
 #include "../mapreduce/fs/ireader.h"
 #include "messages/key_value_shuffle.h"
-#include "../client/dfs.hh"
+#include "client/dfs.hh"
 #include "task_cxx.hh"
 #include "task_python.hh"
 
@@ -33,9 +33,9 @@ Executor::~Executor() { }
 // }}}
 // run_map {{{
 bool Executor::run_map (messages::Task* m) {
-  std::unordered_map<std::string, void*> options;
+  unordered_map<std::string, void*> options;
   vector<uint32_t> keys_blocks;
-  queue<std::thread> threads;
+  queue<thread> threads;
   mutex mut;
 
   auto network_size = GET_VEC_STR("network.nodes").size();
@@ -53,6 +53,8 @@ bool Executor::run_map (messages::Task* m) {
   INFO("Launching mapper with %i threads", m->blocks.size());
 
   task_execution->before_map(options);
+  velox::model::metadata md = velox::get_metadata(m->input_path, VELOX_LOGICAL_OUTPUT);
+  const int job_id = m->job_id;
 
   try {
   for (size_t map_id = 0; map_id < m->blocks.size(); map_id++) {
@@ -67,26 +69,34 @@ bool Executor::run_map (messages::Task* m) {
           try {
 
           {
+
           auto* kv_blocks = new map<uint32_t, KeyValueShuffle>();
 
           {
             const string block_name = m->blocks[id].second;
-            Local_io local_io;
-            string input = local_io.read(block_name);
-            istringstream ss (std::move(input));
-
             velox::OutputCollection results;
+
             char* next_line = new char[MAP_MAX_LINE];
+            bzero(next_line, MAP_MAX_LINE);
+            char next_char = 0;
+            int index = 0;
 
-            while (!ss.eof()) {
-              bzero(next_line, MAP_MAX_LINE);
-              ss.getline (next_line, MAP_MAX_LINE);
-              if (strnlen(next_line, MAP_MAX_LINE) == 0) 
-                continue;
+            do {
+              next_char = (char)velox::lean_peek(md, (uint32_t)job_id, block_name);
+              next_line[index] = next_char;
 
-              std::string line(next_line);
-              task_execution->map(line, results, options);
-            }
+              if (next_line[index] == '\n') {
+                if (index == 0) continue;
+
+                std::string line(next_line);
+                task_execution->map(line, results, options);
+                bzero(next_line, MAP_MAX_LINE);
+                index = 0;
+              }
+
+              index++;
+            } while (next_char != -1); 
+
             delete[] next_line;
 
             for (auto& pair : results) {
@@ -115,7 +125,7 @@ bool Executor::run_map (messages::Task* m) {
           vector<int> shuffled_array;
 
           {
-            for (int i = 0; i < network_size; i++)
+            for (int i = 0; i < (int)network_size; i++)
               shuffled_array.push_back(i);
 
             mut.lock();
@@ -199,7 +209,7 @@ bool Executor::run_reduce (messages::Task* task) {
   uint32_t reducer_slot = directory.select_number_of_reducers(task->job_id);
   mutex mut;
   DEBUG("LAunching reducer with %i threads", reducer_slot);
-  for (int reducer_id = 0; reducer_id < reducer_slot; reducer_id++) {
+  for (int reducer_id = 0; reducer_id < (int)reducer_slot; reducer_id++) {
 
     if (threads.size() >= 1) {
       threads.front().join();
@@ -291,9 +301,8 @@ bool Executor::run_reduce (messages::Task* task) {
     threads.pop();
   }
 
-  velox::DFS dfs;
   INFO("REDUCER APPENDING FILE_METADATA KP:%u", num_keys);
-  dfs.file_metadata_append(task->file_output, total_size, metadata);
+  velox::file_metadata_append(task->file_output, total_size, metadata);
 
   peer->notify_task_leader(task->leader, task->job_id, "REDUCE");
 
