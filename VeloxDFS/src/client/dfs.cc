@@ -45,9 +45,6 @@ model::metadata get_metadata_optimized(std::string& fname, int type);
 
 // Static functions {{{
 namespace {
-uint32_t NUM_NODES             = GET_VEC_STR("network.nodes").size();
-int replica                    = GET_INT("filesystem.replica");
-std::vector<std::string> nodes = GET_VEC_STR("network.nodes");
 
 std::map<std::string, std::shared_ptr<FileDescription>> file_description_cache;
 
@@ -401,6 +398,7 @@ uint64_t read_logical(__attribute__((unused)) std::string& file_name, char* buf,
 // }}}
 // read_chunk {{{
 uint64_t read_chunk(std::string& fname, std::string host, char* buf, uint64_t buffer_offset, uint64_t off, uint64_t len) {
+  std::vector<std::string> nodes = GET_VEC_STR("network.nodes");
   bool is_local_node = bool(host == nodes[context.id]);
 
   cout << "CHUNK: " << fname << " host: " << host << " off: " << off << " boff: " << buffer_offset <<  " len: " << len << endl;
@@ -442,7 +440,9 @@ uint64_t read(std::string& file_name, char* buf, uint64_t off, uint64_t len) {
 // }}}
 // upload {{{
 int upload(std::string file_name, bool is_binary, uint64_t block_size) {
+  uint32_t NUM_NODES = GET_VEC_STR("network.nodes").size();
   uint64_t BLOCK_SIZE = block_size;
+  std::vector<std::string> nodes = GET_VEC_STR("network.nodes");
   if (block_size == 0) {
     BLOCK_SIZE = context.settings.get<int>("filesystem.block");
   }
@@ -709,6 +709,8 @@ int remove(std::string file_name) {
 // }}}
 // rename {{{
 bool rename(std::string src, std::string dst) {
+  uint32_t NUM_NODES = GET_VEC_STR("network.nodes").size();
+  std::vector<std::string> nodes = GET_VEC_STR("network.nodes");
 
   auto src_socket = connect(h(src));
   FileRequest fr;
@@ -785,6 +787,9 @@ bool rename(std::string src, std::string dst) {
 // }}}
 // format {{{
 int format() {
+
+  uint32_t NUM_NODES             = GET_VEC_STR("network.nodes").size();
+
   for (unsigned int net_id = 0; net_id < NUM_NODES; net_id++) {
     FormatRequest fr;
     auto socket = connect(net_id);
@@ -803,6 +808,10 @@ int format() {
 // append {{{
 //! @todo fix implementation
 int append(string file_name, string buf) {
+  uint32_t NUM_NODES             = GET_VEC_STR("network.nodes").size();
+  std::vector<std::string> nodes = GET_VEC_STR("network.nodes");
+  int replica = GET_INT("filesystem.replica");
+
   string ori_file_name = file_name; 
 
   uint32_t file_hash_key = h(ori_file_name);
@@ -1020,6 +1029,10 @@ bool exists(std::string name) {
 // }}}
 // touch {{{
 bool touch(std::string file_name) {
+  uint32_t NUM_NODES             = GET_VEC_STR("network.nodes").size();
+  std::vector<std::string> nodes = GET_VEC_STR("network.nodes");
+  int replica = GET_INT("filesystem.replica");
+
   if (exists(file_name))
     return false;
 
@@ -1100,6 +1113,8 @@ bool touch(std::string file_name) {
 // }}}
 // write {{{
 uint64_t write(std::string& file_name, const char* buf, uint64_t off, uint64_t len, uint64_t block_size) {
+  uint32_t NUM_NODES = GET_VEC_STR("network.nodes").size();
+  std::vector<std::string> nodes = GET_VEC_STR("network.nodes");
 
   // Fall back to default value
   if (block_size == 0) {
@@ -1363,6 +1378,7 @@ model::metadata get_metadata_optimized(std::string& fname, int type) {
 // }}}
 // get_metadata_all {{{
 vector<model::metadata> get_metadata_all() {
+uint32_t NUM_NODES             = GET_VEC_STR("network.nodes").size();
   vector<FileInfo> total; 
 
   for (unsigned int net_id=0; net_id<NUM_NODES; net_id++) {

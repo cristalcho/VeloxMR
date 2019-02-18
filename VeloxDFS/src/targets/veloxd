@@ -2,8 +2,6 @@
 
 VERSION="1.8.x"
 
-declare -A hooks
-
 HELP="\
 VELOXD (Velox Daemon Controler) $VERSION
 Usage: veloxd [options] <actions>
@@ -27,7 +25,7 @@ OPTIONS
     -V           Version     show its compiled version.
 
 This is a re-written version in BASH of the previously used Eclipsed Ruby gem.
-The rationale to change from our Ruby gem is that Ruby gems are a myriad to install
+The rationale to change from our Ruby gem is that Ruby gems are a pain to install
 in HPC systems, thus the motivation.
 
 This shell script is still very incomplete. Please feel free helping porting all
@@ -68,9 +66,6 @@ function parallel_exec {
 function up {
   local ENV="export PATH=$PATH; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
   parallel_exec exec_cmd $RSH $VELOXD_SSH_OPTS {} "\"$ENV; $RUN_EXTRA_ARGS; nohup eclipse_node </dev/null &>/dev/null &\""
-  #for host in `velox_get_config "network.nodes" -v`; do
-  #  exec_cmd $RSH $VELOXD_SSH_OPTS $host "$ENV; $RUN_EXTRA_ARGS; nohup eclipse_node </dev/null &>/dev/null &"
-  #done
 }
 
 function down {
@@ -84,17 +79,10 @@ function down {
 function soft-down {
   parallel_exec exec_cmd $RSH {} "pkill -u $USER eclipse_node"          
   parallel_exec exec_cmd $RSH {} "pkill -f -u $USER read_io_stats.sh"
-  #for host in `velox_get_config "network.nodes" -v`; do
-  #  exec_cmd $RSH $host "pkill -u $USER eclipse_node"
-  #  exec_cmd $RSH $host "pkill -f -u $USER read_io_stats.sh$"
-  #done
 }
 
 function hard-down {
   parallel_exec exec_cmd $RSH {} "pkill -u $USER"
-  #for host in `velox_get_config "network.nodes" -v`; do
-  #  exec_cmd $RSH $host "pkill -u $USER"
-  #done
 }
 
 function stats {

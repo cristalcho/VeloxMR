@@ -53,7 +53,7 @@ void TaskExecutor::job_accept(messages::Job* m, std::function<void(void)> fn) {
 
     // Organize a map of blocks per each block_node
     for (auto& file : m->files) {
-      model::metadata md = velox::get_metadata(file);
+      model::metadata md = velox::get_metadata(file, VELOX_LOGICAL_GENERATE);
 
       for (size_t i = 0; i < md.blocks.size(); i++) {
 
