@@ -38,6 +38,8 @@ class TaskExecutor : public Node {
     void notify_map_is_finished(uint32_t job_id, std::vector<uint32_t>);
     void notify_task_leader(int, uint32_t, std::string);
 
+    void notice_the_end();
+
   protected:
     void schedule_reduce(messages::Job*);
     void request_local_map(messages::Task*);
@@ -46,6 +48,11 @@ class TaskExecutor : public Node {
     void write_key_value(messages::KeyValueShuffle *key_value);
     void try_finish_map(uint32_t job_id);
 
+//soojeong
+    std::unordered_multimap<std::string, void*>** uma;
+    std::vector<std::string> memoryPoints;
+    std::vector<std::string>* mp;
+//
     std::unordered_map<uint32_t, uint32_t> tasks_remaining;
     std::unordered_map<uint32_t, std::function<void(void)>> jobs_callback;
     std::unordered_map<uint32_t, std::shared_ptr<IWriter_interface>> iwriters_;

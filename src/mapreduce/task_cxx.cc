@@ -38,6 +38,8 @@ void task_cxx::setup(bool is_map) {
     before_map_f = loader->load_function_before_map("before_map");
     after_map_f = loader->load_function_after_map("after_map");
     mapper = loader->load_function(func_name);
+    mapper2nd = loader->load_function_2(func_name);
+    mapper3rd = loader->load_function_3(func_name);
 
   } else {
     reducer = loader->load_function_reduce(func_name);
@@ -61,8 +63,18 @@ void task_cxx::map(std::string& line, TaskOutput& out, TaskOptions& options) {
   mapper(line, out, options);
 }
 // }}}
+// map {{{
+void task_cxx::map(std::string& line, int index, TaskOutput& add, TaskOutput& del, TaskOptions& options) {
+  mapper2nd(line, index, add, del, options);
+}
+// }}}
+// map {{{
+void task_cxx::map(vec_str& in, TaskOutput& out, centOptions& cents) {
+  mapper3rd(in, out, cents);
+}
+// }}}
 // reduce {{{
-void task_cxx::reduce(std::string& key, vec_str& values, TaskOutput& out) {
-  reducer(key, values, out);
+void task_cxx::reduce(std::string& key, vec_str& values) {
+  reducer(key, values);
 }
 // }}}

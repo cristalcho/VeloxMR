@@ -74,8 +74,8 @@ void dataset::map(std::string func) {
   socket.close();
 }
 // }}}
-// reduce {{{
-void dataset::reduce(std::string func, std::string output) {
+// sj_reduce {{{
+void dataset::reduce(std::string func){
   tcp::socket socket (context.io);
   socket.connect(*find_local_master(job_id));
 
@@ -85,7 +85,6 @@ void dataset::reduce(std::string func, std::string output) {
   job.library = base_name(getenv("_")) + ".so";
   job.reduce_name = func;
   job.job_id = job_id;
-  job.file_output = output;
 
   send_message(&socket, &job);
   auto reply = read_reply<Reply> (&socket);

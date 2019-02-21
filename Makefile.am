@@ -1,7 +1,7 @@
 SUBDIRS = VeloxDFS .
 
 AM_CPPFLAGS      = $(CPPFLAGS) -I@srcdir@/src/common -I@srcdir@/src -I@srcdir@/VeloxDFS/src -I@srcdir@/VeloxDFS/src/common -include ./config.h $(BOOST_CPPFLAGS) -DSTANDALONE_VERSION
-AM_CXXFLAGS      = $(CXXFLAGS) -Wall
+AM_CXXFLAGS      = $(CXXFLAGS) -Wall -g
 
 dist_bin_SCRIPTS = src/targets/velox-compile src/targets/velox-submit
 bin_PROGRAMS     = eclipse_node __velox_mapreduce
@@ -27,11 +27,15 @@ mr_messages_files= src/mapreduce/messages/task.cc            \
 
 lib_LTLIBRARIES    = libvmr.la
 
-libvmr_la_LDFLAGS  = $(BOOST_LDFLAGS) -version-info 0:0:0
-libvmr_la_LIBADD   = -lboost_system -lboost_serialization -lboost_coroutine -lboost_thread -lboost_context -ldl
+MEMCACHED_LDFLAGS = -L/home/hduser/libmemcached-1.0.18/build/lib
+MEMCACHED_LDADD = -lmemcached -lpthread
+
+libvmr_la_LDFLAGS  = $(BOOST_LDFLAGS) -version-info 0:0:0 $(MEMCACHED_LDFLAGS)
+libvmr_la_LIBADD   = -lboost_system -lboost_serialization -lboost_coroutine -lboost_thread -lboost_context -ldl $(MEMCACHED_LDADD)
 libvmr_la_SOURCES  = $(mr_messages_files) \
                       src/client/vmr.cc \
                       src/mapreduce/output_collection.cc
+
 
 eclipse_node_SOURCES = src/targets/node_main_mr.cc \
                        src/mapreduce/task_executor.cc \
@@ -42,7 +46,6 @@ eclipse_node_SOURCES = src/targets/node_main_mr.cc \
                        src/mapreduce/executor.cc \
                        src/mapreduce/task_handler.cc \
                        src/mapreduce/task_cxx.cc \
-                       src/mapreduce/task_python.cc \
                        src/mapreduce/dl_loader.cc \
                        VeloxDFS/src/network/asyncchannel.cc \
                        VeloxDFS/src/network/server.cc \
@@ -67,6 +70,7 @@ eclipse_node_SOURCES = src/targets/node_main_mr.cc \
                        VeloxDFS/src/stats/scheduler_python.cc \
                        VeloxDFS/src/stats/scheduler_multiwave.cc \
                        VeloxDFS/src/stats/scheduler_lean.cc
+                       #src/mapreduce/task_python.cc 
 
 eclipse_node_LDADD   = libvmr.la $(LDADD) -lpython2.7 $(libvmr_la_LIBADD) 
 eclipse_node_LDADD  +=  -lzookeeper_mt

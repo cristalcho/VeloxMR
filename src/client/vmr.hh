@@ -17,7 +17,7 @@ class dataset {
   friend vmr;
   public:
     void map(std::string);
-    void reduce(std::string, std::string);
+    void reduce(std::string);
 
     void pymap(std::string, std::string, std::string);
     void pyreduce(std::string, std::string);

@@ -28,6 +28,7 @@
 using namespace std;
 using namespace velox;
 
+#define NUM_CLUSTERS 9
 
 namespace eclipse {
 // Constructors {{{
@@ -35,6 +36,25 @@ TaskExecutor::TaskExecutor(network::ClientHandler* net) : Node() {
   network = net;
   directory.create_tables();
   network_size = GET_VEC_STR("network.nodes").size();
+
+  mp = new vector<std::string>[10]; //randomly setting
+//
+  uma = new unordered_multimap<std::string, void*>*[NUM_CLUSTERS];
+  for(int i=0; i<NUM_CLUSTERS; i++){
+    uma[i] = new unordered_multimap<std::string, void*>[10];
+    mp[i].reserve(100000000);
+  }
+}
+//notice_the_end{{{
+void TaskExecutor::notice_the_end() {
+    
+    for(int i=0; i<NUM_CLUSTERS; i++){
+//        INFO("uma[%d]: %d", i, uma[i]->size());
+        delete [] uma[i];
+    }
+    delete [] mp;
+    delete [] uma;
+//    INFO("IN ~~NOTICE_THE_END()");
 }
 // }}}
 // ------------- MAPREDUCE ROUTINES ------------------
@@ -227,7 +247,7 @@ void TaskExecutor::request_local_map (messages::Task* task) {
   Task stask = *task;
 
   std::thread([&, this](Task task) {
-        Executor exec(this);
+        Executor exec(this, uma, mp);
         exec.run_map(&task);
       }, stask).detach();
 }
@@ -306,10 +326,6 @@ void TaskExecutor::schedule_reduce(messages::Job* m) {
 
   INFO("JOB LEADER %i Processing REDUCE %i jobs", id, reduce_nodes.size());
 
-  if (velox::exists(m->file_output))
-    velox::remove(m->file_output);
-
-  velox::touch(m->file_output);
 
   for (auto which_node : reduce_nodes) {
     Task task;
@@ -318,7 +334,6 @@ void TaskExecutor::schedule_reduce(messages::Job* m) {
     task.func_name = m->reduce_name;
     task.library = m->library;
     task.leader = id;
-    task.file_output = m->file_output;
     task.func_body = m->func_body;
     task.lang = m->lang;
 
@@ -341,7 +356,7 @@ void TaskExecutor::request_local_reduce (messages::Task* m) {
   if (di.num_reducer > 0) { //! Perform reduce operation
     std::async(std::launch::async, [&]() {
         logger->info("Performing reduce operation");
-        Executor exec(this);
+        Executor exec(this, uma, mp);
         Task copy_task = *m;
         exec.run_reduce(&copy_task);
         });
